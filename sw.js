@@ -1,6 +1,6 @@
 // Service worker : met l'application en cache pour un fonctionnement hors ligne.
 // Après toute modification des fichiers, incrémente VERSION pour forcer la mise à jour.
-const VERSION = 'kalo-v1.2.0';
+const VERSION = 'kalo-v1.3.0';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './foods.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './vendor/zxing-browser.min.js'];
 

@@ -261,3 +261,5 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
 .proj-list details summary { list-style: none; cursor: pointer; padding: 10px 0; border-top: 1px solid var(--line); color: var(--accent); font-weight: 650; font-size: 14px; }
 .proj-list details summary::-webkit-details-marker { display: none; }
 .proj-list details[open] summary { color: var(--ink-3); }
+
+.burn-calc { background: var(--accent-soft); color: var(--ink); border-radius: 12px; padding: 12px; font-size: 15px; }

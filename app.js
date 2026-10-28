@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.3.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -130,7 +130,7 @@
 
   function saveDay(k) {
     const d = S.days[k];
-    if (!d || (!d.entries.length && d.burn == null && !d.validated)) { delete S.days[k]; return Store.del('day:' + k); }
+    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated)) { delete S.days[k]; return Store.del('day:' + k); }
     if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, tdee: g.tdee }; }
     return Store.put('day:' + k, d);
   }
@@ -139,7 +139,8 @@
   // Dépense du jour : saisie (montre / Santé) ou estimation du profil
   function dayBurn(k) {
     const d = S.days[k];
-    if (d && d.burn != null) return { v: d.burn, measured: true };
+    if (d && d.active != null) { const bmr = d.bmr || calc(S.profile).bmr; return { v: bmr + d.active, measured: true, active: d.active, bmr }; }
+    if (d && d.burn != null) return { v: d.burn, measured: true, total: true };
     return { v: (k !== today() && d?.goal?.tdee) || goals().tdee, measured: false };
   }
   const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + r0(Math.abs(n));
@@ -359,9 +360,9 @@
       </section>
       ${locked ? validatedCard(k, t, burn) : ''}
       <section class="card bilan">
-        <div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Bilan du jour</h3>${locked ? '' : `<button class="btn plain" data-action="burn">${burn.measured ? 'Modifier la dépense' : '+ Saisir ma dépense'}</button>`}</div>
+        <div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Bilan du jour</h3>${locked ? '' : `<button class="btn plain" data-action="burn">${burn.measured ? 'Modifier' : '🔥 Calories brûlées'}</button>`}</div>
         <div class="eq3">
-          <button class="cell" data-action="burn" ${locked ? 'disabled' : ''}><b class="num">${r0(burn.v)}</b><span>Dépense ${burn.measured ? '' : '<em>estimée</em>'}</span></button>
+          <button class="cell" data-action="burn" ${locked ? 'disabled' : ''}><b class="num">${r0(burn.v)}</b><span>Dépense ${burn.active != null ? `<em>repos + ${r0(burn.active)} brûlées</em>` : burn.measured ? '' : '<em>estimée</em>'}</span></button>
           <i>−</i>
           <div class="cell"><b class="num">${r0(t.kcal)}</b><span>Consommé</span></div>
           <i>=</i>
@@ -382,35 +383,44 @@
     </section>`;
   }
 
-  /* ---------- Écran : dépense du jour ---------- */
+  /* ---------- Écran : calories brûlées (montre) ---------- */
   function openBurn(k, then) {
-    const d = S.days[k], est = dayBurn(k);
-    const g = goals();
-    const sh = makeSheet('Dépense du jour');
-    sh.setBody(`<section class="card stack">
-      <label class="field"><span>Dépense totale de la journée (kcal)</span><input type="number" inputmode="numeric" data-f="burn" value="${d?.burn ?? ''}" placeholder="Estimation : ${r0(g.tdee)}"></label>
-      <p class="note" style="margin:0">Entre la <b>dépense totale</b> (repos + activité), pas seulement le sport.<br>
-      <b>iPhone</b> : app Santé → Activité → additionne <i>Énergie au repos</i> + <i>Énergie active</i>.<br>
-      <b>Montre Garmin, Samsung, Fitbit…</b> : « calories totales » du jour.<br>
-      Sans montre, laisse vide : l'estimation de ton profil (${r0(g.tdee)} kcal) est utilisée.</p>
-      <div class="chips" data-f="chips"><button type="button" class="chip" data-add="200">+200 sport</button><button type="button" class="chip" data-add="400">+400 sport</button><button type="button" class="chip" data-add="-200">−200</button></div>
-      <p class="note" style="margin:0">Les montres surestiment souvent les calories du sport de 20 à 40 %. Si ton poids baisse moins vite que prévu, sous-estime plutôt ta dépense.</p>
-    </section>`);
-    sh.setFoot(`${d?.burn != null ? '<button class="btn outline" data-a="clear">Estimation</button>' : ''}<button class="btn grow" data-a="save">Enregistrer</button>`);
-    const inp = $('[data-f="burn"]', sh.body);
-    $('[data-f="chips"]', sh.body).onclick = e => { const b = e.target.closest('[data-add]'); if (!b) return; inp.value = Math.max(0, (num(inp.value) ?? Math.round(est.v)) + +b.dataset.add); };
+    const d = S.days[k] || {};
+    const bmr = calc(S.profile).bmr, g = goals();
+    let mode = d.burn != null && d.active == null ? 'total' : 'active';
+    const sh = makeSheet('Calories brûlées');
+    const draw = () => {
+      sh.setBody(mode === 'active' ? `<section class="card stack">
+        <label class="field"><span>Calories brûlées aujourd'hui (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.active ?? ''}" placeholder="ex. 559"></label>
+        <div class="burn-calc num" data-f="calc"></div>
+        <p class="note" style="margin:0">Entre le chiffre <b>« calories actives »</b> (ou « énergie active ») de ta montre. Kalo y ajoute ta dépense au repos estimée (${r0(bmr)} kcal) pour obtenir ta dépense totale du jour.</p>
+      </section>
+      <button class="btn plain block" data-a="mode">Ma montre donne plutôt la dépense totale</button>`
+        : `<section class="card stack">
+        <label class="field"><span>Dépense totale de la journée (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.burn ?? ''}" placeholder="ex. 2 450"></label>
+        <p class="note" style="margin:0">Calories totales (repos + activité), si ta montre affiche ce chiffre.</p>
+      </section>
+      <button class="btn plain block" data-a="mode">J'ai seulement les calories actives</button>`);
+      const inp = $('[data-f="v"]', sh.body), out = $('[data-f="calc"]', sh.body);
+      const upd = () => { if (!out) return; const v = num(inp.value); out.innerHTML = v == null ? `Sans saisie : estimation du profil ${r0(g.tdee)} kcal` : `Dépense du jour : ${r0(bmr)} + ${r0(v)} = <b>${r0(bmr + v)} kcal</b>`; };
+      inp.addEventListener('input', upd); upd();
+    };
+    draw();
+    sh.body.addEventListener('click', e => { if (e.target.closest('[data-a="mode"]')) { mode = mode === 'active' ? 'total' : 'active'; draw(); } });
+    sh.setFoot(`${d.burn != null || d.active != null ? '<button class="btn outline" data-a="clear">Effacer</button>' : ''}<button class="btn grow" data-a="save">Enregistrer</button>`);
     sh.foot.onclick = e => {
       const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
       const day = getDay(k);
-      if (a === 'clear') delete day.burn;
       if (a === 'save') {
-        const v = num(inp.value);
-        if (v == null) delete day.burn;
-        else if (v < 800 || v > 8000) { toast('Valeur entre 800 et 8 000 kcal'); return; }
-        else day.burn = Math.round(v);
+        const v = num($('[data-f="v"]', sh.body).value);
+        if (v != null && mode === 'active' && (v < 0 || v > 5000)) { toast('Valeur entre 0 et 5 000 kcal'); return; }
+        if (v != null && mode === 'total' && (v < 800 || v > 8000)) { toast('Valeur entre 800 et 8 000 kcal'); return; }
+        delete day.burn; delete day.active; delete day.bmr;
+        if (v != null) { if (mode === 'active') { day.active = Math.round(v); day.bmr = bmr; } else day.burn = Math.round(v); }
       }
+      if (a === 'clear') { delete day.burn; delete day.active; delete day.bmr; }
       saveDay(k);
-      closeSheet(1, then || (() => toast('Dépense enregistrée')));
+      closeSheet(1, then || (() => toast(a === 'clear' ? 'Retour à l\'estimation' : 'Calories brûlées enregistrées')));
     };
     openSheet(sh.el);
   }
@@ -424,10 +434,10 @@
     sh.setBody(`
       <section class="card">
         <div class="vline"><span>Consommé</span><b class="num">${r0(t.kcal)} kcal</b></div>
-        <div class="vline"><span>Dépense ${burn.measured ? '' : '<em class="muted">(estimée)</em>'}</span><b class="num">${r0(burn.v)} kcal</b></div>
+        <div class="vline"><span>Dépense ${burn.active != null ? `<em class="muted">(${r0(burn.bmr)} repos + ${r0(burn.active)} brûlées)</em>` : burn.measured ? '' : '<em class="muted">(estimée)</em>'}</span><b class="num">${r0(burn.v)} kcal</b></div>
         <div class="vline big-line"><span>${bal >= 0 ? 'Déficit' : 'Excédent'}</span><b class="num ${bal >= 0 ? 'good-text' : 'over-text'}">${signed(-bal)} kcal</b></div>
         <p class="note" style="margin:6px 0 0">≈ ${r0(Math.abs(bal) / 7.7)} g de graisse ${bal >= 0 ? 'en moins' : 'en plus'} (7 700 kcal ≈ 1 kg).</p>
-        ${burn.measured ? '' : '<button class="btn block ghost" data-a="burn" style="margin-top:12px">Saisir ma dépense réelle</button>'}
+        ${burn.measured ? '' : '<button class="btn block ghost" data-a="burn" style="margin-top:12px">🔥 Ajouter les calories brûlées</button>'}
       </section>
       <section class="card vchecks big">
         <span class="${okK ? 'ok' : 'ko'}">${okK ? '✓' : '✗'} Calories : ${r0(t.kcal)} / ${r0(g.kcal)} kcal</span>
@@ -528,7 +538,7 @@
       const avgP = n ? logged.reduce((s, x) => s + x.t.p, 0) / n : 0;
       if (m === 'kcal') {
         const inGoal = logged.filter(x => x.t.kcal <= x.g.kcal).length;
-        const bal = logged.reduce((s, x) => s + (x.t.kcal - (S.days[x.k].burn ?? (x.g.tdee || g.tdee))), 0);
+        const bal = logged.reduce((s, x) => s + (x.t.kcal - dayBurn(x.k).v), 0);
         const nv = logged.filter(x => S.days[x.k].validated).length;
         stats = `
           <div class="stat"><b class="num">${n ? r0(avgK) : '–'}</b><span>kcal / jour en moyenne</span></div>
