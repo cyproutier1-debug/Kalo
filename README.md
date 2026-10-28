@@ -37,7 +37,8 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 
 ## Bilan du jour et validation
 
-- **Calories brûlées** : touche « 🔥 Calories brûlées » dans la carte *Bilan du jour* et entre les **calories actives** de ta montre (ex. 559). Kalo ajoute ta dépense au repos estimée (métabolisme de base) pour obtenir la dépense totale. Si ta montre donne la dépense totale, un lien permet de la saisir à la place. Sans saisie, l'estimation du profil est utilisée.
+- **Montre (Apple Watch)** : Journal → *Bilan du jour* → **⌚ Ma montre** → entre le **TOTAL** de l'app Forme (ligne « TOTAL : … KCAL » sous le graphique « Bouger »). Saisi en cours de journée, Kalo ajoute la dépense au repos restante jusqu'à minuit. Un chiffre inférieur à 1 200 est compris comme les calories « Bouger » (actives) : Kalo y ajoute alors la dépense au repos estimée.
+- **Objectifs calés sur la montre** : dès 3 journées passées avec une dépense saisie, la *dépense de référence* devient la moyenne de la montre (28 derniers jours) au lieu de la formule ; objectif = cette moyenne − déficit du rythme choisi. Bascule Montre / Formule dans Profil.
 - **Bilan** = dépense − consommé. Un nombre négatif est un déficit (perte), un positif un excédent.
 - **Valider la journée** (bouton en bas du journal) : affiche le récap (objectifs atteints, déficit, projection sur 4 semaines) et verrouille la journée. « Rouvrir » permet de la modifier.
 - Dans Progrès, le bilan estimé utilise ta dépense réelle quand tu l'as saisie.

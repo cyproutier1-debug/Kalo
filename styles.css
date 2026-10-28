@@ -263,3 +263,5 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
 .proj-list details[open] summary { color: var(--ink-3); }
 
 .burn-calc { background: var(--accent-soft); color: var(--ink); border-radius: 12px; padding: 12px; font-size: 15px; }
+
+.tdee-box { background: var(--bg); border-radius: 12px; padding: 12px; margin-top: 12px; }

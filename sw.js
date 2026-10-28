@@ -1,6 +1,6 @@
 // Service worker : réseau d'abord (toujours la dernière version en ligne), cache en secours hors connexion.
 // Incrémente VERSION à chaque mise à jour.
-const VERSION = 'kalo-v1.3.2';
+const VERSION = 'kalo-v1.4.0';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './foods.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './vendor/zxing-browser.min.js'];
 
