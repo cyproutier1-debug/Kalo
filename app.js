@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.2.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -116,7 +116,7 @@
 
   /* ---------- État ---------- */
   const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {} };
-  const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today() };
+  const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto' };
 
   async function loadState() {
     const all = await Store.loadAll();
@@ -280,7 +280,7 @@
     $$('#tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === UI.tab));
     const views = { journal: viewJournal, progress: viewProgress, foods: viewFoods, profile: viewProfile };
     v.innerHTML = (views[UI.tab] || viewJournal)();
-    if (UI.tab === 'progress') drawChart();
+    if (UI.tab === 'progress') { drawChart(); drawProjection(); }
   }
 
   // Accueil / onboarding
@@ -559,6 +559,7 @@
         : `<span><i style="background:var(--accent);border-radius:50%"></i>Pesées</span>${S.profile.target ? `<span><i class="dash"></i>Poids objectif (${r1(S.profile.target)} kg)</span>` : ''}`;
     const ws = sortedWeights().reverse().slice(0, 8);
     return `<h1>Progrès</h1>
+      ${viewProjection()}
       <div class="seg">${[['week', 'Semaine'], ['month', 'Mois'], ['year', 'Année']].map(([v, l]) => `<button data-action="period" data-v="${v}" class="${UI.period === v ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="period-nav"><button class="icon-btn" data-action="per-prev" aria-label="Période précédente">${ICON.left}</button><b>${periodLabel(r)}</b><button class="icon-btn" data-action="per-next" aria-label="Période suivante" ${isCurrent ? 'disabled style="opacity:.3"' : ''}>${ICON.right}</button></div>
       <section class="card">
@@ -658,6 +659,113 @@
       const rect = wrap.querySelector('svg').getBoundingClientRect(); const px = ev.clientX - rect.left;
       let best = pts[0]; for (const p of pts) if (Math.abs(x(p.t) - px) < Math.abs(x(best.t) - px)) best = p;
       return { x: x(best.t), text: `${cap(F.short.format(dparse(best.date)))} · ${r1(best.v)} kg` };
+    });
+  }
+
+  /* ---------- Projection du poids jusqu'à l'objectif ---------- */
+  const DAY = 864e5;
+  // Rythme réel : régression linéaire sur les pesées des 28 derniers jours (≥ 10 jours d'écart),
+  // sinon déficit moyen des 14 derniers jours saisis (≥ 5 jours). Renvoie kg / jour (négatif = perte).
+  function realRate() {
+    const ws = sortedWeights();
+    if (ws.length >= 2) {
+      const lastT = dparse(ws[ws.length - 1].date).getTime();
+      const pts = ws.filter(w => dparse(w.date).getTime() >= lastT - 28 * DAY).map(w => [dparse(w.date).getTime() / DAY, w.kg]);
+      if (pts.length >= 2 && pts[pts.length - 1][0] - pts[0][0] >= 10) {
+        const n = pts.length, mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
+        const slope = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0);
+        return { rate: slope, basis: `tendance de tes pesées sur ${Math.round(pts[n - 1][0] - pts[0][0])} jours` };
+      }
+    }
+    const days = []; for (let i = 1; i <= 14; i++) { const k = dkey(addDays(new Date(), -i)); if (S.days[k]?.entries.length) days.push(k); }
+    if (days.length >= 5) {
+      const avg = days.reduce((a, k) => a + (dayBurn(k).v - dayTotals(k).kcal), 0) / days.length;
+      return { rate: -avg / 7700, basis: `déficit moyen de tes ${days.length} derniers jours saisis (${r0(avg)} kcal/j)` };
+    }
+    return null;
+  }
+  function projection() {
+    const p = S.profile, ws = sortedWeights();
+    const cur = currentWeight(), tgt = p.target;
+    if (!tgt) return { none: 'Ajoute un poids objectif dans ton profil pour voir la projection.' };
+    const start = ws.length ? Math.max(ws[0].kg, p.weight || 0) : p.weight;
+    const done = start - cur, total = start - tgt, pct = total > 0 ? Math.max(0, Math.min(100, done / total * 100)) : 100;
+    if (cur <= tgt) return { reached: true, start, cur, tgt, pct: 100 };
+    const planned = p.pace > 0 ? { rate: -p.pace / 7, basis: `rythme prévu de ton profil (${r1(p.pace)} kg/semaine)` } : null;
+    const real = realRate();
+    const realOk = real && real.rate < -0.005;
+    const mode = UI.proj === 'planned' || !real ? 'planned' : 'real';
+    const use = mode === 'real' ? real : planned;
+    const base = { start, cur, tgt, pct, done, planned, real, realOk, mode };
+    if (!use || use.rate >= -0.005) return { ...base, stalled: true, use };
+    const t0 = ws.length ? dparse(ws[ws.length - 1].date) : dparse(today());
+    const daysTo = Math.ceil((cur - tgt) / -use.rate);
+    const capped = daysTo > 730;
+    const end = addDays(t0, Math.min(daysTo, 730));
+    const at = d => Math.max(tgt, cur + use.rate * (d.getTime() - t0.getTime()) / DAY);
+    const months = [];
+    for (let m = new Date(t0.getFullYear(), t0.getMonth() + 1, 0); m < end && months.length < 24; m = new Date(m.getFullYear(), m.getMonth() + 2, 0)) {
+      if (m.getTime() - t0.getTime() >= 7 * DAY) months.push({ d: m, kg: at(m) });
+    }
+    return { ...base, use, t0, end, daysTo, capped, months, at, weekly: use.rate * 7 };
+  }
+  function viewProjection() {
+    const P = projection();
+    if (P.none) return `<section class="card proj"><h3>Projection</h3><p class="note" style="margin:0">${P.none}</p></section>`;
+    const bar = `<div class="proj-bar"><div style="width:${P.pct}%"></div></div>
+      <div class="row between small muted num" style="margin-top:6px"><span>Départ ${r1(P.start)} kg</span><span><b style="color:var(--ink)">${r1(P.cur)} kg</b></span><span>Objectif ${r1(P.tgt)} kg</span></div>`;
+    if (P.reached) return `<section class="card proj"><h3>Projection</h3><div class="proj-head">🎉 Objectif atteint !</div>${bar}<p class="note">Passe le rythme sur « Maintenir mon poids » dans ton profil, ou fixe un nouvel objectif.</p></section>`;
+    const toggle = P.real && P.planned ? `<div class="seg" style="margin:12px 0 4px"><button data-action="proj" data-v="real" class="${P.mode === 'real' ? 'on' : ''}">Rythme réel</button><button data-action="proj" data-v="planned" class="${P.mode === 'planned' ? 'on' : ''}">Rythme prévu</button></div>` : '';
+    if (P.stalled) return `<section class="card proj"><h3>Projection jusqu'à l'objectif</h3><div class="proj-head">${r1(P.done > 0 ? P.done : 0)} kg perdus · ${Math.round(P.pct)} %</div>${bar}${toggle}
+      <p class="note">${P.use ? `D'après la ${esc(P.use.basis)}, ton poids ne baisse pas pour l'instant : la projection n'est pas calculable. Vérifie que tout est bien saisi, puis réduis ta cible de 100 à 200 kcal si ça dure plus de 3 semaines.` : 'Choisis un rythme de perte dans ton profil, ou saisis au moins 5 jours de repas, pour voir la projection.'}</p></section>`;
+    const lastM = P.months[P.months.length - 1];
+    const row = m => `<div class="proj-row"><span>${cap(F.month.format(m.d))}</span><b class="num">${r1(m.kg)} kg</b><span class="num good-text">−${r1(P.cur - m.kg)}</span></div>`;
+    const rows3 = P.months.slice(0, 3).map(row).join(''), rowsMore = P.months.slice(3, 24).map(row).join('');
+    return `<section class="card proj">
+      <h3>Projection jusqu'à l'objectif</h3>
+      <div class="proj-head">${P.capped ? 'Objectif dans plus de 2 ans à ce rythme' : `🎯 ${r1(P.tgt)} kg vers ${F.month.format(P.end)}`}</div>
+      <div class="muted small">${r1(Math.max(0, P.done))} kg perdus · ${Math.round(P.pct)} % du chemin · encore ${r1(P.cur - P.tgt)} kg${P.capped ? '' : ` en ~${Math.max(1, Math.round(P.daysTo / 7))} semaines`}</div>
+      ${bar}
+      ${toggle}
+      <div class="chart-wrap" id="proj-chart" style="margin-top:10px"></div>
+      <div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>Pesées</span><span><i class="dash" style="border-color:var(--accent)"></i>Projection</span><span><i class="dash"></i>Objectif</span></div>
+      <div class="proj-list">${rows3}${rowsMore ? `<details><summary>Voir tous les mois (${P.months.length})</summary>${rowsMore}</details>` : ''}
+        ${P.capped ? '' : `<div class="proj-row goal"><span>🎯 ${cap(F.dmy.format(P.end))}</span><b class="num">${r1(P.tgt)} kg</b><span class="num good-text">−${r1(P.cur - P.tgt)}</span></div>`}</div>
+      <p class="note" style="margin:8px 0 0">Base : ${esc(P.use.basis)} (−${r1(Math.abs(P.weekly))} kg/semaine). ${P.mode === 'real' ? 'Se met à jour à chaque pesée.' : 'Si tu suis ton objectif chaque jour.'} Le poids fluctue de ±1 kg d'un jour à l'autre (eau, sel) : fie-toi à la tendance.</p>
+    </section>`;
+  }
+  function drawProjection() {
+    const wrap = $('#proj-chart'); if (!wrap) return;
+    const P = projection(); if (!P.months) return;
+    const hist = sortedWeights().filter(w => dparse(w.date) >= addDays(P.t0, -90)).map(w => ({ t: dparse(w.date).getTime(), v: w.kg, date: w.date }));
+    const tStart = hist.length ? Math.min(hist[0].t, P.t0.getTime()) : P.t0.getTime();
+    const tEnd = P.end.getTime() + 10 * DAY;
+    const W = Math.max(260, wrap.clientWidth || 320), H = 200, M = { l: 40, r: 12, t: 30, b: 24 };
+    const pw = W - M.l - M.r, ph = H - M.t - M.b;
+    const x = t => M.l + (t - tStart) / (tEnd - tStart) * pw;
+    let lo = Math.min(P.tgt, ...hist.map(h => h.v)), hi = Math.max(P.cur, ...hist.map(h => h.v));
+    const padv = Math.max(0.5, (hi - lo) * 0.1); lo -= padv; hi += padv;
+    const step = niceStep(hi - lo); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const y = v => M.t + ph - (v - lo) / (hi - lo) * ph;
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projection du poids jusqu'à l'objectif">`;
+    for (let v = lo; v <= hi + 1e-9; v += step) s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--grid)"/><text x="${M.l - 6}" y="${y(v) + 4}" text-anchor="end">${r1(v)}</text>`;
+    // repères de mois
+    const nM = P.months.length, every = nM > 12 ? 3 : nM > 6 ? 2 : 1;
+    P.months.forEach((m, i) => { if (i % every === 0) s += `<text x="${x(m.d.getTime())}" y="${H - 6}" text-anchor="middle">${MO[m.d.getMonth()]}</text>`; });
+    s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(P.tgt)}" y2="${y(P.tgt)}" stroke-dasharray="5 4" stroke-width="1.5" style="stroke:var(--ink-2)"/>`;
+    if (hist.length > 1) s += `<path d="${hist.map((h, i) => (i ? 'L' : 'M') + x(h.t).toFixed(1) + ',' + y(h.v).toFixed(1)).join('')}" fill="none" stroke-width="2" stroke-linejoin="round" style="stroke:var(--accent)"/>`;
+    const projPts = [{ t: P.t0.getTime(), v: P.cur }, ...P.months.map(m => ({ t: m.d.getTime(), v: m.kg })), { t: P.end.getTime(), v: P.at(P.end) }];
+    s += `<path d="${projPts.map((h, i) => (i ? 'L' : 'M') + x(h.t).toFixed(1) + ',' + y(h.v).toFixed(1)).join('')}" fill="none" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round" style="stroke:var(--accent)"/>`;
+    hist.forEach(h => { s += `<circle cx="${x(h.t)}" cy="${y(h.v)}" r="4" stroke-width="2" style="fill:var(--accent);stroke:var(--card)"/>`; });
+    P.months.forEach(m => { s += `<circle cx="${x(m.d.getTime())}" cy="${y(m.kg)}" r="4" stroke-width="2" style="fill:var(--card);stroke:var(--accent)"/>`; });
+    if (!P.capped) { const fx = x(P.end.getTime()), fy = y(P.tgt); s += `<circle cx="${fx}" cy="${fy}" r="6" style="fill:var(--accent)"/><text x="${Math.min(fx, W - M.r - 4)}" y="${fy + 18}" text-anchor="end" style="fill:var(--accent);font-weight:700">${r1(P.tgt)} kg</text>`; }
+    s += `<rect x="${M.l}" y="${M.t - 10}" width="${pw}" height="${ph + 10}" fill="transparent"/></svg><div class="chart-tip"></div>`;
+    wrap.innerHTML = s;
+    const all = [...hist.map(h => ({ t: h.t, text: `${cap(F.short.format(new Date(h.t)))} · ${r1(h.v)} kg (pesée)` })), ...P.months.map(m => ({ t: m.d.getTime(), text: `Fin ${F.month.format(m.d)} · ≈ ${r1(m.kg)} kg` })), ...(P.capped ? [] : [{ t: P.end.getTime(), text: `🎯 ${cap(F.dmy.format(P.end))} · ${r1(P.tgt)} kg` }])];
+    bindTip(wrap, null, ev => {
+      const px = ev.clientX - wrap.querySelector('svg').getBoundingClientRect().left;
+      let best = all[0]; for (const a of all) if (Math.abs(x(a.t) - px) < Math.abs(x(best.t) - px)) best = a;
+      return { x: x(best.t), text: best.text };
     });
   }
 
@@ -1014,6 +1122,7 @@
     },
     period: b => { UI.period = b.dataset.v; UI.anchor = today(); render(); },
     metric: b => { UI.metric = b.dataset.v; render(); },
+    proj: b => { UI.proj = b.dataset.v; render(); },
     'per-prev': () => shiftPeriod(-1),
     'per-next': () => shiftPeriod(1),
     'add-weight': () => openWeight(),
@@ -1068,7 +1177,7 @@
     if (t.dataset.input === 'import' && t.files[0]) importData(t.files[0]);
   });
 
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (UI.tab === 'progress' && !stack.length) drawChart(); }, 150); });
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (UI.tab === 'progress' && !stack.length) { drawChart(); drawProjection(); } }, 150); });
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if (UI.tab === 'profile') render(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && UI.date !== today() && UI.tab === 'journal' && !stack.length && UI._lastToday !== today()) { UI.date = today(); render(); } UI._lastToday = today(); });
 

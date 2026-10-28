@@ -248,3 +248,16 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
 .vchecks .ok { color: var(--accent); } .vchecks .ko { color: var(--warn); }
 .vline { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .vline.big-line { border-bottom: 0; font-size: 20px; font-weight: 700; }
+
+/* Projection */
+.proj-head { font-size: 22px; font-weight: 750; letter-spacing: -.02em; margin-bottom: 2px; }
+.proj-bar { height: 12px; background: var(--line); border-radius: 7px; overflow: hidden; margin-top: 12px; }
+.proj-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent-soft), var(--accent)); border-radius: 7px; }
+.proj-list { margin-top: 10px; }
+.proj-row { display: grid; grid-template-columns: 1fr auto 64px; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.proj-row span:last-child { text-align: right; }
+.proj-row.goal { font-weight: 700; }
+
+.proj-list details summary { list-style: none; cursor: pointer; padding: 10px 0; border-top: 1px solid var(--line); color: var(--accent); font-weight: 650; font-size: 14px; }
+.proj-list details summary::-webkit-details-marker { display: none; }
+.proj-list details[open] summary { color: var(--ink-3); }

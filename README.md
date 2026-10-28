@@ -42,6 +42,13 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Valider la journée** (bouton en bas du journal) : affiche le récap (objectifs atteints, déficit, projection sur 4 semaines) et verrouille la journée. « Rouvrir » permet de la modifier.
 - Dans Progrès, le bilan estimé utilise ta dépense réelle quand tu l'as saisie.
 
+## Projection jusqu'à l'objectif (onglet Progrès)
+
+- Date estimée d'arrivée au poids objectif, % du chemin parcouru, poids estimé à la fin de chaque mois, courbe pesées + projection.
+- **Rythme réel** : tendance (régression linéaire) de tes pesées des 28 derniers jours, dès qu'elles couvrent au moins 10 jours ; sinon déficit moyen de tes 14 derniers jours saisis (au moins 5 jours).
+- **Rythme prévu** : le rythme choisi dans ton profil.
+- Si le poids réel ne baisse pas, l'app l'indique au lieu d'afficher une date fictive.
+
 ## Fonctionnement des objectifs
 
 - Métabolisme de base : formule Mifflin-St Jeor, multiplié par le niveau d'activité, ce qui donne la dépense estimée.
