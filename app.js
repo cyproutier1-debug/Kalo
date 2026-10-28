@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '1.3.1';
+  const APP_VERSION = '1.3.2';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -395,10 +395,11 @@
         <div class="burn-calc num" data-f="calc"></div>
         <p class="note" style="margin:0">Entre le chiffre <b>« calories actives »</b> (ou « énergie active ») de ta montre. Kalo y ajoute ta dépense au repos estimée (${r0(bmr)} kcal) pour obtenir ta dépense totale du jour.</p>
       </section>
+      <p class="note"><b>Apple Watch</b> (app Forme) : « Bouger » = calories actives. La ligne <b>« TOTAL »</b> sous le graphique rouge est plus précise : utilise le bouton ci-dessous pour l'entrer, de préférence le soir ou le lendemain (le total augmente jusqu'à minuit).</p>
       <button class="btn plain block" data-a="mode">Ma montre donne plutôt la dépense totale</button>`
         : `<section class="card stack">
         <label class="field"><span>Dépense totale de la journée (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.burn ?? ''}" placeholder="ex. 2 450"></label>
-        <p class="note" style="margin:0">Calories totales (repos + activité), si ta montre affiche ce chiffre.</p>
+        <p class="note" style="margin:0">Calories totales (repos + activité). <b>Apple Watch</b> : app Forme → ligne « TOTAL » sous « Bouger ». Entre-le le soir ou le lendemain matin (flèche ‹ du journal) : il augmente jusqu'à minuit.</p>
       </section>
       <button class="btn plain block" data-a="mode">J'ai seulement les calories actives</button>`);
       const inp = $('[data-f="v"]', sh.body), out = $('[data-f="calc"]', sh.body);
