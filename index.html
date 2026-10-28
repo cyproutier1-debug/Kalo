@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Kalo — calories & protéines</title>
+  <meta name="description" content="Suivi des calories et des protéines, scan des produits, objectifs et progression.">
+  <meta name="theme-color" content="#F5F6F3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121513" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Kalo">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <main id="view" aria-live="polite"></main>
+    <nav id="tabbar" aria-label="Navigation principale">
+      <button data-tab="journal" class="tab"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M9 9h6M9 13h6"/></svg><span>Journal</span></button>
+      <button data-tab="progress" class="tab"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Progrès</span></button>
+      <button data-action="scan-global" class="tab tab-scan" aria-label="Scanner un produit"><svg viewBox="0 0 24 24"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></button>
+      <button data-tab="foods" class="tab"><svg viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5C4 8 8 4 12 3c4 1 8 5 8 10.5 0 4.4-3.6 7.5-8 7.5z"/><path d="M12 21V9"/></svg><span>Aliments</span></button>
+      <button data-tab="profile" class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Profil</span></button>
+    </nav>
+    <div id="sheets"></div>
+    <div id="toast" role="status"></div>
+  </div>
+  <script src="foods.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
