@@ -374,7 +374,7 @@
   function viewProfile() {
     const p = S.profile, c = calc(p), g = goals(), w = currentWeight();
     const install = isStandalone() ? '' : `<section class="card"><h3>Installer l'application</h3>${isIOS()
-      ? '<p class="small">Dans <b>Safari</b> : touche le bouton <b>Partager</b> (carré avec une flèche) puis <b>« Sur l\'écran d\'accueil »</b>.</p>'
+      ? '<p class="small">Dans <b>Safari</b> : touche <b>« ⋯ »</b> à côté de la barre d\'adresse, puis <b>Partager</b> (carré avec une flèche), fais défiler et choisis <b>« Sur l\'écran d\'accueil »</b>. Sur les anciens iOS, le bouton Partager est directement en bas de l\'écran.</p>'
       : installPrompt ? '<button class="btn block" data-action="install">Installer Kalo</button>' : '<p class="small">Dans <b>Chrome</b> : menu <b>⋮</b> puis <b>« Ajouter à l\'écran d\'accueil »</b> ou <b>« Installer l\'application »</b>.</p>'}</section>`;
     return `<h1>Profil</h1>
       ${install}

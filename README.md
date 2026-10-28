@@ -18,7 +18,7 @@ L'app doit être servie en **https** (sinon pas de caméra ni d'installation). G
 ## 2. Installer sur le téléphone
 
 - **Android (Chrome)** : ouvre l'adresse → menu ⋮ → **Installer l'application** (ou « Ajouter à l'écran d'accueil »).
-- **iPhone (Safari obligatoirement)** : ouvre l'adresse → bouton **Partager** → **Sur l'écran d'accueil** → Ajouter.
+- **iPhone (Safari obligatoirement)** : ouvre l'adresse → **⋯** (à côté de la barre d'adresse, iOS 26) → **Partager** → fais défiler → **Sur l'écran d'accueil** → laisse « Ouvrir en tant qu'app web » activé → Ajouter.
 
 Ensuite lance Kalo depuis son icône. Au premier scan, autorise la caméra.
 
