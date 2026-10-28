@@ -25,8 +25,8 @@ Ensuite lance Kalo depuis son icône. Au premier scan, autorise la caméra.
 ## 3. Mettre à jour l'app plus tard
 
 1. Remplace les fichiers modifiés dans le dépôt GitHub.
-2. Dans `sw.js`, change `VERSION` (ex. `kalo-v1.0.1`). Sans ça, les téléphones gardent l'ancienne version en cache.
-3. Ferme et rouvre l'app deux fois sur le téléphone.
+2. Dans `sw.js`, change `VERSION` (ex. `kalo-v1.3.2`). L'app charge toujours la version en ligne quand il y a du réseau ; le cache ne sert qu'hors connexion.
+3. Ferme et rouvre l'app sur le téléphone.
 
 ## 4. Sauvegarde des données
 
