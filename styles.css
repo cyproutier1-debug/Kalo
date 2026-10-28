@@ -228,3 +228,23 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
 .note { font-size: 13px; color: var(--ink-3); line-height: 1.45; }
 .spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; margin: 18px auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Bilan du jour & validation */
+.good-text { color: var(--accent); }
+.eq3 { display: flex; align-items: stretch; text-align: center; }
+.eq3 .cell { flex: 1; display: flex; flex-direction: column; justify-content: center; border: 0; background: none; padding: 6px 2px; border-radius: 10px; }
+.eq3 button.cell { background: var(--accent-soft); }
+.eq3 button.cell:disabled { background: none; opacity: 1; }
+.eq3 b { font-size: 19px; }
+.eq3 span { font-size: 12px; color: var(--ink-3); }
+.eq3 em { font-style: normal; display: block; font-size: 11px; }
+.eq3 i { font-style: normal; color: var(--ink-3); align-self: center; padding: 0 4px; font-size: 18px; }
+.ico-check { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.validate-btn { margin-top: 4px; min-height: 52px; font-size: 17px; }
+.validated { border: 1.5px solid var(--accent) !important; background: var(--accent-soft); }
+.validated .ico-check { color: var(--accent); }
+.vchecks { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; font-size: 14px; font-weight: 600; }
+.vchecks.big { font-size: 16px; gap: 8px; margin-top: 0; }
+.vchecks .ok { color: var(--accent); } .vchecks .ko { color: var(--warn); }
+.vline { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.vline.big-line { border-bottom: 0; font-size: 20px; font-weight: 700; }

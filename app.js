@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = '1.1.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -39,6 +39,7 @@
     scan: '<svg viewBox="0 0 24 24"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>',
     bolt: '<svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+    check: '<svg viewBox="0 0 24 24" class="ico-check"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
   };
 
   const MEALS = [['breakfast', 'Petit-déjeuner'], ['lunch', 'Déjeuner'], ['dinner', 'Dîner'], ['snack', 'Collations']];
@@ -129,11 +130,19 @@
 
   function saveDay(k) {
     const d = S.days[k];
-    if (!d || !d.entries.length) { delete S.days[k]; return Store.del('day:' + k); }
+    if (!d || (!d.entries.length && d.burn == null && !d.validated)) { delete S.days[k]; return Store.del('day:' + k); }
     if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, tdee: g.tdee }; }
     return Store.put('day:' + k, d);
   }
   const getDay = k => (S.days[k] = S.days[k] || { entries: [] });
+  const isLocked = k => !!S.days[k]?.validated;
+  // Dépense du jour : saisie (montre / Santé) ou estimation du profil
+  function dayBurn(k) {
+    const d = S.days[k];
+    if (d && d.burn != null) return { v: d.burn, measured: true };
+    return { v: (k !== today() && d?.goal?.tdee) || goals().tdee, measured: false };
+  }
+  const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + r0(Math.abs(n));
 
   /* ---------- Objectifs ---------- */
   function sortedWeights() { return S.weights.slice().sort((a, b) => (a.date < b.date ? -1 : 1)); }
@@ -325,13 +334,14 @@
     const d = dparse(k);
     const label = k === today() ? "Aujourd'hui" : k === dkey(addDays(new Date(), -1)) ? 'Hier' : k === dkey(addDays(new Date(), 1)) ? 'Demain' : cap(F.short.format(d));
     const prev = S.days[dkey(addDays(d, -1))];
+    const locked = isLocked(k), burn = dayBurn(k), bal = burn.v - t.kcal;
     const meal = ([id, name]) => {
       const es = (S.days[k]?.entries || []).filter(e => e.meal === id);
       const kc = es.reduce((s, e) => s + e.kcal, 0);
-      const canCopy = !es.length && prev && prev.entries.some(e => e.meal === id);
+      const canCopy = !locked && !es.length && prev && prev.entries.some(e => e.meal === id);
       return `<section class="card meal"><div class="meal-head"><h2>${name}</h2><span class="kcal num">${es.length ? r0(kc) + ' kcal' : ''}</span></div>
         ${es.map(e => `<button class="entry" data-action="edit-entry" data-id="${e.id}"><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(entrySub(e))}</div></div><div class="val num">${r0(e.kcal)}<small>${r0(e.p)} g prot.</small></div></button>`).join('')}
-        <div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}</div></section>`;
+        ${locked ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}</div>`}</section>`;
     };
     return `
       <div class="datebar">
@@ -347,7 +357,93 @@
         <div class="metric"><div class="row between"><span>Protéines</span><span class="num">${r0(t.p)} / ${r0(g.protein)} g</span></div><div class="bar protein"><div style="width:${Math.min(100, t.p / g.protein * 100)}%"></div></div></div>
         <div class="macros-mini"><span>Glucides <b class="num">${r0(t.c)} g</b></span><span>Lipides <b class="num">${r0(t.f)} g</b></span></div>
       </section>
-      ${MEALS.map(meal).join('')}`;
+      ${locked ? validatedCard(k, t, burn) : ''}
+      <section class="card bilan">
+        <div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Bilan du jour</h3>${locked ? '' : `<button class="btn plain" data-action="burn">${burn.measured ? 'Modifier la dépense' : '+ Saisir ma dépense'}</button>`}</div>
+        <div class="eq3">
+          <button class="cell" data-action="burn" ${locked ? 'disabled' : ''}><b class="num">${r0(burn.v)}</b><span>Dépense ${burn.measured ? '' : '<em>estimée</em>'}</span></button>
+          <i>−</i>
+          <div class="cell"><b class="num">${r0(t.kcal)}</b><span>Consommé</span></div>
+          <i>=</i>
+          <div class="cell"><b class="num ${bal >= 0 ? 'good-text' : 'over-text'}">${signed(-bal)}</b><span>${bal >= 0 ? 'Déficit' : 'Excédent'}</span></div>
+        </div>
+      </section>
+      ${MEALS.map(meal).join('')}
+      ${locked ? '' : `<button class="btn block validate-btn" data-action="validate">${ICON.check} Valider la journée</button>`}`;
+  }
+
+  function validatedCard(k, t, burn) {
+    const d = S.days[k], g = d.goal || goals();
+    const okK = t.kcal <= g.kcal, okP = t.p >= g.protein;
+    return `<section class="card validated">
+      <div class="row between"><div class="row" style="gap:8px">${ICON.check}<b>Journée validée</b></div><button class="btn plain" data-action="reopen">Rouvrir</button></div>
+      <div class="vchecks"><span class="${okK ? 'ok' : 'ko'}">${okK ? '✓' : '✗'} Calories ${okK ? 'dans l\'objectif' : 'au-dessus (+' + r0(t.kcal - g.kcal) + ')'}</span>
+      <span class="${okP ? 'ok' : 'ko'}">${okP ? '✓' : '✗'} Protéines ${okP ? 'atteintes' : '(' + r0(t.p) + ' / ' + r0(g.protein) + ' g)'}</span></div>
+    </section>`;
+  }
+
+  /* ---------- Écran : dépense du jour ---------- */
+  function openBurn(k, then) {
+    const d = S.days[k], est = dayBurn(k);
+    const g = goals();
+    const sh = makeSheet('Dépense du jour');
+    sh.setBody(`<section class="card stack">
+      <label class="field"><span>Dépense totale de la journée (kcal)</span><input type="number" inputmode="numeric" data-f="burn" value="${d?.burn ?? ''}" placeholder="Estimation : ${r0(g.tdee)}"></label>
+      <p class="note" style="margin:0">Entre la <b>dépense totale</b> (repos + activité), pas seulement le sport.<br>
+      <b>iPhone</b> : app Santé → Activité → additionne <i>Énergie au repos</i> + <i>Énergie active</i>.<br>
+      <b>Montre Garmin, Samsung, Fitbit…</b> : « calories totales » du jour.<br>
+      Sans montre, laisse vide : l'estimation de ton profil (${r0(g.tdee)} kcal) est utilisée.</p>
+      <div class="chips" data-f="chips"><button type="button" class="chip" data-add="200">+200 sport</button><button type="button" class="chip" data-add="400">+400 sport</button><button type="button" class="chip" data-add="-200">−200</button></div>
+      <p class="note" style="margin:0">Les montres surestiment souvent les calories du sport de 20 à 40 %. Si ton poids baisse moins vite que prévu, sous-estime plutôt ta dépense.</p>
+    </section>`);
+    sh.setFoot(`${d?.burn != null ? '<button class="btn outline" data-a="clear">Estimation</button>' : ''}<button class="btn grow" data-a="save">Enregistrer</button>`);
+    const inp = $('[data-f="burn"]', sh.body);
+    $('[data-f="chips"]', sh.body).onclick = e => { const b = e.target.closest('[data-add]'); if (!b) return; inp.value = Math.max(0, (num(inp.value) ?? Math.round(est.v)) + +b.dataset.add); };
+    sh.foot.onclick = e => {
+      const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
+      const day = getDay(k);
+      if (a === 'clear') delete day.burn;
+      if (a === 'save') {
+        const v = num(inp.value);
+        if (v == null) delete day.burn;
+        else if (v < 800 || v > 8000) { toast('Valeur entre 800 et 8 000 kcal'); return; }
+        else day.burn = Math.round(v);
+      }
+      saveDay(k);
+      closeSheet(1, then || (() => toast('Dépense enregistrée')));
+    };
+    openSheet(sh.el);
+  }
+
+  /* ---------- Écran : valider la journée ---------- */
+  function openValidate(k) {
+    const t = dayTotals(k), g = goals(), burn = dayBurn(k), bal = burn.v - t.kcal;
+    const okK = t.kcal <= g.kcal, okP = t.p >= g.protein;
+    const kg4 = bal * 28 / 7700;
+    const sh = makeSheet('Valider la journée');
+    sh.setBody(`
+      <section class="card">
+        <div class="vline"><span>Consommé</span><b class="num">${r0(t.kcal)} kcal</b></div>
+        <div class="vline"><span>Dépense ${burn.measured ? '' : '<em class="muted">(estimée)</em>'}</span><b class="num">${r0(burn.v)} kcal</b></div>
+        <div class="vline big-line"><span>${bal >= 0 ? 'Déficit' : 'Excédent'}</span><b class="num ${bal >= 0 ? 'good-text' : 'over-text'}">${signed(-bal)} kcal</b></div>
+        <p class="note" style="margin:6px 0 0">≈ ${r0(Math.abs(bal) / 7.7)} g de graisse ${bal >= 0 ? 'en moins' : 'en plus'} (7 700 kcal ≈ 1 kg).</p>
+        ${burn.measured ? '' : '<button class="btn block ghost" data-a="burn" style="margin-top:12px">Saisir ma dépense réelle</button>'}
+      </section>
+      <section class="card vchecks big">
+        <span class="${okK ? 'ok' : 'ko'}">${okK ? '✓' : '✗'} Calories : ${r0(t.kcal)} / ${r0(g.kcal)} kcal</span>
+        <span class="${okP ? 'ok' : 'ko'}">${okP ? '✓' : '✗'} Protéines : ${r0(t.p)} / ${r0(g.protein)} g</span>
+      </section>
+      ${t.n && t.kcal < (S.profile.sex === 'm' ? 1500 : 1200) ? `<section class="card" style="background:var(--warn-soft)"><b class="over-text">Apport très bas (${r0(t.kcal)} kcal)</b><p class="small" style="margin:6px 0 0">As-tu tout saisi ? Si oui, un déficit aussi fort fait perdre du muscle et se maintient mal. Vise au moins ${S.profile.sex === 'm' ? '1 500' : '1 200'} kcal et tes protéines.</p></section>` : ''}
+      ${t.n ? `<p class="note">Si tous tes jours ressemblaient à celui-ci : <b>${kg4 >= 0 ? '−' : '+'}${r1(Math.abs(kg4))} kg en 4 semaines</b>.</p>` : '<p class="note">Aucun aliment saisi ce jour-là. Vérifie que tu n\'as rien oublié avant de valider.</p>'}`);
+    sh.setFoot('<button class="btn grow" data-a="ok">✓ Valider</button>');
+    sh.body.onclick = e => { if (e.target.closest('[data-a="burn"]')) closeSheet(1, () => openBurn(k, () => openValidate(k))); };
+    sh.foot.onclick = e => {
+      if (!e.target.closest('[data-a="ok"]')) return;
+      const day = getDay(k); day.validated = Date.now(); saveDay(k);
+      try { navigator.vibrate?.(30); } catch (err) { /* ignore */ }
+      closeSheet(1, () => { window.scrollTo(0, 0); toast(bal >= 0 ? `Journée validée · déficit ${r0(bal)} kcal` : 'Journée validée'); });
+    };
+    openSheet(sh.el);
   }
 
   // Aliments
@@ -432,10 +528,11 @@
       const avgP = n ? logged.reduce((s, x) => s + x.t.p, 0) / n : 0;
       if (m === 'kcal') {
         const inGoal = logged.filter(x => x.t.kcal <= x.g.kcal).length;
-        const bal = logged.reduce((s, x) => s + (x.t.kcal - (x.g.tdee || g.tdee)), 0);
+        const bal = logged.reduce((s, x) => s + (x.t.kcal - (S.days[x.k].burn ?? (x.g.tdee || g.tdee))), 0);
+        const nv = logged.filter(x => S.days[x.k].validated).length;
         stats = `
           <div class="stat"><b class="num">${n ? r0(avgK) : '–'}</b><span>kcal / jour en moyenne</span></div>
-          <div class="stat"><b class="num">${n} / ${elapsed}</b><span>jours saisis</span></div>
+          <div class="stat"><b class="num">${n} / ${elapsed}</b><span>jours saisis · ${nv} validé${nv > 1 ? 's' : ''}</span></div>
           <div class="stat"><b class="num">${n ? inGoal : '–'}</b><span>jours sous l'objectif</span></div>
           <div class="stat"><b class="num">${n ? (bal <= 0 ? '−' : '+') + r1(Math.abs(bal) / 7700) + ' kg' : '–'}</b><span>bilan estimé (${n ? (bal <= 0 ? 'déficit ' : 'excédent ') + r0(Math.abs(bal)) + ' kcal' : 'jours saisis'})</span></div>`;
       } else {
@@ -896,8 +993,16 @@
     'day-prev': () => { UI.date = dkey(addDays(dparse(UI.date), -1)); render(); },
     'day-next': () => { UI.date = dkey(addDays(dparse(UI.date), 1)); render(); },
     add: b => openAdd(b.dataset.meal),
-    'scan-global': () => { UI.date = UI.tab === 'journal' ? UI.date : today(); openScanner({ meal: guessMeal(), date: UI.date }); },
+    'scan-global': () => {
+      UI.date = UI.tab === 'journal' ? UI.date : today();
+      if (isLocked(UI.date)) { UI.tab = 'journal'; render(); toast('Journée validée : touche « Rouvrir » pour ajouter'); return; }
+      openScanner({ meal: guessMeal(), date: UI.date });
+    },
+    burn: () => openBurn(UI.date),
+    validate: () => openValidate(UI.date),
+    reopen: () => { const d = S.days[UI.date]; if (!d) return; delete d.validated; saveDay(UI.date); render(); toast('Journée rouverte'); },
     'edit-entry': b => {
+      if (isLocked(UI.date)) { toast('Journée validée : touche « Rouvrir » pour modifier'); return; }
       const e = S.days[UI.date]?.entries.find(x => x.id === b.dataset.id); if (!e) return;
       if (e.src === 'quick') openQuick({ entry: e, date: UI.date, meal: e.meal });
       else openDetail(entryFood(e), { entry: e, date: UI.date, meal: e.meal });
@@ -952,7 +1057,9 @@
     if (it) {
       const isCustom = it.closest('[data-list]').dataset.list === 'custom';
       const f = (isCustom ? S.foods : S.recents)[+it.dataset.i];
-      if (isCustom) openFoodForm(f); else { UI.date = today(); openDetail(f, { meal: guessMeal(), date: UI.date }); }
+      if (isCustom) openFoodForm(f);
+      else if (isLocked(today())) toast("Journée d'aujourd'hui validée : rouvre-la pour ajouter");
+      else { UI.date = today(); openDetail(f, { meal: guessMeal(), date: UI.date }); }
     }
   });
   document.addEventListener('change', e => {

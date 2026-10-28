@@ -35,6 +35,13 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - Changement de téléphone : installe l'app sur le nouveau, puis Profil → **Importer**.
 - Sur iPhone, supprimer l'icône de l'écran d'accueil efface les données de l'app.
 
+## Bilan du jour et validation
+
+- **Dépense du jour** : touche « + Saisir ma dépense » dans la carte *Bilan du jour*. Entre la dépense **totale** (énergie au repos + énergie active, dans l'app Santé ou sur ta montre). Sans saisie, l'estimation du profil est utilisée.
+- **Bilan** = dépense − consommé. Un nombre négatif est un déficit (perte), un positif un excédent.
+- **Valider la journée** (bouton en bas du journal) : affiche le récap (objectifs atteints, déficit, projection sur 4 semaines) et verrouille la journée. « Rouvrir » permet de la modifier.
+- Dans Progrès, le bilan estimé utilise ta dépense réelle quand tu l'as saisie.
+
 ## Fonctionnement des objectifs
 
 - Métabolisme de base : formule Mifflin-St Jeor, multiplié par le niveau d'activité, ce qui donne la dépense estimée.
