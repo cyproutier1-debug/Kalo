@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '1.4.0';
+  const APP_VERSION = '1.5.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -130,7 +130,7 @@
 
   function saveDay(k) {
     const d = S.days[k];
-    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated)) { delete S.days[k]; return Store.del('day:' + k); }
+    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !(d.mealsDone && Object.keys(d.mealsDone).length))) { delete S.days[k]; return Store.del('day:' + k); }
     if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, tdee: g.tdee }; }
     return Store.put('day:' + k, d);
   }
@@ -181,10 +181,16 @@
     return p.goalMode === 'manual' ? { ...c, autoKcal: c.kcal, autoProtein: c.protein, kcal: p.kcalGoal || c.kcal, protein: p.proteinGoal || c.protein } : c;
   }
 
+  const mealDone = (k, m) => !!(S.days[k]?.validated || S.days[k]?.mealsDone?.[m]);
   function dayTotals(k) {
-    const t = { kcal: 0, p: 0, c: 0, f: 0, n: 0 };
+    const t = { kcal: 0, p: 0, c: 0, f: 0, n: 0, eatenK: 0, eatenP: 0, anyDone: false };
     const d = S.days[k];
-    if (d) for (const e of d.entries) { t.kcal += e.kcal || 0; t.p += e.p || 0; t.c += e.c || 0; t.f += e.f || 0; t.n++; }
+    if (d) for (const e of d.entries) {
+      t.kcal += e.kcal || 0; t.p += e.p || 0; t.c += e.c || 0; t.f += e.f || 0; t.n++;
+      if (mealDone(k, e.meal)) { t.eatenK += e.kcal || 0; t.eatenP += e.p || 0; }
+    }
+    t.anyDone = !!d && MEALS.some(([m]) => mealDone(k, m));
+    t.planK = t.kcal - t.eatenK; t.planP = t.p - t.eatenP;
     return t;
   }
 
@@ -342,6 +348,10 @@
     const q = e.count && e.unit ? (e.count === 1 ? e.unit.label : `${r1(e.count)} × ${e.unit.label.replace(/^1\s+/, '')}`) + (/\d\s*(g|ml)\b/i.test(e.unit.label) ? '' : ` · ${r0(e.grams)} g`) : `${r0(e.grams)} g`;
     return [e.brand, q].filter(Boolean).join(' · ');
   }
+  function segBar(eaten, planned, goal, cls) {
+    const a = Math.min(100, eaten / goal * 100), b = Math.min(100 - a, planned / goal * 100);
+    return `<div class="bar seg-bar ${cls}"><div style="width:${a}%"></div><div class="plan" style="width:${b}%"></div></div>`;
+  }
   function viewJournal() {
     const k = UI.date, g = goals(), t = dayTotals(k);
     const rem = g.kcal - t.kcal, over = rem < 0;
@@ -349,13 +359,18 @@
     const label = k === today() ? "Aujourd'hui" : k === dkey(addDays(new Date(), -1)) ? 'Hier' : k === dkey(addDays(new Date(), 1)) ? 'Demain' : cap(F.short.format(d));
     const prev = S.days[dkey(addDays(d, -1))];
     const locked = isLocked(k), burn = dayBurn(k), bal = burn.v - t.kcal;
+    const split = !locked && t.anyDone && t.planK > 0;
     const meal = ([id, name]) => {
       const es = (S.days[k]?.entries || []).filter(e => e.meal === id);
       const kc = es.reduce((s, e) => s + e.kcal, 0);
-      const canCopy = !locked && !es.length && prev && prev.entries.some(e => e.meal === id);
-      return `<section class="card meal"><div class="meal-head"><h2>${name}</h2><span class="kcal num">${es.length ? r0(kc) + ' kcal' : ''}</span></div>
+      const done = mealDone(k, id);
+      const canCopy = !locked && !done && !es.length && prev && prev.entries.some(e => e.meal === id);
+      return `<section class="card meal ${done ? 'done' : ''}"><div class="meal-head">
+          <button class="meal-check ${done ? 'on' : ''}" data-action="meal-done" data-meal="${id}" ${locked ? 'disabled' : ''} aria-pressed="${done}" aria-label="${done ? 'Décocher' : 'Valider'} ${name}">${ICON.check}</button>
+          <h2 class="grow">${name}</h2>
+          <span class="kcal num">${es.length ? r0(kc) + ' kcal' : ''}${es.length ? `<small>${done ? 'mangé' : 'prévu'}</small>` : ''}</span></div>
         ${es.map(e => `<button class="entry" data-action="edit-entry" data-id="${e.id}"><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(entrySub(e))}</div></div><div class="val num">${r0(e.kcal)}<small>${r0(e.p)} g prot.</small></div></button>`).join('')}
-        ${locked ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}</div>`}</section>`;
+        ${locked || done ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}</div>`}</section>`;
     };
     return `
       <div class="datebar">
@@ -366,9 +381,10 @@
       <section class="card summary">
         <div class="muted small">${over ? 'Calories en trop' : 'Calories restantes'}</div>
         <div class="big num ${over ? 'over-text' : ''}">${r0(Math.abs(rem))}</div>
-        <div class="muted small num" style="margin:2px 0 14px">Objectif ${r0(g.kcal)} − consommé ${r0(t.kcal)}</div>
-        <div class="metric"><div class="row between"><span>Calories</span><span class="num">${r0(t.kcal)} / ${r0(g.kcal)} kcal</span></div><div class="bar ${over ? 'over' : ''}"><div style="width:${Math.min(100, t.kcal / g.kcal * 100)}%"></div></div></div>
-        <div class="metric"><div class="row between"><span>Protéines</span><span class="num">${r0(t.p)} / ${r0(g.protein)} g</span></div><div class="bar protein"><div style="width:${Math.min(100, t.p / g.protein * 100)}%"></div></div></div>
+        <div class="muted small num" style="margin:2px 0 14px">${split ? `Objectif ${r0(g.kcal)} − mangé ${r0(t.eatenK)} − prévu ${r0(t.planK)}` : `Objectif ${r0(g.kcal)} − consommé ${r0(t.kcal)}`}</div>
+        <div class="metric"><div class="row between"><span>Calories</span><span class="num">${r0(t.kcal)} / ${r0(g.kcal)} kcal</span></div>${segBar(split ? t.eatenK : t.kcal, split ? t.planK : 0, g.kcal, over ? 'over' : '')}</div>
+        <div class="metric"><div class="row between"><span>Protéines</span><span class="num">${r0(t.p)} / ${r0(g.protein)} g</span></div>${segBar(split ? t.eatenP : t.p, split ? t.planP : 0, g.protein, 'protein')}</div>
+        ${split ? `<div class="legend" style="margin-top:10px"><span><i style="background:var(--accent)"></i>Mangé ${r0(t.eatenK)} kcal</span><span><i class="planned-swatch"></i>Prévu ${r0(t.planK)} kcal</span></div>` : ''}
         <div class="macros-mini"><span>Glucides <b class="num">${r0(t.c)} g</b></span><span>Lipides <b class="num">${r0(t.f)} g</b></span></div>
       </section>
       ${locked ? validatedCard(k, t, burn) : ''}
@@ -377,7 +393,7 @@
         <div class="eq3">
           <button class="cell" data-action="burn" ${locked ? 'disabled' : ''}><b class="num">${r0(burn.v)}</b><span>Dépense ${burn.active != null ? `<em>repos + ${r0(burn.active)} brûlées</em>` : burn.total ? `<em>montre${burn.extra ? ` + ~${r0(burn.extra)} d'ici minuit` : ''}</em>` : '<em>estimée</em>'}</span></button>
           <i>−</i>
-          <div class="cell"><b class="num">${r0(t.kcal)}</b><span>Consommé</span></div>
+          <div class="cell"><b class="num">${r0(t.kcal)}</b><span>Consommé${split ? `<em>dont ${r0(t.planK)} prévu</em>` : ''}</span></div>
           <i>=</i>
           <div class="cell"><b class="num ${bal >= 0 ? 'good-text' : 'over-text'}">${signed(-bal)}</b><span>${bal >= 0 ? 'Déficit' : 'Excédent'}</span></div>
         </div>
@@ -472,7 +488,7 @@
     sh.body.onclick = e => { if (e.target.closest('[data-a="burn"]')) closeSheet(1, () => openBurn(k, () => openValidate(k))); };
     sh.foot.onclick = e => {
       if (!e.target.closest('[data-a="ok"]')) return;
-      const day = getDay(k); day.validated = Date.now(); saveDay(k);
+      const day = getDay(k); day.validated = Date.now(); day.mealsDone = Object.fromEntries(MEALS.map(([m]) => [m, day.mealsDone?.[m] || Date.now()])); saveDay(k);
       try { navigator.vibrate?.(30); } catch (err) { /* ignore */ }
       closeSheet(1, () => { window.scrollTo(0, 0); toast(bal >= 0 ? `Journée validée · déficit ${r0(bal)} kcal` : 'Journée validée'); });
     };
@@ -1147,11 +1163,19 @@
       openScanner({ meal: guessMeal(), date: UI.date });
     },
     burn: () => openBurn(UI.date),
+    'meal-done': b => {
+      const k = UI.date, m = b.dataset.meal; if (isLocked(k)) return;
+      const d = getDay(k); d.mealsDone = d.mealsDone || {};
+      if (d.mealsDone[m]) delete d.mealsDone[m]; else d.mealsDone[m] = Date.now();
+      saveDay(k); render();
+      if (d.mealsDone[m]) { try { navigator.vibrate?.(20); } catch (e) { /* ignore */ } toast(`${mealName(m)} validé ✓`); }
+    },
     validate: () => openValidate(UI.date),
     reopen: () => { const d = S.days[UI.date]; if (!d) return; delete d.validated; saveDay(UI.date); render(); toast('Journée rouverte'); },
     'edit-entry': b => {
       if (isLocked(UI.date)) { toast('Journée validée : touche « Rouvrir » pour modifier'); return; }
       const e = S.days[UI.date]?.entries.find(x => x.id === b.dataset.id); if (!e) return;
+      if (mealDone(UI.date, e.meal)) { toast(`${mealName(e.meal)} validé : décoche-le pour modifier`); return; }
       if (e.src === 'quick') openQuick({ entry: e, date: UI.date, meal: e.meal });
       else openDetail(entryFood(e), { entry: e, date: UI.date, meal: e.meal });
     },

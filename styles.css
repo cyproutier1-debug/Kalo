@@ -265,3 +265,23 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
 .burn-calc { background: var(--accent-soft); color: var(--ink); border-radius: 12px; padding: 12px; font-size: 15px; }
 
 .tdee-box { background: var(--bg); border-radius: 12px; padding: 12px; margin-top: 12px; }
+
+/* Repas validés */
+.meal-head { gap: 10px; }
+.meal-check { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); display: inline-flex; align-items: center; justify-content: center; padding: 0; color: transparent; }
+.meal-check .ico-check { width: 22px; height: 22px; }
+.meal-check .ico-check circle { display: none; }
+.meal-check.on { background: var(--protein); border-color: var(--protein); color: #fff; }
+.meal-check:disabled { opacity: 1; }
+.meal.done { border: 1.5px solid var(--protein) !important; }
+.meal.done .meal-head { background: var(--protein-soft); }
+.meal.done .meal-head h2, .meal.done .meal-head .kcal { color: var(--protein); }
+.meal-head .kcal small { display: block; text-align: right; font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; }
+.meal.done .meal-head .kcal small { color: var(--protein); }
+.seg-bar { display: flex; }
+.seg-bar > div { border-radius: 0; }
+.seg-bar > div:first-child { border-radius: 6px 0 0 6px; }
+.seg-bar > div.plan { background: var(--accent); opacity: .35; border-radius: 0 6px 6px 0; }
+.seg-bar.protein > div.plan { background: var(--protein); }
+.seg-bar.over > div.plan { background: var(--warn); }
+.planned-swatch { background: var(--accent); opacity: .35; }
