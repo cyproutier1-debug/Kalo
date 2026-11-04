@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.0.0';
+  const APP_VERSION = '2.1.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -40,6 +40,8 @@
     bolt: '<svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
     check: '<svg viewBox="0 0 24 24" class="ico-check"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
+    pill: '<svg viewBox="0 0 24 24"><g transform="rotate(-45 12 12)"><rect x="3" y="8.3" width="18" height="7.4" rx="3.7"/><path d="M12 8.3v7.4"/></g></svg>',
+    edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>',
     gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>',
     flame: '<svg viewBox="0 0 24 24"><path fill="#2EE68A" d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.3 1.8 3.5 4.3 3.5 6.6C18.5 19.3 15.6 22 12 22s-6.5-2.7-6.5-6.4C5.5 10.5 11 8.5 12 2z"/></svg>',
     fork: '<svg viewBox="0 0 24 24" fill="none" stroke="#2EE68A" stroke-width="2" stroke-linecap="round"><path d="M6 3v7a2 2 0 002 2v9M10 3v7a2 2 0 01-2 2M8 3v6M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>',
@@ -52,7 +54,8 @@
     body: '<svg viewBox="0 0 48 48"><circle cx="24" cy="12" r="6"/><path d="M10 44c0-11 3-20 14-20s14 9 14 20M17 30c2 2 4.5 3 7 3s5-1 7-3M24 33v8M18 38h12"/></svg>',
   };
 
-  const brandHTML = () => `<div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6CFFBC"/><stop offset="1" stop-color="#14B866"/></linearGradient></defs><path d="M20 3.5 L37 35.5 H27.6 L20 21 L12.4 35.5 H3 Z" fill="url(#lgA)"/><path d="M20 26 L23.6 33 H16.4 Z" fill="#050807"/></svg><span>Automa<b>Fit</b></span></div>`;
+  const LOGO = '<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgK" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6CFFBC"/><stop offset="1" stop-color="#14B866"/></linearGradient></defs><circle cx="20" cy="20" r="14.5" fill="none" stroke="rgba(46,230,138,.22)" stroke-width="5.5"/><path d="M20 5.5 A14.5 14.5 0 1 1 5.5 20" fill="none" stroke="url(#lgK)" stroke-width="5.5" stroke-linecap="round"/><circle cx="20" cy="20" r="4.6" fill="#DCFBEA"/></svg>';
+  const brandHTML = () => `<div class="brand">${LOGO}<span>Ka<b>lo</b></span></div>`;
   const MEALS = [['breakfast', 'Petit-déjeuner'], ['lunch', 'Déjeuner'], ['dinner', 'Dîner'], ['snack', 'Collations']];
   const mealName = id => (MEALS.find(m => m[0] === id) || [, id])[1];
   const guessMeal = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; return h < 10.5 ? 'breakfast' : h < 15 ? 'lunch' : h < 18 ? 'snack' : 'dinner'; };
@@ -126,12 +129,12 @@
   };
 
   /* ---------- État ---------- */
-  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '' };
+  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [] };
   const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto', mini: 30 };
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || '';
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || [];
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -141,7 +144,7 @@
 
   function saveDay(k) {
     const d = S.days[k];
-    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !(d.mealsDone && Object.keys(d.mealsDone).length))) { delete S.days[k]; return Store.del('day:' + k); }
+    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !(d.mealsDone && Object.keys(d.mealsDone).length) && !(d.supps && Object.keys(d.supps).length))) { delete S.days[k]; return Store.del('day:' + k); }
     if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, carbs: g.carbs, tdee: g.tdee }; }
     return Store.put('day:' + k, d);
   }
@@ -442,6 +445,7 @@
         </div>
         <div class="today-sub num">${split ? `Mangé ${r0(t.eatenK)} · prévu ${r0(t.planK)} · ` : ''}consommé ${r0(t.kcal)} / ${r0(g.kcal)} kcal</div>
       </section>
+      ${suppsCard(k)}
       ${locked ? validatedCard(k, t, burn) : ''}
       <section class="card">
         <div class="row between"><div class="card-title">${ICON.cal}Bilan du jour</div>${locked ? '' : `<button class="watch-pill ${burn.measured ? 'on' : ''}" data-action="burn">${ICON.watch}Ma montre<i></i></button>`}</div>
@@ -464,6 +468,50 @@
         <div><div class="k num">${r0(g.kcal)} <small>kcal</small></div><div class="s">Objectif quotidien</div></div>
         <div class="chips2"><span>${p.sex === 'f' ? 'Femme' : 'Homme'}</span><span>${p.age} ans</span><span class="more">Voir plus ›</span></div>
       </section>`;
+  }
+
+  /* ---------- Compléments alimentaires du jour ---------- */
+  function suppsCard(k) {
+    const sl = S.supps, taken = S.days[k]?.supps || {};
+    const n = sl.filter(x => taken[x.id]).length, all = sl.length && n === sl.length;
+    return `<section class="card supps ${all ? 'all' : ''}">
+      <div class="row between"><div class="card-title">${ICON.pill}Compléments</div>
+        <div class="row" style="gap:4px">${sl.length ? `<span class="supp-count ${all ? 'good-text' : n ? '' : 'over-text'}">${all ? 'Tous pris ✓' : `${n} / ${sl.length} pris`}</span>` : ''}<button class="icon-btn" data-action="supps-manage" aria-label="Gérer mes compléments">${ICON.edit}</button></div></div>
+      ${sl.length ? `<div class="supp-row">${sl.map(x => `<button class="supp ${taken[x.id] ? 'on' : ''}" data-action="supp-toggle" data-id="${x.id}" aria-pressed="${!!taken[x.id]}"><span class="dot">${ICON.check}</span><span class="txt"><b>${esc(x.name)}</b>${x.dose ? `<small>${esc(x.dose)}</small>` : ''}</span></button>`).join('')}</div>`
+        : '<button class="btn ghost block small" style="margin-top:12px" data-action="supps-manage">+ Ajouter mes compléments (créatine, magnésium…)</button>'}
+    </section>`;
+  }
+  const SUPP_SUGGEST = [['Créatine', '5 g'], ['Magnésium', '300 mg'], ['Oméga 3', '2 gélules'], ['Vitamine D3 + K2', '1 gélule'], ['Zinc', '15 mg'], ['Multivitamines', '1 comprimé'], ['Whey', '30 g'], ['Vitamine C', '500 mg'], ['Fer', '1 comprimé'], ['Collagène', '10 g']];
+  function openSupps() {
+    const sh = makeSheet('Mes compléments');
+    const draw = () => {
+      const has = n => S.supps.some(x => norm(x.name) === norm(n));
+      sh.setBody(`
+        <section class="card list">${S.supps.length ? S.supps.map((x, i) => `<div class="item"><div class="grow"><div class="name">${esc(x.name)}</div>${x.dose ? `<div class="sub">${esc(x.dose)}</div>` : ''}</div>
+          <button class="icon-btn" data-a="up" data-i="${i}" aria-label="Monter" ${i ? '' : 'disabled style="opacity:.25"'}>${ICON.left.replace('M15 5l-7 7 7 7', 'M6 15l6-6 6 6')}</button>
+          <button class="icon-btn" data-a="del" data-i="${i}" aria-label="Supprimer" style="color:var(--danger)">${ICON.close}</button></div>`).join('') : '<div class="empty small">Aucun complément pour l\'instant.</div>'}</section>
+        <h3>Suggestions</h3>
+        <div class="chips" style="margin:0 0 16px">${SUPP_SUGGEST.filter(([n]) => !has(n)).map(([n, d]) => `<button class="chip" data-a="sug" data-n="${esc(n)}" data-d="${esc(d)}">+ ${esc(n)}</button>`).join('')}</div>
+        <h3>Ajouter un autre complément</h3>
+        <section class="card stack"><div class="grid2"><label class="field"><span>Nom</span><input type="text" data-f="n" placeholder="ex. Ashwagandha"></label><label class="field"><span>Dose (facultatif)</span><input type="text" data-f="d" placeholder="ex. 1 gélule"></label></div>
+          <button class="btn block" data-a="add">Ajouter</button></section>
+        <p class="note">La liste est la même chaque jour ; les cases se décochent automatiquement à minuit. Les compléments ne remplacent pas une alimentation variée : demande conseil à un médecin ou un pharmacien en cas de traitement.</p>`);
+    };
+    const save = () => { Store.put('supps', S.supps); render(); };
+    sh.body.addEventListener('click', e => {
+      const b = e.target.closest('[data-a]'); if (!b) return;
+      const a = b.dataset.a, i = +b.dataset.i;
+      if (a === 'del') S.supps.splice(i, 1);
+      if (a === 'up' && i > 0) [S.supps[i - 1], S.supps[i]] = [S.supps[i], S.supps[i - 1]];
+      if (a === 'sug') S.supps.push({ id: uid(), name: b.dataset.n, dose: b.dataset.d });
+      if (a === 'add') {
+        const n = $('[data-f="n"]', sh.body).value.trim(), d = $('[data-f="d"]', sh.body).value.trim();
+        if (!n) { toast('Indique un nom'); return; }
+        S.supps.push({ id: uid(), name: n, dose: d });
+      }
+      save(); draw();
+    });
+    draw(); openSheet(sh.el);
   }
 
   function drawMini() {
@@ -523,13 +571,13 @@
       sh.setBody(mode === 'active' ? `<section class="card stack">
         <label class="field"><span>Calories brûlées aujourd'hui (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.active ?? ''}" placeholder="ex. 559"></label>
         <div class="burn-calc num" data-f="calc"></div>
-        <p class="note" style="margin:0">Entre le chiffre <b>« calories actives »</b> (ou « énergie active ») de ta montre. AutomaFit y ajoute ta dépense au repos estimée (${r0(bmr)} kcal) pour obtenir ta dépense totale du jour.</p>
+        <p class="note" style="margin:0">Entre le chiffre <b>« calories actives »</b> (ou « énergie active ») de ta montre. Kalo y ajoute ta dépense au repos estimée (${r0(bmr)} kcal) pour obtenir ta dépense totale du jour.</p>
       </section>
       <button class="btn plain block" data-a="mode">Entrer plutôt le TOTAL de ma montre (recommandé)</button>`
         : `<section class="card stack">
         <label class="field"><span>TOTAL de la journée (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.burn ?? ''}" placeholder="ex. 2 416"></label>
         <div class="burn-calc num" data-f="calc"></div>
-        <p class="note" style="margin:0"><b>Apple Watch</b> : app <b>Forme</b> → Résumé → touche l'anneau rouge → ligne <b>« TOTAL : … KCAL »</b> sous le graphique « Bouger ».${k === today() ? ' AutomaFit ajoute automatiquement ce que tu brûleras au repos jusqu\'à minuit.' : ''}</p>
+        <p class="note" style="margin:0"><b>Apple Watch</b> : app <b>Forme</b> → Résumé → touche l'anneau rouge → ligne <b>« TOTAL : … KCAL »</b> sous le graphique « Bouger ».${k === today() ? ' Kalo ajoute automatiquement ce que tu brûleras au repos jusqu\'à minuit.' : ''}</p>
       </section>
       <button class="btn plain block" data-a="mode">Je n'ai que les calories « Bouger » (actives)</button>`);
       const inp = $('[data-f="v"]', sh.body), out = $('[data-f="calc"]', sh.body);
@@ -538,7 +586,7 @@
         if (v == null) { out.innerHTML = `Sans saisie : estimation ${r0(g.tdee)} kcal`; return; }
         if (mode === 'active') { out.innerHTML = `Dépense du jour : ${r0(bmr)} + ${r0(v)} = <b>${r0(bmr + v)} kcal</b>`; return; }
         const rl = restLeft();
-        if (v < 1200) { out.innerHTML = `${r0(v)} ressemble à tes calories « Bouger » : AutomaFit ajoute ta dépense au repos → <b>${r0(bmr + v)} kcal</b>`; return; }
+        if (v < 1200) { out.innerHTML = `${r0(v)} ressemble à tes calories « Bouger » : Kalo ajoute ta dépense au repos → <b>${r0(bmr + v)} kcal</b>`; return; }
         out.innerHTML = rl ? `${r0(v)} + ~${r0(rl)} au repos d'ici minuit = <b>${r0(v + rl)} kcal</b>` : `Dépense du jour : <b>${r0(v)} kcal</b>`;
       };
       inp.addEventListener('input', upd); upd();
@@ -635,7 +683,7 @@
     const p = S.profile, g = goals(), c = g, w = currentWeight();
     const install = isStandalone() ? '' : `<section class="card"><h3>Installer l'application</h3>${isIOS()
       ? '<p class="small">Dans <b>Safari</b> : touche <b>« ⋯ »</b> à côté de la barre d\'adresse, puis <b>Partager</b> (carré avec une flèche), fais défiler et choisis <b>« Sur l\'écran d\'accueil »</b>. Sur les anciens iOS, le bouton Partager est directement en bas de l\'écran.</p>'
-      : installPrompt ? '<button class="btn block" data-action="install">Installer AutomaFit</button>' : '<p class="small">Dans <b>Chrome</b> : menu <b>⋮</b> puis <b>« Ajouter à l\'écran d\'accueil »</b> ou <b>« Installer l\'application »</b>.</p>'}</section>`;
+      : installPrompt ? '<button class="btn block" data-action="install">Installer Kalo</button>' : '<p class="small">Dans <b>Chrome</b> : menu <b>⋮</b> puis <b>« Ajouter à l\'écran d\'accueil »</b> ou <b>« Installer l\'application »</b>.</p>'}</section>`;
     const hM = `${Math.floor(p.height / 100)}m${String(Math.round(p.height % 100)).padStart(2, '0')}`;
     const imc = w / (p.height / 100) ** 2;
     const prompt = aiPrompt();
@@ -681,7 +729,7 @@
         <div class="grid2"><button class="btn outline" data-action="export">Exporter</button><label class="btn outline" style="position:relative">Importer<input type="file" accept="application/json,.json" data-input="import" style="position:absolute;inset:0;opacity:0"></label></div>
         <button class="btn danger block" data-action="reset">Effacer toutes les données</button>
       </section>
-      <p class="note">AutomaFit ${APP_VERSION} · stockage ${Store.mode === 'idb' ? 'IndexedDB' : 'local'} · données produits <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>. Les valeurs sont des estimations, pas un avis médical.</p>`;
+      <p class="note">Kalo ${APP_VERSION} · stockage ${Store.mode === 'idb' ? 'IndexedDB' : 'local'} · données produits <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>. Les valeurs sont des estimations, pas un avis médical.</p>`;
   }
 
   /* ---------- Progrès ---------- */
@@ -1267,12 +1315,12 @@
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '' };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: 'Sauvegarde AutomaFit' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+      try { await navigator.share({ files: [file], title: 'Sauvegarde Kalo' }); return; } catch (e) { if (e.name === 'AbortError') return; }
     }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -1284,7 +1332,7 @@
       if (d.app !== 'kalo' || !d.profile) throw new Error('format');
       if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
       await Store.clear();
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo);
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps);
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await loadState(); render(); toast('Sauvegarde restaurée');
     } catch (e) { toast('Fichier de sauvegarde invalide'); }
@@ -1309,6 +1357,14 @@
     'photo-pick': () => $('#photoInput').click(),
     'photo-del': () => { if (!confirm('Retirer ta photo objectif ?')) return; S.photo = ''; Store.del('photo'); render(); },
     'copy-prompt': () => { navigator.clipboard?.writeText(aiPrompt()).then(() => toast('Texte copié ✓'), () => toast('Copie impossible : sélectionne le texte')); },
+    'supps-manage': () => openSupps(),
+    'supp-toggle': b => {
+      const d = getDay(UI.date); d.supps = d.supps || {};
+      const id = b.dataset.id;
+      if (d.supps[id]) delete d.supps[id]; else d.supps[id] = Date.now();
+      saveDay(UI.date); render();
+      if (d.supps[id]) { try { navigator.vibrate?.(15); } catch (e) { /* ignore */ } if (S.supps.every(x => d.supps[x.id])) toast('Tous tes compléments sont pris 💊'); }
+    },
     'mini-range': b => { UI.mini = +b.dataset.v; render(); },
     'meal-done': b => {
       const k = UI.date, m = b.dataset.meal; if (isLocked(k)) return;

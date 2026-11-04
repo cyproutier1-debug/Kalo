@@ -1,6 +1,6 @@
 {
-  "name": "AutomaFit — calories & protéines",
-  "short_name": "AutomaFit",
+  "name": "Kalo — calories & protéines",
+  "short_name": "Kalo",
   "description": "Suivi des calories, protéines et glucides, scan des produits, objectifs et progression.",
   "lang": "fr",
   "start_url": "./",

@@ -1,4 +1,4 @@
-# AutomaFit : suivi calories, protéines & glucides (Android + iPhone)
+# Kalo : suivi calories, protéines & glucides (Android + iPhone)
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
@@ -52,6 +52,8 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - Si le poids réel ne baisse pas, l'app l'indique au lieu d'afficher une date fictive.
 
 ## Accueil (v2)
+
+- **Compléments** (entre le résumé du jour et le bilan) : crayon → ajoute tes compléments (suggestions créatine, magnésium, oméga 3, D3 + K2… ou nom/dose libres). Touche une pastille pour la cocher ; elles se décochent chaque nouveau jour. « Tous pris ✓ » quand tout est coché.
 
 - **Photo objectif** : Profil → *Ma photo objectif* → Ajouter. L'image (idéalement générée par IA à ton poids objectif) s'affiche en haut de l'accueil. Le Profil fournit le texte à coller dans ChatGPT / Gemini avec ta photo. L'image est compressée et stockée sur le téléphone (incluse dans l'export).
 - **Anneau calories** : calories restantes, arc plein = mangé, arc clair = prévu.
