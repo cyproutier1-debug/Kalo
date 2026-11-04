@@ -357,3 +357,25 @@ input::placeholder { color: var(--ink-3); }
 .supp.on .dot { background: var(--accent); border-color: var(--accent); color: #04140B; box-shadow: 0 0 10px var(--accent-glow); }
 .supp.on .txt b { color: var(--accent); }
 .supps.all { border-color: rgba(46,230,138,.35); }
+
+/* Photo IA */
+.quick-actions { grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.quick-actions button { font-size: 12px; padding: 12px 4px; }
+.quick-actions .ai-btn { border-color: rgba(46,230,138,.45); background: linear-gradient(180deg, rgba(46,230,138,.16), rgba(46,230,138,.04)); }
+.ai-drop { width: 100%; border: 1.5px dashed rgba(46,230,138,.45); background: rgba(46,230,138,.05); border-radius: 18px; padding: 26px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; color: var(--ink); }
+.ai-drop svg { width: 38px; height: 38px; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linejoin: round; }
+.ai-drop span { font-size: 13px; color: var(--ink-3); }
+.ai-photo { width: 100%; aspect-ratio: 4 / 3; border-radius: 18px; background-size: cover; background-position: center; border: 1px solid var(--card-border); }
+textarea { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.04); color: var(--ink); resize: vertical; min-height: 84px; }
+textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.ai-item { gap: 10px; }
+.ai-item.off { opacity: .45; }
+.ai-item .meal-check { width: 28px; height: 28px; }
+.ai-item .meal-check.on { background: var(--accent); border-color: var(--accent); color: #04140B; box-shadow: none; }
+.ai-g { width: 72px !important; min-height: 40px !important; padding: 8px 10px !important; text-align: right; }
+.chip-on { background: var(--accent) !important; color: #03130A; border-color: var(--accent) !important; }
+.btn > svg { width: 20px; height: 20px; flex: 0 0 auto; }
+.btn > svg path { fill: currentColor; }
+.btn > svg.ico-check path { fill: none; }
+input[type=password] { width: 100%; font-size: 16px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.04); color: var(--ink); min-height: 48px; -webkit-appearance: none; appearance: none; }
+input[type=password]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }

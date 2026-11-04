@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.1.0';
+  const APP_VERSION = '2.2.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -42,6 +42,8 @@
     check: '<svg viewBox="0 0 24 24" class="ico-check"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
     pill: '<svg viewBox="0 0 24 24"><g transform="rotate(-45 12 12)"><rect x="3" y="8.3" width="18" height="7.4" rx="3.7"/><path d="M12 8.3v7.4"/></g></svg>',
     edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>',
+    sparkle: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3zM18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z"/></svg>',
+    camera: '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.6"/></svg>',
     gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>',
     flame: '<svg viewBox="0 0 24 24"><path fill="#2EE68A" d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.3 1.8 3.5 4.3 3.5 6.6C18.5 19.3 15.6 22 12 22s-6.5-2.7-6.5-6.4C5.5 10.5 11 8.5 12 2z"/></svg>',
     fork: '<svg viewBox="0 0 24 24" fill="none" stroke="#2EE68A" stroke-width="2" stroke-linecap="round"><path d="M6 3v7a2 2 0 002 2v9M10 3v7a2 2 0 01-2 2M8 3v6M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>',
@@ -129,12 +131,12 @@
   };
 
   /* ---------- État ---------- */
-  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [] };
+  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [], ai: { provider: 'gemini', keys: {} } };
   const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto', mini: 30 };
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || [];
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} };
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -646,7 +648,7 @@
   // Aliments
   function foodItem(f, i) {
     const p = f.per100;
-    const thumb = f.img ? `<img class="thumb" src="${esc(f.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="thumb">${f.src === 'gen' ? 'GÉN' : f.src === 'custom' ? 'PERSO' : 'OFF'}</span>`;
+    const thumb = f.img ? `<img class="thumb" src="${esc(f.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="thumb">${f.src === 'gen' ? 'GÉN' : f.src === 'custom' ? 'PERSO' : f.src === 'ai' ? 'IA' : 'OFF'}</span>`;
     const sub = [f.brand, p ? `${r0(p.kcal)} kcal · ${r1(p.p)} g prot. / 100 g` : 'valeurs manquantes'].filter(Boolean).join(' · ');
     return `<button class="item" data-i="${i}">${thumb}<div class="grow"><div class="name">${esc(f.name)}</div><div class="sub">${esc(sub)}</div></div>${f.ns ? `<span class="badge ns ns-${f.ns}">${f.ns.toUpperCase()}</span>` : ''}</button>`;
   }
@@ -724,6 +726,7 @@
         <p class="note">Poids actuel ${r1(w)} kg${p.goalMode !== 'manual' ? ` · objectif = dépense de référence − ${r0(Math.min((p.pace || 0) * 1100, 1000))} kcal (rythme ${r1(p.pace || 0)} kg/sem.)` : ` · suggestion auto ${r0(g.autoKcal)} kcal / ${r0(g.autoProtein)} g`}${c.floored ? ' · plancher de sécurité appliqué' : ''}${c.reached ? ' · poids objectif atteint : mode maintien' : ''}.</p>
       </section>
       <form class="card stack" id="pform" novalidate><h3>Mon profil</h3>${profileFields({ ...p, noWeight: true })}<button type="button" class="btn block" data-action="save-profile">Enregistrer</button></form>
+      <section class="card stack" id="ai-settings"><div class="card-title">${ICON.sparkle}Photo IA</div>${aiSettingsHTML()}<button class="btn block" data-action="ai-save">Enregistrer la clé</button></section>
       <section class="card stack"><h3>Mes données</h3>
         <p class="note" style="margin:0">Tes données sont stockées uniquement sur cet appareil. Fais une sauvegarde de temps en temps (et avant de changer de téléphone).</p>
         <div class="grid2"><button class="btn outline" data-action="export">Exporter</button><label class="btn outline" style="position:relative">Importer<input type="file" accept="application/json,.json" data-input="import" style="position:absolute;inset:0;opacity:0"></label></div>
@@ -1025,6 +1028,178 @@
     svg.addEventListener('pointerleave', ev => { if (ev.pointerType === 'mouse') tip.classList.remove('show'); });
   }
 
+  /* ---------- Scan IA d'un plat (photo + description) ---------- */
+  const AI_PROVIDERS = {
+    gemini: { name: 'Gemini (Google)', price: 'gratuit', keyUrl: 'https://aistudio.google.com/apikey', keyHint: 'Clé commençant par « AIza… »' },
+    claude: { name: 'Claude (Anthropic)', price: '≈ 0,01 € par photo', keyUrl: 'https://console.anthropic.com/settings/keys', keyHint: 'Clé commençant par « sk-ant-… »' },
+  };
+  const aiKey = () => (S.ai.keys || {})[S.ai.provider] || '';
+  function aiPromptText(desc) {
+    return `Tu es un nutritionniste expert en estimation de portions. Analyse la photo du plat${desc ? ' et la description de l\'utilisateur' : ''}.
+Identifie chaque composant (y compris ceux qui ne se voient pas mais sont probables : huile ou beurre de cuisson, sauce, sucre). Estime le poids en grammes de chaque composant en te servant de l'assiette, des couverts et des mains comme repères. Pour un plat de restaurant, compte une matière grasse de cuisson généreuse.
+${desc ? `Description de l'utilisateur (prioritaire sur ce que tu vois) : « ${desc} »\n` : ''}Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, de la forme :
+{"plat":"nom court du plat","elements":[{"nom":"composant","grammes":0,"kcal":0,"proteines":0,"glucides":0,"lipides":0}],"confiance":"faible|moyenne|élevée","remarque":"une phrase : ce qui ferait le plus varier l'estimation"}
+Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estimée (pas pour 100 g). Si la photo ne montre pas de nourriture, renvoie "elements":[].`;
+  }
+  function parseAIJson(txt) {
+    const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+    if (a < 0 || b < a) throw new Error('format');
+    const j = JSON.parse(txt.slice(a, b + 1));
+    const items = (j.elements || []).map(e => ({ name: String(e.nom || 'Élément'), grams: Math.max(1, num(e.grammes) || 100), kcal: Math.max(0, num(e.kcal) || 0), p: Math.max(0, num(e.proteines) || 0), c: Math.max(0, num(e.glucides) || 0), f: Math.max(0, num(e.lipides) || 0), on: true }));
+    return { dish: String(j.plat || 'Plat'), items, confidence: String(j.confiance || ''), note: String(j.remarque || '') };
+  }
+  async function geminiModel(key) {
+    if (S.ai.geminiModel && S.ai.geminiModelAt > Date.now() - 7 * 864e5) return S.ai.geminiModel;
+    let model = 'gemini-3.8-flash';
+    try {
+      const j = await (await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key } })).json();
+      const cands = (j.models || []).filter(m => /flash/.test(m.name) && (m.supportedGenerationMethods || []).includes('generateContent') && !/(image|tts|live|lite|embed|audio|thinking|exp)/.test(m.name));
+      const ver = n => (n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1] * 1 - (/preview/.test(n) ? 0.01 : 0);
+      cands.sort((x, y) => ver(y.name) - ver(x.name));
+      if (cands[0]) model = cands[0].name.replace('models/', '');
+    } catch (e) { /* modèle par défaut */ }
+    S.ai.geminiModel = model; S.ai.geminiModelAt = Date.now(); Store.put('ai', S.ai);
+    return model;
+  }
+  async function aiAnalyze(b64, desc) {
+    const key = aiKey(); if (!key) { const e = new Error('nokey'); e.code = 'nokey'; throw e; }
+    const prompt = aiPromptText(desc);
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 90000);
+    try {
+      let r, txt;
+      if (S.ai.provider === 'claude') {
+        r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST', signal: ctl.signal,
+          headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+          body: JSON.stringify({ model: 'claude-sonnet-5-5', max_tokens: 1200, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } }, { type: 'text', text: prompt }] }] }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { const e = new Error(j.error?.message || 'HTTP ' + r.status); e.status = r.status; throw e; }
+        txt = (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+      } else {
+        const model = await geminiModel(key);
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: 'POST', signal: ctl.signal,
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: 'image/jpeg', data: b64 } }, { text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2 } }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { if (r.status === 404) { S.ai.geminiModel = ''; Store.put('ai', S.ai); } const e = new Error(j.error?.message || 'HTTP ' + r.status); e.status = r.status; throw e; }
+        txt = (j.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('');
+      }
+      return parseAIJson(txt);
+    } finally { clearTimeout(tm); }
+  }
+  const aiError = e => e.code === 'nokey' ? 'Ajoute ta clé API pour utiliser la photo IA.'
+    : e.status === 400 && /key|API_KEY/i.test(e.message) || e.status === 401 || e.status === 403 ? 'Clé API refusée : vérifie-la dans les réglages IA.'
+      : e.status === 429 ? (S.ai.provider === 'gemini' ? 'Quota gratuit Gemini atteint pour le moment : réessaie dans une minute (ou demain si la limite du jour est atteinte).' : 'Trop de demandes : réessaie dans une minute.')
+        : e.status === 529 || e.status >= 500 ? 'Le service IA est surchargé, réessaie dans un instant.'
+          : e.name === 'AbortError' ? "L'analyse a pris trop de temps, réessaie."
+            : e.message === 'format' || e instanceof SyntaxError ? "Réponse de l'IA illisible, réessaie (ou précise la description)."
+              : !navigator.onLine ? 'Pas de connexion internet.' : 'Analyse impossible : ' + (e.message || 'erreur inconnue');
+  async function imageToB64(file, max = 1280) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const d = c.toDataURL('image/jpeg', 0.82);
+      return { dataUrl: d, b64: d.split(',')[1] };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  function aiSettingsHTML() {
+    const pv = AI_PROVIDERS[S.ai.provider];
+    return `<div class="seg" style="margin-bottom:10px">${Object.entries(AI_PROVIDERS).map(([k, v]) => `<button type="button" data-ai-prov="${k}" class="${S.ai.provider === k ? 'on' : ''}">${v.name.split(' ')[0]} · ${v.price}</button>`).join('')}</div>
+      <label class="field"><span>Clé API ${esc(pv.name)}</span><input type="password" data-f="aikey" autocomplete="off" value="${esc(aiKey())}" placeholder="${esc(pv.keyHint)}"></label>
+      <p class="note" style="margin:6px 0 0">Obtenir une clé : <a href="${pv.keyUrl}" target="_blank" rel="noopener">${pv.keyUrl.replace('https://', '')}</a> → créer une clé → la copier ici. La clé reste sur ton téléphone (jamais dans les sauvegardes). La photo est envoyée à ${esc(pv.name)} pour l'analyse${S.ai.provider === 'gemini' ? ' ; en gratuit, Google peut utiliser les données pour améliorer ses produits' : ''}.</p>`;
+  }
+  function bindAISettings(root, onChange) {
+    root.addEventListener('click', e => {
+      const b = e.target.closest('[data-ai-prov]'); if (!b) return;
+      saveAIKey(root); S.ai.provider = b.dataset.aiProv; Store.put('ai', S.ai); onChange();
+    });
+  }
+  function saveAIKey(root) {
+    const inp = $('[data-f="aikey"]', root); if (!inp) return;
+    S.ai.keys = S.ai.keys || {}; S.ai.keys[S.ai.provider] = inp.value.trim(); Store.put('ai', S.ai);
+  }
+  function openAIScan(ctx) {
+    const sh = makeSheet('Photo IA');
+    const st = { file: null, img: '', b64: '', desc: '', res: null, mult: 1, loading: false, err: '', meal: ctx.meal };
+    const fileInput = document.createElement('input'); fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.hidden = true; sh.el.appendChild(fileInput);
+    const totals = () => st.res.items.filter(i => i.on).reduce((t, i) => { const k = st.mult; t.kcal += i.kcal * k; t.p += i.p * k; t.c += i.c * k; t.f += i.f * k; return t; }, { kcal: 0, p: 0, c: 0, f: 0 });
+    const draw = () => {
+      const needKey = !aiKey();
+      let h = '';
+      if (needKey || st.showSettings) h += `<section class="card"><div class="card-title" style="margin-bottom:10px">${ICON.sparkle}Réglages IA</div>${aiSettingsHTML()}<button class="btn block" style="margin-top:12px" data-a="savekey">Enregistrer la clé</button></section>`;
+      h += `<section class="card stack">
+        ${st.img ? `<div class="ai-photo" style="background-image:url('${st.img}')"></div>` : `<button class="ai-drop" data-a="pick">${ICON.camera}<b>Prendre ou choisir une photo</b><span>de ton plat, vue de dessus si possible, avec l'assiette entière</span></button>`}
+        ${st.img ? '<button class="btn outline block small" data-a="pick">Changer de photo</button>' : ''}
+        <label class="field"><span>Décris ton plat pour plus de précision</span><textarea data-f="desc" rows="3" placeholder="ex. Burger au restaurant, double steak, cheddar, sauce maison ; frites à moitié mangées ; pas de dessert">${esc(st.desc)}</textarea></label>
+        <p class="note" style="margin:0">Indique ce que la photo ne montre pas : cuisson (frit, au beurre), sauces, quantité réelle (« j'ai laissé la moitié du riz »), taille de l'assiette.</p>
+        <button class="btn block" data-a="go" ${!st.img || st.loading || needKey ? 'disabled' : ''}>${st.loading ? 'Analyse en cours…' : `${ICON.sparkle} Analyser le plat`}</button>
+        ${st.loading ? '<div class="spinner"></div>' : ''}
+        ${st.err ? `<p class="small over-text" style="margin:0">${esc(st.err)}</p>` : ''}
+      </section>`;
+      if (st.res) {
+        const t = totals();
+        h += st.res.items.length ? `<h3>${esc(st.res.dish)}</h3>
+        <section class="card">
+          <div class="nutri-grid"><div><b class="num">${r0(t.kcal)}</b><span>kcal</span></div><div class="pr"><b class="num">${r1(t.p)}</b><span>protéines</span></div><div><b class="num">${r1(t.c)}</b><span>glucides</span></div><div><b class="num">${r1(t.f)}</b><span>lipides</span></div></div>
+          <div class="chips" style="justify-content:center">${[0.5, 0.75, 1, 1.25, 1.5].map(m => `<button class="chip ${st.mult === m ? 'chip-on' : ''}" data-a="mult" data-v="${m}">${m === 1 ? 'Portion estimée' : '× ' + r1(m)}</button>`).join('')}</div>
+          ${st.res.confidence ? `<p class="note" style="text-align:center;margin:10px 0 0">Confiance de l'IA : <b>${esc(st.res.confidence)}</b>${st.res.note ? ' · ' + esc(st.res.note) : ''}</p>` : ''}
+        </section>
+        <h3>Détail (modifie les grammes si besoin)</h3>
+        <section class="card list">${st.res.items.map((i, n) => `<div class="item ai-item ${i.on ? '' : 'off'}">
+          <button class="meal-check ${i.on ? 'on' : ''}" data-a="tog" data-i="${n}" aria-label="Inclure">${ICON.check}</button>
+          <div class="grow"><div class="name">${esc(i.name)}</div><div class="sub num">${r0(i.kcal * st.mult)} kcal · ${r1(i.p * st.mult)} g prot.</div></div>
+          <input type="number" inputmode="decimal" class="ai-g" data-i="${n}" value="${Math.round(i.grams * st.mult)}" aria-label="Grammes"><span class="muted small">g</span></div>`).join('')}</section>
+        <label class="field"><span>Repas</span><select data-f="meal">${mealOptions(st.meal)}</select></label>
+        <p class="note">Estimation à ±20–30 % : une photo ne montre ni l'huile ni ce qui est caché. Plus la description est précise, plus le chiffre est fiable.</p>`
+          : '<section class="card"><p style="margin:0">Aucun aliment reconnu sur la photo. Essaie une photo plus nette, vue de dessus, ou ajoute une description.</p></section>';
+      }
+      h += `<button class="btn plain block" data-a="settings">${st.showSettings ? 'Masquer' : 'Réglages IA'} · ${esc(AI_PROVIDERS[S.ai.provider].name)}</button>`;
+      sh.setBody(h);
+      sh.setFoot(st.res && st.res.items.some(i => i.on) ? `<button class="btn grow" data-a="add">Ajouter · ${r0(totals().kcal)} kcal</button>` : '');
+      const ta = $('[data-f="desc"]', sh.body); ta.addEventListener('input', () => { st.desc = ta.value; });
+      $$('.ai-g', sh.body).forEach(inp => inp.addEventListener('change', () => {
+        const i = st.res.items[+inp.dataset.i], g = num(inp.value); if (!(g > 0)) return;
+        const ratio = g / (i.grams * st.mult); i.grams *= ratio; i.kcal *= ratio; i.p *= ratio; i.c *= ratio; i.f *= ratio; draw();
+      }));
+      const ms = $('[data-f="meal"]', sh.body); if (ms) ms.addEventListener('change', () => { st.meal = ms.value; });
+    };
+    fileInput.addEventListener('change', async () => {
+      const f = fileInput.files[0]; fileInput.value = ''; if (!f) return;
+      try { const r = await imageToB64(f); st.img = r.dataUrl; st.b64 = r.b64; st.res = null; st.err = ''; draw(); } catch (e) { toast('Image illisible'); }
+    });
+    bindAISettings(sh.body, draw);
+    sh.body.addEventListener('click', async e => {
+      const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+      if (a === 'pick') fileInput.click();
+      if (a === 'settings') { st.showSettings = !st.showSettings; draw(); }
+      if (a === 'savekey') { saveAIKey(sh.body); st.showSettings = false; toast(aiKey() ? 'Clé enregistrée ✓' : 'Clé effacée'); draw(); }
+      if (a === 'mult') { st.mult = +b.dataset.v; draw(); }
+      if (a === 'tog') { const i = st.res.items[+b.dataset.i]; i.on = !i.on; draw(); }
+      if (a === 'go' && !st.loading) {
+        st.loading = true; st.err = ''; st.res = null; st.mult = 1; draw();
+        try { st.res = await aiAnalyze(st.b64, st.desc.trim()); } catch (err) { st.err = aiError(err); }
+        st.loading = false; draw();
+      }
+    });
+    sh.foot.onclick = e => {
+      if (!e.target.closest('[data-a="add"]')) return;
+      const d = getDay(ctx.date), meal = st.meal;
+      for (const i of st.res.items.filter(x => x.on)) {
+        const g = i.grams * st.mult, k = st.mult;
+        d.entries.push({ id: uid(), meal, src: 'ai', name: i.name, brand: st.res.dish + ' · IA', per100: { kcal: i.kcal / i.grams * 100, p: i.p / i.grams * 100, c: i.c / i.grams * 100, f: i.f / i.grams * 100 }, unit: null, grams: g, count: null, kcal: i.kcal * k, p: i.p * k, c: i.c * k, f: i.f * k, t: Date.now() });
+      }
+      saveDay(ctx.date); UI.date = ctx.date; UI.tab = 'journal';
+      const t = totals(); closeAll(() => toast(`Ajouté · ${r0(t.kcal)} kcal · ${r0(t.p)} g prot.`));
+    };
+    draw(); openSheet(sh.el);
+  }
+
   /* ---------- Écran : ajouter un aliment ---------- */
   function openAdd(meal, date = UI.date) {
     const sh = makeSheet(`Ajouter · ${mealName(meal)}`);
@@ -1033,6 +1208,7 @@
         <button data-a="scan">${ICON.scan}Scanner</button>
         <button data-a="quick">${ICON.bolt}Ajout rapide</button>
         <button data-a="create">${ICON.plus}Créer</button>
+        <button data-a="ai" class="ai-btn">${ICON.sparkle}Photo IA</button>
       </div>
       <form class="searchbar"><input type="search" placeholder="Rechercher un aliment ou une marque" enterkeyhint="search" autocomplete="off" aria-label="Rechercher"><button class="btn" type="submit" aria-label="Rechercher sur Open Food Facts">${ICON.search}</button></form>
       <div data-a="results"></div>`);
@@ -1068,6 +1244,7 @@
       if (a === 'scan') return openScanner(ctx);
       if (a === 'quick') return openQuick(ctx);
       if (a === 'create') return openFoodForm(null, { ctx });
+      if (a === 'ai') return openAIScan(ctx);
       if (a === 'off') return runOff();
       const it = e.target.closest('.item[data-i]');
       if (it) openDetail(list[+it.dataset.i], ctx);
@@ -1331,7 +1508,9 @@
       const d = JSON.parse(await file.text());
       if (d.app !== 'kalo' || !d.profile) throw new Error('format');
       if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+      const keepAI = S.ai;
       await Store.clear();
+      await Store.put('ai', keepAI);
       await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps);
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await loadState(); render(); toast('Sauvegarde restaurée');
@@ -1358,6 +1537,7 @@
     'photo-del': () => { if (!confirm('Retirer ta photo objectif ?')) return; S.photo = ''; Store.del('photo'); render(); },
     'copy-prompt': () => { navigator.clipboard?.writeText(aiPrompt()).then(() => toast('Texte copié ✓'), () => toast('Copie impossible : sélectionne le texte')); },
     'supps-manage': () => openSupps(),
+    'ai-save': () => { saveAIKey($('#ai-settings')); toast(aiKey() ? 'Clé enregistrée ✓' : 'Clé effacée'); render(); },
     'supp-toggle': b => {
       const d = getDay(UI.date); d.supps = d.supps || {};
       const id = b.dataset.id;
@@ -1426,6 +1606,8 @@
 
   document.addEventListener('click', e => {
     if (e.target.matches?.('input[type=date]')) { try { e.target.showPicker?.(); } catch (err) { /* ignore */ } }
+    const prov = e.target.closest('#view [data-ai-prov]');
+    if (prov) { saveAIKey($('#ai-settings')); S.ai.provider = prov.dataset.aiProv; Store.put('ai', S.ai); render(); return; }
     const tab = e.target.closest('[data-tab]');
     if (tab) { UI.tab = tab.dataset.tab; if (UI.tab === 'progress') UI.anchor = today(); render(); window.scrollTo(0, 0); return; }
     const b = e.target.closest('[data-action]');

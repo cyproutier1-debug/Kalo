@@ -51,6 +51,13 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Rythme prévu** : le rythme choisi dans ton profil.
 - Si le poids réel ne baisse pas, l'app l'indique au lieu d'afficher une date fictive.
 
+## Photo IA (estimation d'un plat)
+
+- Ajouter → **Photo IA** → photo du plat (appareil photo ou galerie) + description (cuisson, sauces, quantité réellement mangée) → **Analyser**.
+- L'IA renvoie chaque composant avec grammes et macros ; tu peux décocher un élément, corriger les grammes, ou appliquer un multiplicateur de portion (×0,5 à ×1,5), puis ajouter au repas. Chaque composant devient une entrée modifiable du journal.
+- Fournisseur au choix (Profil → *Photo IA*) : **Gemini** (clé gratuite sur aistudio.google.com/apikey ; en gratuit, Google peut utiliser les données) ou **Claude** (clé payante sur console.anthropic.com, < 1 centime par photo avec Sonnet 5.5). La clé reste sur le téléphone et n'est jamais exportée.
+- Précision : ±20–30 % sur une photo seule ; la description réduit l'écart.
+
 ## Accueil (v2)
 
 - **Compléments** (entre le résumé du jour et le bilan) : crayon → ajoute tes compléments (suggestions créatine, magnésium, oméga 3, D3 + K2… ou nom/dose libres). Touche une pastille pour la cocher ; elles se décochent chaque nouveau jour. « Tous pris ✓ » quand tout est coché.
