@@ -1,4 +1,4 @@
-# Kalo : suivi calories & protéines (Android + iPhone)
+# AutomaFit : suivi calories, protéines & glucides (Android + iPhone)
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
@@ -51,11 +51,19 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Rythme prévu** : le rythme choisi dans ton profil.
 - Si le poids réel ne baisse pas, l'app l'indique au lieu d'afficher une date fictive.
 
+## Accueil (v2)
+
+- **Photo objectif** : Profil → *Ma photo objectif* → Ajouter. L'image (idéalement générée par IA à ton poids objectif) s'affiche en haut de l'accueil. Le Profil fournit le texte à coller dans ChatGPT / Gemini avec ta photo. L'image est compressée et stockée sur le téléphone (incluse dans l'export).
+- **Anneau calories** : calories restantes, arc plein = mangé, arc clair = prévu.
+- **Barres protéines et glucides** : couleur selon la progression : rouge au départ, orange à mi-chemin, vert quand l'objectif est atteint.
+- Bouton **+** central : ajoute un aliment au repas en cours (scan, recherche, ajout rapide).
+
 ## Fonctionnement des objectifs
 
 - Métabolisme de base : formule Mifflin-St Jeor, multiplié par le niveau d'activité, ce qui donne la dépense estimée.
 - Objectif calories = dépense − déficit (rythme choisi × 7 700 kcal / 7 jours), plafonné à −1 000 kcal/j, plancher 1 500 kcal (homme) / 1 200 kcal (femme).
 - Protéines = 1,8 g × poids objectif.
+- Lipides ≈ 25 % des calories ; glucides = calories restantes après protéines et lipides (modifiable en mode Manuel).
 - En mode **Auto**, chaque pesée recalcule les objectifs. En mode **Manuel**, tu fixes les valeurs toi-même.
 - Ce sont des estimations ±10–15 %. Si le poids ne bouge pas en 3 semaines de saisie fidèle, baisse l'objectif de 100 à 150 kcal.
 

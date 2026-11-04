@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '1.5.0';
+  const APP_VERSION = '2.0.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -40,8 +40,19 @@
     bolt: '<svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
     check: '<svg viewBox="0 0 24 24" class="ico-check"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
+    gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>',
+    flame: '<svg viewBox="0 0 24 24"><path fill="#2EE68A" d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.3 1.8 3.5 4.3 3.5 6.6C18.5 19.3 15.6 22 12 22s-6.5-2.7-6.5-6.4C5.5 10.5 11 8.5 12 2z"/></svg>',
+    fork: '<svg viewBox="0 0 24 24" fill="none" stroke="#2EE68A" stroke-width="2" stroke-linecap="round"><path d="M6 3v7a2 2 0 002 2v9M10 3v7a2 2 0 01-2 2M8 3v6M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>',
+    trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
+    cal: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/></svg>',
+    bars: '<svg viewBox="0 0 24 24" style="stroke:none"><rect x="3" y="12" width="4.5" height="9" rx="1.5" fill="#2EE68A"/><rect x="9.75" y="7" width="4.5" height="14" rx="1.5" fill="#2EE68A"/><rect x="16.5" y="3" width="4.5" height="18" rx="1.5" fill="#2EE68A"/></svg>',
+    watch: '<svg viewBox="0 0 24 24" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="3.5"/><path d="M9 6l.6-3h4.8L15 6M9 18l.6 3h4.8l.6-3M12 9.5V12l1.5 1"/></svg>',
+    muscle: '<svg viewBox="0 0 24 24"><path fill="#2EE68A" d="M3.5 16.5c0-4.6 1.8-10 5.6-11.6 1.4-.6 2.8.4 2.4 1.9l-.9 3.1c2.4-1.3 5.8-1.2 7.9.9 2.7 2.6 2.3 6.4-.8 8.3-3.6 2.2-10.5 2.4-14.2-.9z"/></svg>',
+    drop: c => `<svg viewBox="0 0 24 24"><path fill="${c}" d="M12 2.5C9 7 6 10.2 6 14a6 6 0 0012 0c0-3.8-3-7-6-11.5z"/></svg>`,
+    body: '<svg viewBox="0 0 48 48"><circle cx="24" cy="12" r="6"/><path d="M10 44c0-11 3-20 14-20s14 9 14 20M17 30c2 2 4.5 3 7 3s5-1 7-3M24 33v8M18 38h12"/></svg>',
   };
 
+  const brandHTML = () => `<div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6CFFBC"/><stop offset="1" stop-color="#14B866"/></linearGradient></defs><path d="M20 3.5 L37 35.5 H27.6 L20 21 L12.4 35.5 H3 Z" fill="url(#lgA)"/><path d="M20 26 L23.6 33 H16.4 Z" fill="#050807"/></svg><span>Automa<b>Fit</b></span></div>`;
   const MEALS = [['breakfast', 'Petit-déjeuner'], ['lunch', 'Déjeuner'], ['dinner', 'Dîner'], ['snack', 'Collations']];
   const mealName = id => (MEALS.find(m => m[0] === id) || [, id])[1];
   const guessMeal = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; return h < 10.5 ? 'breakfast' : h < 15 ? 'lunch' : h < 18 ? 'snack' : 'dinner'; };
@@ -115,12 +126,12 @@
   };
 
   /* ---------- État ---------- */
-  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {} };
-  const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto' };
+  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '' };
+  const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto', mini: 30 };
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || [];
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || '';
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -131,7 +142,7 @@
   function saveDay(k) {
     const d = S.days[k];
     if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !(d.mealsDone && Object.keys(d.mealsDone).length))) { delete S.days[k]; return Store.del('day:' + k); }
-    if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, tdee: g.tdee }; }
+    if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, carbs: g.carbs, tdee: g.tdee }; }
     return Store.put('day:' + k, d);
   }
   const getDay = k => (S.days[k] = S.days[k] || { entries: [] });
@@ -153,6 +164,12 @@
   function sortedWeights() { return S.weights.slice().sort((a, b) => (a.date < b.date ? -1 : 1)); }
   function currentWeight() { const w = sortedWeights(); return w.length ? w[w.length - 1].kg : S.profile?.weight; }
 
+  // Lipides = 25 % des calories, glucides = le reste après protéines et lipides
+  function macroSplit(kcal, protein, carbsOverride) {
+    const fat = Math.round(kcal * 0.25 / 9);
+    const carbs = carbsOverride || Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4 / 5) * 5);
+    return { fat, carbs };
+  }
   function calc(p, w = currentWeight(), tdeeOverride = null) {
     const bmr = 10 * w + 6.25 * p.height - 5 * p.age + (p.sex === 'm' ? 5 : -161);
     const formula = bmr * p.activity;
@@ -164,7 +181,8 @@
     const kcal = Math.round(Math.max(raw, floor) / 10) * 10;
     const refW = p.target && p.target < w ? p.target : w;
     const protein = Math.round(refW * 1.8 / 5) * 5;
-    return { bmr: Math.round(bmr), tdee: Math.round(tdee), formulaTdee: Math.round(formula), kcal, protein, floored: raw < floor, reached };
+    const { fat, carbs } = macroSplit(kcal, protein);
+    return { bmr: Math.round(bmr), tdee: Math.round(tdee), formulaTdee: Math.round(formula), kcal, protein, fat, carbs, floored: raw < floor, reached };
   }
   // Moyenne des dépenses saisies depuis la montre sur les 28 derniers jours complets (hors aujourd'hui)
   function watchStats() {
@@ -178,19 +196,21 @@
     const ws = watchStats();
     const useWatch = p.tdeeSource !== 'formula' && ws.n >= 3;
     const c = { ...calc(p, undefined, useWatch ? ws.avg : null), source: useWatch ? 'watch' : 'formula', watch: ws };
-    return p.goalMode === 'manual' ? { ...c, autoKcal: c.kcal, autoProtein: c.protein, kcal: p.kcalGoal || c.kcal, protein: p.proteinGoal || c.protein } : c;
+    if (p.goalMode !== 'manual') return c;
+    const kcal = p.kcalGoal || c.kcal, protein = p.proteinGoal || c.protein;
+    return { ...c, autoKcal: c.kcal, autoProtein: c.protein, autoCarbs: c.carbs, kcal, protein, ...macroSplit(kcal, protein, p.carbGoal) };
   }
 
   const mealDone = (k, m) => !!(S.days[k]?.validated || S.days[k]?.mealsDone?.[m]);
   function dayTotals(k) {
-    const t = { kcal: 0, p: 0, c: 0, f: 0, n: 0, eatenK: 0, eatenP: 0, anyDone: false };
+    const t = { kcal: 0, p: 0, c: 0, f: 0, n: 0, eatenK: 0, eatenP: 0, eatenC: 0, anyDone: false };
     const d = S.days[k];
     if (d) for (const e of d.entries) {
       t.kcal += e.kcal || 0; t.p += e.p || 0; t.c += e.c || 0; t.f += e.f || 0; t.n++;
-      if (mealDone(k, e.meal)) { t.eatenK += e.kcal || 0; t.eatenP += e.p || 0; }
+      if (mealDone(k, e.meal)) { t.eatenK += e.kcal || 0; t.eatenP += e.p || 0; t.eatenC += e.c || 0; }
     }
     t.anyDone = !!d && MEALS.some(([m]) => mealDone(k, m));
-    t.planK = t.kcal - t.eatenK; t.planP = t.p - t.eatenP;
+    t.planK = t.kcal - t.eatenK; t.planP = t.p - t.eatenP; t.planC = t.c - t.eatenC;
     return t;
   }
 
@@ -301,11 +321,13 @@
     const views = { journal: viewJournal, progress: viewProgress, foods: viewFoods, profile: viewProfile };
     v.innerHTML = (views[UI.tab] || viewJournal)();
     if (UI.tab === 'progress') { drawChart(); drawProjection(); }
+    if (UI.tab === 'journal') drawMini();
   }
 
   // Accueil / onboarding
   function profileFields(p = {}) {
     return `
+      <label class="field"><span>Prénom</span><input type="text" name="name" autocomplete="given-name" value="${esc(p.name || '')}" placeholder="Ton prénom"></label>
       <div class="grid2">
         <label class="field"><span>Sexe</span><select name="sex"><option value="m" ${p.sex === 'm' ? 'selected' : ''}>Homme</option><option value="f" ${p.sex === 'f' ? 'selected' : ''}>Femme</option></select></label>
         <label class="field"><span>Âge</span><input type="number" name="age" inputmode="numeric" min="16" max="100" value="${p.age ?? ''}" placeholder="30"></label>
@@ -318,13 +340,13 @@
   }
   function readProfileForm(form) {
     const g = n => form.querySelector(`[name="${n}"]`)?.value;
-    return { sex: g('sex'), age: num(g('age')), height: num(g('height')), weight: num(g('weight')), target: num(g('target')), activity: num(g('activity')), pace: num(g('pace')) ?? 0.5 };
+    return { name: (g('name') || '').trim(), sex: g('sex'), age: num(g('age')), height: num(g('height')), weight: num(g('weight')), target: num(g('target')), activity: num(g('activity')), pace: num(g('pace')) ?? 0.5 };
   }
   const profileValid = p => p.age >= 16 && p.age <= 100 && p.height >= 120 && p.height <= 230 && (p.weight == null || (p.weight >= 30 && p.weight <= 300)) && (!p.target || (p.target >= 30 && p.target <= 300));
 
   function viewOnboarding() {
     return `
-      <div class="onboard-hero"><img src="icons/icon-192.png" alt=""><h1 style="margin-top:12px">Bienvenue sur Kalo</h1>
+      <div class="onboard-hero">${brandHTML()}<h1 style="margin-top:18px">Bienvenue</h1>
       <p class="muted">Quelques infos pour calculer tes objectifs de calories et de protéines. Tout reste sur ton téléphone.</p></div>
       <form id="oform" class="card stack" novalidate>${profileFields({ pace: 0.5 })}</form>
       <section class="card goal-result" id="oresult"><p class="muted">Remplis le formulaire pour voir tes objectifs.</p></section>
@@ -348,18 +370,43 @@
     const q = e.count && e.unit ? (e.count === 1 ? e.unit.label : `${r1(e.count)} × ${e.unit.label.replace(/^1\s+/, '')}`) + (/\d\s*(g|ml)\b/i.test(e.unit.label) ? '' : ` · ${r0(e.grams)} g`) : `${r0(e.grams)} g`;
     return [e.brand, q].filter(Boolean).join(' · ');
   }
-  function segBar(eaten, planned, goal, cls) {
-    const a = Math.min(100, eaten / goal * 100), b = Math.min(100 - a, planned / goal * 100);
-    return `<div class="bar seg-bar ${cls}"><div style="width:${a}%"></div><div class="plan" style="width:${b}%"></div></div>`;
+  // Couleur de progression : rouge (0 %) → orange (50 %) → vert (objectif atteint)
+  function progColor(x) {
+    x = Math.max(0, Math.min(1, x || 0));
+    const h = x < 0.5 ? x / 0.5 * 32 : 32 + (x - 0.5) / 0.5 * 113;
+    return `hsl(${Math.round(h)} 90% ${x >= 1 ? 50 : 57}%)`;
   }
+  function gradBar(eaten, planned, goal) {
+    if (!(goal > 0)) return '<div class="bar"></div>';
+    const col = progColor((eaten + planned) / goal);
+    const a = Math.min(100, eaten / goal * 100), b = Math.min(100 - a, planned / goal * 100);
+    return `<div class="bar">${a > 0 ? `<div style="width:${a}%;background:${col};box-shadow:0 0 10px ${col}${b > 0 ? '' : ';border-radius:8px'}"></div>` : ''}${b > 0 ? `<div class="plan" style="width:${b}%;background:${col}${a > 0 ? '' : ';border-radius:8px'}"></div>` : ''}</div>`;
+  }
+  const plainBar = (v, goal, cls) => `<div class="bar ${cls}"><div style="width:${goal > 0 ? Math.min(100, v / goal * 100) : 0}%;border-radius:8px"></div></div>`;
+  function kcalRing(eaten, planned, goal) {
+    const R = 62, C = 2 * Math.PI * R, over = eaten + planned > goal;
+    const a = Math.min(1, eaten / goal), b = Math.min(1 - a, planned / goal);
+    const main = over ? '#FF9F43' : 'url(#ringGrad)';
+    return `<svg viewBox="0 0 150 150" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6CFFBC"/><stop offset="1" stop-color="#14B866"/></linearGradient></defs>
+      <circle cx="75" cy="75" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="13"/>
+      ${b > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" stroke="${over ? '#FF9F43' : '#2EE68A'}" stroke-opacity=".3" stroke-width="13" stroke-linecap="round" stroke-dasharray="${((a + b) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)"/>` : ''}
+      ${a > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" stroke="${main}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${(a * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)" style="filter:drop-shadow(0 0 5px ${over ? 'rgba(255,159,67,.6)' : 'rgba(46,230,138,.6)'})"/>` : ''}
+    </svg>`;
+  }
+  const QUOTES = ['On reste focus 💪', 'Chaque repas compte 🔥', 'Un jour après l\'autre 💚', 'La régularité paie ⚡'];
   function viewJournal() {
-    const k = UI.date, g = goals(), t = dayTotals(k);
+    const k = UI.date, g = goals(), t = dayTotals(k), p = S.profile;
     const rem = g.kcal - t.kcal, over = rem < 0;
     const d = dparse(k);
     const label = k === today() ? "Aujourd'hui" : k === dkey(addDays(new Date(), -1)) ? 'Hier' : k === dkey(addDays(new Date(), 1)) ? 'Demain' : cap(F.short.format(d));
     const prev = S.days[dkey(addDays(d, -1))];
     const locked = isLocked(k), burn = dayBurn(k), bal = burn.v - t.kcal;
     const split = !locked && t.anyDone && t.planK > 0;
+    const E = split ? { k: t.eatenK, p: t.eatenP, c: t.eatenC } : { k: t.kcal, p: t.p, c: t.c };
+    const P = split ? { k: t.planK, p: t.planP, c: t.planC } : { k: 0, p: 0, c: 0 };
+    const cur = currentWeight();
+    const sub = S.photo && p.target && cur > p.target ? `Encore ${r1(cur - p.target)} kg avant cette version de toi 🔥` : p.name ? `On reste focus, ${esc(p.name)} 💪` : QUOTES[d.getDate() % QUOTES.length];
+    const burnLabel = burn.active != null ? `<em>repos + ${r0(burn.active)} brûlées</em>` : burn.total ? `<em>montre${burn.extra ? ` + ~${r0(burn.extra)} d'ici minuit` : ''}</em>` : '<em>estimée</em>';
     const meal = ([id, name]) => {
       const es = (S.days[k]?.entries || []).filter(e => e.meal === id);
       const kc = es.reduce((s, e) => s + e.kcal, 0);
@@ -373,33 +420,86 @@
         ${locked || done ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}</div>`}</section>`;
     };
     return `
-      <div class="datebar">
-        <button class="icon-btn" data-action="day-prev" aria-label="Jour précédent">${ICON.left}</button>
-        <label class="date-label" style="position:relative">${esc(label)}<input type="date" value="${k}" data-input="date" aria-label="Choisir une date" style="position:absolute;inset:0;opacity:0;width:100%"></label>
-        <button class="icon-btn" data-action="day-next" aria-label="Jour suivant">${ICON.right}</button>
-      </div>
-      <section class="card summary">
-        <div class="muted small">${over ? 'Calories en trop' : 'Calories restantes'}</div>
-        <div class="big num ${over ? 'over-text' : ''}">${r0(Math.abs(rem))}</div>
-        <div class="muted small num" style="margin:2px 0 14px">${split ? `Objectif ${r0(g.kcal)} − mangé ${r0(t.eatenK)} − prévu ${r0(t.planK)}` : `Objectif ${r0(g.kcal)} − consommé ${r0(t.kcal)}`}</div>
-        <div class="metric"><div class="row between"><span>Calories</span><span class="num">${r0(t.kcal)} / ${r0(g.kcal)} kcal</span></div>${segBar(split ? t.eatenK : t.kcal, split ? t.planK : 0, g.kcal, over ? 'over' : '')}</div>
-        <div class="metric"><div class="row between"><span>Protéines</span><span class="num">${r0(t.p)} / ${r0(g.protein)} g</span></div>${segBar(split ? t.eatenP : t.p, split ? t.planP : 0, g.protein, 'protein')}</div>
-        ${split ? `<div class="legend" style="margin-top:10px"><span><i style="background:var(--accent)"></i>Mangé ${r0(t.eatenK)} kcal</span><span><i class="planned-swatch"></i>Prévu ${r0(t.planK)} kcal</span></div>` : ''}
-        <div class="macros-mini"><span>Glucides <b class="num">${r0(t.c)} g</b></span><span>Lipides <b class="num">${r0(t.f)} g</b></span></div>
+      <header class="hero">
+        ${S.photo ? `<div class="hero-photo" style="background-image:url('${S.photo}')" role="img" aria-label="Ma photo objectif"></div>` : ''}
+        <div class="brand-row">${brandHTML()}<button class="icon-btn glass" data-tab="profile" aria-label="Profil et réglages">${ICON.gear}</button></div>
+        <div class="hero-text ${S.photo ? '' : 'wide'}">
+          <div class="day-title"><button class="icon-btn" data-action="day-prev" aria-label="Jour précédent">${ICON.left}</button><label>${esc(label)}<input type="date" value="${k}" data-input="date" aria-label="Choisir une date" style="position:absolute;inset:0;opacity:0;width:100%"></label><button class="icon-btn" data-action="day-next" aria-label="Jour suivant">${ICON.right}</button></div>
+          <p class="hero-sub">${sub}</p>
+          ${S.photo ? '' : '<button class="btn ghost small" data-action="photo-pick">📷 Ajoute ta photo objectif</button>'}
+        </div>
+      </header>
+      <section class="card glow">
+        <div class="today-card">
+          <div class="ring-wrap">${kcalRing(E.k, P.k, g.kcal)}
+            <div class="ring-center">${ICON.flame}<b class="num ${over ? 'over-text' : ''}">${r0(Math.abs(rem))}</b><span>${over ? 'kcal en trop' : 'kcal restantes'}</span></div>
+            <div class="ring-goal num">Objectif : ${r0(g.kcal)} kcal</div></div>
+          <div class="macros">
+            <div class="macro"><div class="row">${ICON.muscle}<span>Protéines</span><b class="num">${r0(t.p)} / ${r0(g.protein)} g</b></div>${gradBar(E.p, P.p, g.protein)}</div>
+            <div class="macro"><div class="row">${ICON.drop('#6E8BFF')}<span>Glucides</span><b class="num">${r0(t.c)} / ${r0(g.carbs)} g</b></div>${gradBar(E.c, P.c, g.carbs)}</div>
+            <div class="macro"><div class="row">${ICON.drop('#FFC247')}<span>Lipides</span><b class="num">${r0(t.f)} g</b></div>${plainBar(t.f, g.fat, 'fat')}</div>
+          </div>
+        </div>
+        <div class="today-sub num">${split ? `Mangé ${r0(t.eatenK)} · prévu ${r0(t.planK)} · ` : ''}consommé ${r0(t.kcal)} / ${r0(g.kcal)} kcal</div>
       </section>
       ${locked ? validatedCard(k, t, burn) : ''}
-      <section class="card bilan">
-        <div class="row between" style="margin-bottom:10px"><h3 style="margin:0">Bilan du jour</h3>${locked ? '' : `<button class="btn plain" data-action="burn">${burn.measured ? 'Modifier' : '⌚ Ma montre'}</button>`}</div>
-        <div class="eq3">
-          <button class="cell" data-action="burn" ${locked ? 'disabled' : ''}><b class="num">${r0(burn.v)}</b><span>Dépense ${burn.active != null ? `<em>repos + ${r0(burn.active)} brûlées</em>` : burn.total ? `<em>montre${burn.extra ? ` + ~${r0(burn.extra)} d'ici minuit` : ''}</em>` : '<em>estimée</em>'}</span></button>
-          <i>−</i>
-          <div class="cell"><b class="num">${r0(t.kcal)}</b><span>Consommé${split ? `<em>dont ${r0(t.planK)} prévu</em>` : ''}</span></div>
-          <i>=</i>
-          <div class="cell"><b class="num ${bal >= 0 ? 'good-text' : 'over-text'}">${signed(-bal)}</b><span>${bal >= 0 ? 'Déficit' : 'Excédent'}</span></div>
+      <section class="card">
+        <div class="row between"><div class="card-title">${ICON.cal}Bilan du jour</div>${locked ? '' : `<button class="watch-pill ${burn.measured ? 'on' : ''}" data-action="burn">${ICON.watch}Ma montre<i></i></button>`}</div>
+        <div class="bilan-row">
+          <button data-action="burn" ${locked ? 'disabled' : ''}><div class="v">${ICON.flame}<span class="num">${r0(burn.v)}</span></div><div class="l">Dépense ${burnLabel}</div></button>
+          <div><div class="v">${ICON.fork}<span class="num">${r0(t.kcal)}</span></div><div class="l">Consommé${split ? `<em>dont ${r0(t.planK)} prévu</em>` : ''}</div></div>
+          <div><div class="v ${bal >= 0 ? 'good-text' : 'over-text'}">${ICON.trend}<span class="num">${signed(-bal)}</span></div><div class="l">${bal >= 0 ? 'Déficit' : 'Excédent'}</div></div>
         </div>
       </section>
+      <div class="section-title"><h2>Repas du jour</h2></div>
       ${MEALS.map(meal).join('')}
-      ${locked ? '' : `<button class="btn block validate-btn" data-action="validate">${ICON.check} Valider la journée</button>`}`;
+      ${locked ? '' : `<button class="btn block validate-btn" data-action="validate">${ICON.check} Valider la journée</button>`}
+      <section class="card mini-prog">
+        <div class="row between"><div class="card-title">${ICON.bars}Progrès</div><div class="seg compact">${[[7, '7j'], [30, '30j'], [90, '90j']].map(([v, l]) => `<button data-action="mini-range" data-v="${v}" class="${UI.mini === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        <div class="chart-wrap" id="mini-chart"></div>
+        <div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>Poids</span>${p.target ? '<span><i class="dash"></i>Objectif</span>' : ''}</div>
+      </section>
+      <section class="card prof-mini" data-tab="profile">
+        <div class="avatar" ${S.photo ? `style="background-image:url('${S.photo}')"` : ''}>${S.photo ? '' : ICON.body}</div>
+        <div><div class="k num">${r0(g.kcal)} <small>kcal</small></div><div class="s">Objectif quotidien</div></div>
+        <div class="chips2"><span>${p.sex === 'f' ? 'Femme' : 'Homme'}</span><span>${p.age} ans</span><span class="more">Voir plus ›</span></div>
+      </section>`;
+  }
+
+  function drawMini() {
+    const wrap = $('#mini-chart'); if (!wrap) return;
+    const N = UI.mini, end = dparse(today()), start = addDays(end, -(N - 1)), tgt = S.profile.target;
+    const pts = sortedWeights().filter(w => w.date >= dkey(start)).map(w => ({ t: dparse(w.date).getTime() + 432e5, v: w.kg, date: w.date }));
+    if (!pts.length) { wrap.innerHTML = '<div class="empty small">Aucune pesée sur cette période.<br><button class="btn plain" data-action="add-weight">+ Ajouter une pesée</button></div>'; return; }
+    const W = Math.max(260, wrap.clientWidth || 320), H = 190, M = { l: 34, r: 14, t: 28, b: 22 };
+    const pw = W - M.l - M.r, ph = H - M.t - M.b;
+    const t0 = start.getTime(), t1 = end.getTime() + 864e5;
+    const x = t => M.l + (t - t0) / (t1 - t0) * pw;
+    let lo = Math.min(...pts.map(q => q.v), tgt || Infinity), hi = Math.max(...pts.map(q => q.v));
+    const padv = Math.max(1, (hi - lo) * 0.12); lo -= padv; hi += padv;
+    const step = niceStep(hi - lo); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const y = v => M.t + ph - (v - lo) / (hi - lo) * ph;
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du poids"><defs><linearGradient id="miniFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2EE68A" stop-opacity=".32"/><stop offset="1" stop-color="#2EE68A" stop-opacity="0"/></linearGradient></defs>`;
+    for (let v = lo; v <= hi + 1e-9; v += step) s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--grid)"/><text x="${M.l - 6}" y="${y(v) + 4}" text-anchor="end">${r0(v)}</text>`;
+    if (tgt) s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(tgt)}" y2="${y(tgt)}" stroke-dasharray="6 5" stroke-width="1.5" style="stroke:var(--ink-2)"/>`;
+    [start, addDays(start, Math.floor(N / 2)), end].forEach((dd, i) => { s += `<text x="${x(dd.getTime() + 432e5)}" y="${H - 5}" text-anchor="${i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}">${F.dm.format(dd)}</text>`; });
+    const line = pts.map((q, i) => (i ? 'L' : 'M') + x(q.t).toFixed(1) + ',' + y(q.v).toFixed(1)).join('');
+    if (pts.length > 1) {
+      s += `<path d="${line}L${x(pts[pts.length - 1].t).toFixed(1)},${M.t + ph}L${x(pts[0].t).toFixed(1)},${M.t + ph}Z" fill="url(#miniFill)"/>`;
+      s += `<path d="${line}" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke:var(--accent);filter:drop-shadow(0 0 4px rgba(46,230,138,.5))"/>`;
+    }
+    pts.slice(0, -1).forEach(q => { s += `<circle cx="${x(q.t)}" cy="${y(q.v)}" r="3.5" style="fill:var(--accent)"/>`; });
+    const L = pts[pts.length - 1], lx = x(L.t), ly = y(L.v);
+    s += `<circle cx="${lx}" cy="${ly}" r="10" fill="#2EE68A" fill-opacity=".2"/><circle cx="${lx}" cy="${ly}" r="6" style="fill:var(--accent)"/>`;
+    const lab = `${r1(L.v)} kg`, bw = lab.length * 7.6 + 16, bx = Math.min(W - M.r - bw, Math.max(M.l, lx - bw / 2)), by = Math.max(2, ly - 36);
+    s += `<rect x="${bx}" y="${by}" width="${bw}" height="24" rx="8" fill="#141C18" stroke="rgba(255,255,255,.14)"/><text x="${bx + bw / 2}" y="${by + 16.5}" text-anchor="middle" style="fill:var(--ink);font-weight:700;font-size:13px">${lab}</text>`;
+    s += `<rect x="${M.l}" y="${M.t - 10}" width="${pw}" height="${ph + 10}" fill="transparent"/></svg><div class="chart-tip"></div>`;
+    wrap.innerHTML = s;
+    bindTip(wrap, null, ev => {
+      const px = ev.clientX - wrap.querySelector('svg').getBoundingClientRect().left;
+      let best = pts[0]; for (const q of pts) if (Math.abs(x(q.t) - px) < Math.abs(x(best.t) - px)) best = q;
+      return { x: x(best.t), text: `${cap(F.short.format(dparse(best.date)))} · ${r1(best.v)} kg` };
+    });
   }
 
   function validatedCard(k, t, burn) {
@@ -423,13 +523,13 @@
       sh.setBody(mode === 'active' ? `<section class="card stack">
         <label class="field"><span>Calories brûlées aujourd'hui (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.active ?? ''}" placeholder="ex. 559"></label>
         <div class="burn-calc num" data-f="calc"></div>
-        <p class="note" style="margin:0">Entre le chiffre <b>« calories actives »</b> (ou « énergie active ») de ta montre. Kalo y ajoute ta dépense au repos estimée (${r0(bmr)} kcal) pour obtenir ta dépense totale du jour.</p>
+        <p class="note" style="margin:0">Entre le chiffre <b>« calories actives »</b> (ou « énergie active ») de ta montre. AutomaFit y ajoute ta dépense au repos estimée (${r0(bmr)} kcal) pour obtenir ta dépense totale du jour.</p>
       </section>
       <button class="btn plain block" data-a="mode">Entrer plutôt le TOTAL de ma montre (recommandé)</button>`
         : `<section class="card stack">
         <label class="field"><span>TOTAL de la journée (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.burn ?? ''}" placeholder="ex. 2 416"></label>
         <div class="burn-calc num" data-f="calc"></div>
-        <p class="note" style="margin:0"><b>Apple Watch</b> : app <b>Forme</b> → Résumé → touche l'anneau rouge → ligne <b>« TOTAL : … KCAL »</b> sous le graphique « Bouger ».${k === today() ? ' Kalo ajoute automatiquement ce que tu brûleras au repos jusqu\'à minuit.' : ''}</p>
+        <p class="note" style="margin:0"><b>Apple Watch</b> : app <b>Forme</b> → Résumé → touche l'anneau rouge → ligne <b>« TOTAL : … KCAL »</b> sous le graphique « Bouger ».${k === today() ? ' AutomaFit ajoute automatiquement ce que tu brûleras au repos jusqu\'à minuit.' : ''}</p>
       </section>
       <button class="btn plain block" data-a="mode">Je n'ai que les calories « Bouger » (actives)</button>`);
       const inp = $('[data-f="v"]', sh.body), out = $('[data-f="calc"]', sh.body);
@@ -438,7 +538,7 @@
         if (v == null) { out.innerHTML = `Sans saisie : estimation ${r0(g.tdee)} kcal`; return; }
         if (mode === 'active') { out.innerHTML = `Dépense du jour : ${r0(bmr)} + ${r0(v)} = <b>${r0(bmr + v)} kcal</b>`; return; }
         const rl = restLeft();
-        if (v < 1200) { out.innerHTML = `${r0(v)} ressemble à tes calories « Bouger » : Kalo ajoute ta dépense au repos → <b>${r0(bmr + v)} kcal</b>`; return; }
+        if (v < 1200) { out.innerHTML = `${r0(v)} ressemble à tes calories « Bouger » : AutomaFit ajoute ta dépense au repos → <b>${r0(bmr + v)} kcal</b>`; return; }
         out.innerHTML = rl ? `${r0(v)} + ~${r0(rl)} au repos d'ici minuit = <b>${r0(v + rl)} kcal</b>` : `Dépense du jour : <b>${r0(v)} kcal</b>`;
       };
       inp.addEventListener('input', upd); upd();
@@ -516,18 +616,56 @@
   let installPrompt = null;
   const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function aiPrompt() {
+    const p = S.profile;
+    return `Voici une photo de moi. Génère une image photoréaliste de moi-même à ${p.target ? r1(p.target) : 'mon poids idéal'} kg pour ${p.height} cm : garde exactement mon visage, ma couleur de peau, mes cheveux et mon âge. Silhouette plus sèche et athlétique, ventre plat, épaules et bras dessinés, posture confiante. Portrait vertical cadré du haut des cuisses à la tête, fond noir, éclairage de studio contrasté avec un léger reflet vert néon, rendu photo professionnelle très réaliste.`;
+  }
+  async function handlePhoto(file) {
+    try {
+      const url = URL.createObjectURL(file);
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const sc = Math.min(1, 1100 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      S.photo = c.toDataURL('image/jpeg', 0.85);
+      await Store.put('photo', S.photo); render(); toast('Photo objectif ajoutée 💪');
+    } catch (e) { toast('Image illisible, essaie une autre photo'); }
+  }
   function viewProfile() {
     const p = S.profile, g = goals(), c = g, w = currentWeight();
     const install = isStandalone() ? '' : `<section class="card"><h3>Installer l'application</h3>${isIOS()
       ? '<p class="small">Dans <b>Safari</b> : touche <b>« ⋯ »</b> à côté de la barre d\'adresse, puis <b>Partager</b> (carré avec une flèche), fais défiler et choisis <b>« Sur l\'écran d\'accueil »</b>. Sur les anciens iOS, le bouton Partager est directement en bas de l\'écran.</p>'
-      : installPrompt ? '<button class="btn block" data-action="install">Installer Kalo</button>' : '<p class="small">Dans <b>Chrome</b> : menu <b>⋮</b> puis <b>« Ajouter à l\'écran d\'accueil »</b> ou <b>« Installer l\'application »</b>.</p>'}</section>`;
-    return `<h1>Profil</h1>
+      : installPrompt ? '<button class="btn block" data-action="install">Installer AutomaFit</button>' : '<p class="small">Dans <b>Chrome</b> : menu <b>⋮</b> puis <b>« Ajouter à l\'écran d\'accueil »</b> ou <b>« Installer l\'application »</b>.</p>'}</section>`;
+    const hM = `${Math.floor(p.height / 100)}m${String(Math.round(p.height % 100)).padStart(2, '0')}`;
+    const imc = w / (p.height / 100) ** 2;
+    const prompt = aiPrompt();
+    return `<h1>Mon profil</h1>
+      <section class="card glow">
+        <div class="profile-head"><div class="avatar big" ${S.photo ? `style="background-image:url('${S.photo}')"` : ''}>${S.photo ? '' : ICON.body}</div>
+          <div><div class="n">${esc(p.name || 'Mon profil')}</div><div class="d">${p.age} ans · ${hM} · ${r1(w)} kg</div></div></div>
+        <div class="pstats"><div><b class="num">${r1(w)} kg</b><span>Poids actuel</span></div><div><b class="num">${p.target ? r1(p.target) + ' kg' : '–'}</b><span>Objectif</span></div><div><b class="num">${r1(imc)}</b><span>IMC</span></div></div>
+      </section>
+      <section class="card stack">
+        <div class="card-title">📷 Ma photo objectif</div>
+        ${S.photo ? `<div class="photo-preview" style="background-image:url('${S.photo}')"></div>` : '<p class="note" style="margin:0">Ajoute une image de toi à ton poids objectif, générée par IA : elle s\'affichera en haut de l\'accueil pour te motiver chaque jour.</p>'}
+        <div class="grid2"><button class="btn ${S.photo ? 'outline' : ''}" data-action="photo-pick">${S.photo ? 'Changer' : 'Ajouter ma photo'}</button>${S.photo ? '<button class="btn danger" data-action="photo-del">Retirer</button>' : ''}</div>
+        <details><summary class="btn plain" style="padding-left:0">Créer ma photo avec l'IA (ChatGPT, Gemini…)</summary>
+          <ol class="note" style="padding-left:18px;margin:8px 0">
+            <li>Ouvre l'app ChatGPT ou Gemini.</li>
+            <li>Envoie une photo de toi bien éclairée, de face, haut du corps visible.</li>
+            <li>Colle le texte ci-dessous et envoie.</li>
+            <li>Enregistre l'image obtenue dans Photos, puis « Ajouter ma photo » ici.</li></ol>
+          <div class="prompt-box">${esc(prompt)}</div>
+          <button class="btn outline block" style="margin-top:10px" data-action="copy-prompt">Copier le texte</button>
+          <p class="note">C'est une image de motivation, pas une prédiction : ton corps réel à ${p.target ? r1(p.target) + ' kg' : 'ton objectif'} sera un peu différent.</p>
+        </details>
+      </section>
       ${install}
       <section class="card">
         <h3>Objectifs quotidiens</h3>
-        <div class="row between"><div><div class="big num" style="font-size:28px;font-weight:750">${r0(g.kcal)} kcal</div><div class="num" style="color:var(--protein);font-weight:700">${r0(g.protein)} g de protéines</div></div>
+        <div class="row between"><div><div class="big num" style="font-size:28px;font-weight:800">${r0(g.kcal)} kcal</div><div class="num" style="color:var(--accent);font-weight:700">${r0(g.protein)} g protéines · ${r0(g.carbs)} g glucides</div><div class="num small muted">lipides ≈ ${r0(g.fat)} g (25 % des calories)</div></div>
         <div class="seg" style="width:150px"><button data-action="goal-mode" data-v="auto" class="${p.goalMode !== 'manual' ? 'on' : ''}">Auto</button><button data-action="goal-mode" data-v="manual" class="${p.goalMode === 'manual' ? 'on' : ''}">Manuel</button></div></div>
-        ${p.goalMode === 'manual' ? `<div class="grid2" style="margin-top:12px"><label class="field"><span>Calories (kcal)</span><input type="number" inputmode="numeric" id="mk" value="${p.kcalGoal || g.autoKcal || g.kcal}"></label><label class="field"><span>Protéines (g)</span><input type="number" inputmode="numeric" id="mp" value="${p.proteinGoal || g.autoProtein || g.protein}"></label></div><button class="btn block" style="margin-top:10px" data-action="save-manual">Enregistrer les objectifs</button>` : ''}
+        ${p.goalMode === 'manual' ? `<div class="grid2" style="margin-top:12px"><label class="field"><span>Calories (kcal)</span><input type="number" inputmode="numeric" id="mk" value="${p.kcalGoal || g.autoKcal || g.kcal}"></label><label class="field"><span>Protéines (g)</span><input type="number" inputmode="numeric" id="mp" value="${p.proteinGoal || g.autoProtein || g.protein}"></label><label class="field" style="grid-column:1/-1"><span>Glucides (g) — vide = calcul auto</span><input type="number" inputmode="numeric" id="mc" value="${p.carbGoal || ''}" placeholder="${r0(macroSplit(p.kcalGoal || g.kcal, p.proteinGoal || g.protein).carbs)}"></label></div><button class="btn block" style="margin-top:10px" data-action="save-manual">Enregistrer les objectifs</button>` : ''}
         <div class="tdee-box">
           <div class="row between"><span>Dépense de référence</span><b class="num">${r0(g.tdee)} kcal/j</b></div>
           ${g.watch.n >= 3 ? `<div class="seg" style="margin:10px 0 4px"><button data-action="tdee-src" data-v="watch" class="${g.source === 'watch' ? 'on' : ''}">⌚ Ma montre</button><button data-action="tdee-src" data-v="formula" class="${g.source === 'formula' ? 'on' : ''}">Formule</button></div>` : ''}
@@ -543,7 +681,7 @@
         <div class="grid2"><button class="btn outline" data-action="export">Exporter</button><label class="btn outline" style="position:relative">Importer<input type="file" accept="application/json,.json" data-input="import" style="position:absolute;inset:0;opacity:0"></label></div>
         <button class="btn danger block" data-action="reset">Effacer toutes les données</button>
       </section>
-      <p class="note">Kalo ${APP_VERSION} · stockage ${Store.mode === 'idb' ? 'IndexedDB' : 'local'} · données produits <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>. Les valeurs sont des estimations, pas un avis médical.</p>`;
+      <p class="note">AutomaFit ${APP_VERSION} · stockage ${Store.mode === 'idb' ? 'IndexedDB' : 'local'} · données produits <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>. Les valeurs sont des estimations, pas un avis médical.</p>`;
   }
 
   /* ---------- Progrès ---------- */
@@ -1129,12 +1267,12 @@
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '' };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: 'Sauvegarde Kalo' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+      try { await navigator.share({ files: [file], title: 'Sauvegarde AutomaFit' }); return; } catch (e) { if (e.name === 'AbortError') return; }
     }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
@@ -1146,7 +1284,7 @@
       if (d.app !== 'kalo' || !d.profile) throw new Error('format');
       if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
       await Store.clear();
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []);
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo);
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await loadState(); render(); toast('Sauvegarde restaurée');
     } catch (e) { toast('Fichier de sauvegarde invalide'); }
@@ -1163,6 +1301,15 @@
       openScanner({ meal: guessMeal(), date: UI.date });
     },
     burn: () => openBurn(UI.date),
+    'add-global': () => {
+      const k = UI.tab === 'journal' ? UI.date : today();
+      if (isLocked(k)) { UI.date = k; UI.tab = 'journal'; render(); toast('Journée validée : touche « Rouvrir » pour ajouter'); return; }
+      UI.date = k; openAdd(guessMeal(), k);
+    },
+    'photo-pick': () => $('#photoInput').click(),
+    'photo-del': () => { if (!confirm('Retirer ta photo objectif ?')) return; S.photo = ''; Store.del('photo'); render(); },
+    'copy-prompt': () => { navigator.clipboard?.writeText(aiPrompt()).then(() => toast('Texte copié ✓'), () => toast('Copie impossible : sélectionne le texte')); },
+    'mini-range': b => { UI.mini = +b.dataset.v; render(); },
     'meal-done': b => {
       const k = UI.date, m = b.dataset.meal; if (isLocked(k)) return;
       const d = getDay(k); d.mealsDone = d.mealsDone || {};
@@ -1208,9 +1355,9 @@
     'tdee-src': b => { S.profile.tdeeSource = b.dataset.v; Store.put('profile', S.profile); render(); toast(`Objectif : ${r0(goals().kcal)} kcal`); },
     'goal-mode': b => { S.profile.goalMode = b.dataset.v; Store.put('profile', S.profile); render(); },
     'save-manual': () => {
-      const k = num($('#mk').value), p = num($('#mp').value);
-      if (!(k >= 800 && k <= 6000) || !(p >= 20 && p <= 400)) { toast('Valeurs hors limites'); return; }
-      S.profile.kcalGoal = k; S.profile.proteinGoal = p; Store.put('profile', S.profile); render(); toast('Objectifs enregistrés');
+      const k = num($('#mk').value), p = num($('#mp').value), c = num($('#mc').value);
+      if (!(k >= 800 && k <= 6000) || !(p >= 20 && p <= 400) || (c != null && !(c >= 0 && c <= 900))) { toast('Valeurs hors limites'); return; }
+      S.profile.kcalGoal = k; S.profile.proteinGoal = p; S.profile.carbGoal = c || null; Store.put('profile', S.profile); render(); toast('Objectifs enregistrés');
     },
     export: () => exportData(),
     reset: async () => {
@@ -1240,9 +1387,10 @@
     const t = e.target.closest('[data-input]'); if (!t) return;
     if (t.dataset.input === 'date' && t.value) { UI.date = t.value; render(); }
     if (t.dataset.input === 'import' && t.files[0]) importData(t.files[0]);
+    if (t.dataset.input === 'photo' && t.files[0]) { handlePhoto(t.files[0]); t.value = ''; }
   });
 
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (UI.tab === 'progress' && !stack.length) { drawChart(); drawProjection(); } }, 150); });
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!stack.length) { if (UI.tab === 'progress') { drawChart(); drawProjection(); } if (UI.tab === 'journal') drawMini(); } }, 150); });
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if (UI.tab === 'profile') render(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && UI.date !== today() && UI.tab === 'journal' && !stack.length && UI._lastToday !== today()) { UI.date = today(); render(); } UI._lastToday = today(); });
 
