@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.6.1';
+  const APP_VERSION = '2.7.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -166,13 +166,19 @@
   const getDay = k => (S.days[k] = S.days[k] || { entries: [] });
   const isLocked = k => !!S.days[k]?.validated;
   // Dépense du jour : saisie (montre / Santé) ou estimation du profil
+  // Correction de la montre : les montres surestiment surtout les calories ACTIVES ; la dépense au repos est fiable.
+  const watchCorr = d => (d && d.corr != null ? d.corr : (S.profile?.watchCorr ?? 25)) / 100;
   function dayBurn(k) {
     const d = S.days[k];
-    if (d && d.active != null) { const bmr = d.bmr || calc(S.profile).bmr; return { v: bmr + d.active, measured: true, active: d.active, bmr }; }
+    if (d && d.active != null) {
+      const bmr = d.bmr || calc(S.profile).bmr, c = watchCorr(d), cut = Math.round(d.active * c);
+      return { v: bmr + d.active - cut, measured: true, active: d.active, bmr, cut, pct: Math.round(c * 100) };
+    }
     if (d && d.burn != null) {
-      let extra = 0;
-      if (d.burnAt) { const at = new Date(d.burnAt); if (dkey(at) === k) extra = Math.round(calc(S.profile).bmr / 24 * Math.max(0, 24 - at.getHours() - at.getMinutes() / 60)); }
-      return { v: d.burn + extra, measured: true, total: true, raw: d.burn, extra };
+      const bmr = calc(S.profile).bmr; let extra = 0, restSoFar = bmr;
+      if (d.burnAt) { const at = new Date(d.burnAt); if (dkey(at) === k) { const h = at.getHours() + at.getMinutes() / 60; extra = Math.round(bmr / 24 * Math.max(0, 24 - h)); restSoFar = bmr / 24 * h; } }
+      const c = watchCorr(d), cut = Math.round(Math.max(0, d.burn - restSoFar) * c);
+      return { v: d.burn - cut + extra, measured: true, total: true, raw: d.burn, extra, cut, pct: Math.round(c * 100) };
     }
     return { v: (k !== today() && d?.goal?.tdee) || goals().tdee, measured: false };
   }
@@ -424,7 +430,7 @@
     const P = split ? { k: t.planK, p: t.planP, c: t.planC } : { k: 0, p: 0, c: 0 };
     const cur = currentWeight();
     const sub = S.photo && p.target && cur > p.target ? `Encore ${r1(cur - p.target)} kg avant cette version de toi 🔥` : p.name ? `On reste focus, ${esc(p.name)} 💪` : QUOTES[d.getDate() % QUOTES.length];
-    const burnLabel = burn.active != null ? `<em>repos + ${r0(burn.active)} brûlées</em>` : burn.total ? `<em>montre${burn.extra ? ` + ~${r0(burn.extra)} d'ici minuit` : ''}</em>` : '<em>estimée</em>';
+    const burnLabel = burn.measured ? `<em>montre${burn.cut ? ` −${burn.pct} %` : ''}${burn.extra ? ` + ~${r0(burn.extra)} d'ici minuit` : ''}</em>` : '<em>estimée</em>';
     const meal = ([id, name]) => {
       const es = (S.days[k]?.entries || []).filter(e => e.meal === id);
       const kc = es.reduce((s, e) => s + e.kcal, 0);
@@ -581,18 +587,22 @@
     const d = S.days[k] || {};
     const bmr = calc(S.profile).bmr, g = goals();
     let mode = d.active != null ? 'active' : 'total';
+    let corr = Math.round(watchCorr(d.burn != null || d.active != null ? d : null) * 100);
+    const corrHTML = () => `<div class="corr-row"><span>Correction montre<small>sur les calories actives</small></span><div class="chips" style="margin:0">${[0, 15, 25, 35].map(c => `<button type="button" class="chip ${corr === c ? 'chip-on' : ''}" data-corr="${c}">${c ? '−' + c + ' %' : 'Aucune'}</button>`).join('')}</div></div>`;
     const restLeft = () => { if (k !== today()) return 0; const n = new Date(); return Math.round(bmr / 24 * Math.max(0, 24 - n.getHours() - n.getMinutes() / 60)); };
     const sh = makeSheet('Calories brûlées');
     const draw = () => {
       sh.setBody(mode === 'active' ? `<section class="card stack">
         <label class="field"><span>Calories brûlées aujourd'hui (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.active ?? ''}" placeholder="ex. 559"></label>
         <div class="burn-calc num" data-f="calc"></div>
+        ${corrHTML()}
         <p class="note" style="margin:0">Entre le chiffre <b>« calories actives »</b> (ou « énergie active ») de ta montre. Kalo y ajoute ta dépense au repos estimée (${r0(bmr)} kcal) pour obtenir ta dépense totale du jour.</p>
       </section>
       <button class="btn plain block" data-a="mode">Entrer plutôt le TOTAL de ma montre (recommandé)</button>`
         : `<section class="card stack">
         <label class="field"><span>TOTAL de la journée (kcal)</span><input type="number" inputmode="numeric" data-f="v" value="${d.burn ?? ''}" placeholder="ex. 2 416"></label>
         <div class="burn-calc num" data-f="calc"></div>
+        ${corrHTML()}
         <p class="note" style="margin:0"><b>Apple Watch</b> : app <b>Forme</b> → Résumé → touche l'anneau rouge → ligne <b>« TOTAL : … KCAL »</b> sous le graphique « Bouger ».${k === today() ? ' Kalo ajoute automatiquement ce que tu brûleras au repos jusqu\'à minuit.' : ''}</p>
       </section>
       <button class="btn plain block" data-a="mode">Je n'ai que les calories « Bouger » (actives)</button>`);
@@ -600,15 +610,24 @@
       const upd = () => {
         if (!out) return; const v = num(inp.value);
         if (v == null) { out.innerHTML = `Sans saisie : estimation ${r0(g.tdee)} kcal`; return; }
-        if (mode === 'active') { out.innerHTML = `Dépense du jour : ${r0(bmr)} + ${r0(v)} = <b>${r0(bmr + v)} kcal</b>`; return; }
-        const rl = restLeft();
-        if (v < 1200) { out.innerHTML = `${r0(v)} ressemble à tes calories « Bouger » : Kalo ajoute ta dépense au repos → <b>${r0(bmr + v)} kcal</b>`; return; }
-        out.innerHTML = rl ? `${r0(v)} + ~${r0(rl)} au repos d'ici minuit = <b>${r0(v + rl)} kcal</b>` : `Dépense du jour : <b>${r0(v)} kcal</b>`;
+        const c = corr / 100;
+        if (mode === 'active' || v < 1200) {
+          const cut = Math.round(v * c);
+          out.innerHTML = `${mode === 'active' ? '' : `${r0(v)} ressemble à tes calories « Bouger ». `}Repos ${r0(bmr)} + actives ${r0(v)}${cut ? ` − ${corr} % (${r0(cut)})` : ''} = <b>${r0(bmr + v - cut)} kcal</b>`;
+          return;
+        }
+        const rl = restLeft(), nowH = new Date().getHours() + new Date().getMinutes() / 60;
+        const restSoFar = k === today() ? bmr / 24 * nowH : bmr, cut = Math.round(Math.max(0, v - restSoFar) * c);
+        out.innerHTML = `Montre ${r0(v)}${cut ? ` − ${corr} % des actives (${r0(cut)})` : ''}${rl ? ` + ~${r0(rl)} au repos d'ici minuit` : ''} = <b>${r0(v - cut + rl)} kcal</b>`;
       };
       inp.addEventListener('input', upd); upd();
     };
     draw();
-    sh.body.addEventListener('click', e => { if (e.target.closest('[data-a="mode"]')) { mode = mode === 'active' ? 'total' : 'active'; draw(); } });
+    sh.body.addEventListener('click', e => {
+      if (e.target.closest('[data-a="mode"]')) { const v = $('[data-f="v"]', sh.body).value; mode = mode === 'active' ? 'total' : 'active'; draw(); $('[data-f="v"]', sh.body).value = ''; return; }
+      const cb = e.target.closest('[data-corr]');
+      if (cb) { const v = $('[data-f="v"]', sh.body).value; corr = +cb.dataset.corr; draw(); $('[data-f="v"]', sh.body).value = v; $('[data-f="v"]', sh.body).dispatchEvent(new Event('input')); }
+    });
     sh.setFoot(`${d.burn != null || d.active != null ? '<button class="btn outline" data-a="clear">Effacer</button>' : ''}<button class="btn grow" data-a="save">Enregistrer</button>`);
     sh.foot.onclick = e => {
       const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
@@ -618,10 +637,12 @@
         if (v != null && mode === 'total' && v < 1200) mode = 'active';
         if (v != null && mode === 'active' && (v < 0 || v > 5000)) { toast('Valeur entre 0 et 5 000 kcal'); return; }
         if (v != null && mode === 'total' && (v < 800 || v > 8000)) { toast('Valeur entre 800 et 8 000 kcal'); return; }
-        delete day.burn; delete day.active; delete day.bmr; delete day.burnAt;
+        delete day.burn; delete day.active; delete day.bmr; delete day.burnAt; delete day.corr;
+        S.profile.watchCorr = corr; Store.put('profile', S.profile);
+        if (v != null) { day.corr = corr; }
         if (v != null) { if (mode === 'active') { day.active = Math.round(v); day.bmr = bmr; } else { day.burn = Math.round(v); if (k === today()) day.burnAt = Date.now(); } }
       }
-      if (a === 'clear') { delete day.burn; delete day.active; delete day.bmr; delete day.burnAt; }
+      if (a === 'clear') { delete day.burn; delete day.active; delete day.bmr; delete day.burnAt; delete day.corr; }
       saveDay(k);
       closeSheet(1, then || (() => toast(a === 'clear' ? 'Retour à l\'estimation' : 'Calories brûlées enregistrées')));
     };
@@ -637,7 +658,7 @@
     sh.setBody(`
       <section class="card">
         <div class="vline"><span>Consommé</span><b class="num">${r0(t.kcal)} kcal</b></div>
-        <div class="vline"><span>Dépense ${burn.active != null ? `<em class="muted">(${r0(burn.bmr)} repos + ${r0(burn.active)} brûlées)</em>` : burn.total ? `<em class="muted">(montre ${r0(burn.raw)}${burn.extra ? ` + ~${r0(burn.extra)} d'ici minuit` : ''})</em>` : '<em class="muted">(estimée)</em>'}</span><b class="num">${r0(burn.v)} kcal</b></div>
+        <div class="vline"><span>Dépense ${burn.active != null ? `<em class="muted">(repos ${r0(burn.bmr)} + actives ${r0(burn.active)}${burn.cut ? ` − ${burn.pct} %` : ''})</em>` : burn.total ? `<em class="muted">(montre ${r0(burn.raw)}${burn.cut ? ` − ${r0(burn.cut)} de correction` : ''}${burn.extra ? ` + ~${r0(burn.extra)} d'ici minuit` : ''})</em>` : '<em class="muted">(estimée)</em>'}</span><b class="num">${r0(burn.v)} kcal</b></div>
         <div class="vline big-line"><span>${bal >= 0 ? 'Déficit' : 'Excédent'}</span><b class="num ${bal >= 0 ? 'good-text' : 'over-text'}">${signed(-bal)} kcal</b></div>
         <p class="note" style="margin:6px 0 0">≈ ${r0(Math.abs(bal) / 7.7)} g de graisse ${bal >= 0 ? 'en moins' : 'en plus'} (7 700 kcal ≈ 1 kg).</p>
         ${burn.measured ? '' : '<button class="btn block ghost" data-a="burn" style="margin-top:12px">⌚ Entrer le TOTAL de ma montre</button>'}

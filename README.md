@@ -38,6 +38,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 ## Bilan du jour et validation
 
 - **Montre (Apple Watch)** : Journal → *Bilan du jour* → **⌚ Ma montre** → entre le **TOTAL** de l'app Forme (ligne « TOTAL : … KCAL » sous le graphique « Bouger »). Saisi en cours de journée, Kalo ajoute la dépense au repos restante jusqu'à minuit. Un chiffre inférieur à 1 200 est compris comme les calories « Bouger » (actives) : Kalo y ajoute alors la dépense au repos estimée.
+- **Correction montre** (par défaut −25 %, réglable 0 / 15 / 25 / 35 % dans l'écran de saisie) : appliquée aux calories **actives** uniquement, car les montres surestiment surtout l'activité ; la dépense au repos n'est pas réduite. En mode TOTAL, la part active = total − dépense au repos écoulée à l'heure de saisie.
 - **Objectifs calés sur la montre** : dès 3 journées passées avec une dépense saisie, la *dépense de référence* devient la moyenne de la montre (28 derniers jours) au lieu de la formule ; objectif = cette moyenne − déficit du rythme choisi. Bascule Montre / Formule dans Profil.
 - **Valider un repas** : coche le rond à gauche du nom du repas → il passe en bleu (« mangé »). Les repas non cochés comptent comme « prévu » : tu peux préparer ton dîner à l'avance et voir dans le résumé *mangé + prévu* par rapport à l'objectif (barre pleine = mangé, claire = prévu). Décoche pour modifier un repas validé.
 - **Bilan** = dépense − consommé. Un nombre négatif est un déficit (perte), un positif un excédent.

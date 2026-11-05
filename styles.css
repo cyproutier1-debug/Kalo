@@ -553,3 +553,7 @@ body::before { filter: saturate(1.15); }
 .bilan-row .v { font-size: clamp(17px, 5.4vw, 22px); gap: 4px; white-space: nowrap; }
 .bilan-row .v svg { width: 17px; height: 17px; }
 .bilan-row .l { font-size: 13px; }
+
+.corr-row { display: flex; flex-direction: column; gap: 8px; }
+.corr-row > span { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.corr-row > span small { display: inline; margin-left: 6px; font-weight: 400; color: var(--ink-3); }
