@@ -76,7 +76,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - La séance en cours est enregistrée en continu : tu peux quitter l'app ou changer d'onglet (bandeau « Séance en cours » au-dessus des onglets).
 - **Fin de séance** : durée, volume soulevé (kg × reps), séries, records battus (1RM estimé Epley = charge × (1 + reps/30), ou charge max), kcal estimées (MET 5, indicatif, non ajoutées au bilan car la montre les compte déjà). Possibilité d'enregistrer la séance comme routine.
 - **Suivi** : semaines d'affilée avec au moins une séance, séances sur 30 jours, volume sur 7 jours, carte des muscles travaillés sur 7 jours (séries par muscle, un muscle secondaire compte pour ½), volume par semaine sur 8 semaines, historique, fiche par exercice (records, courbe du 1RM estimé, historique).
-- Carte musculaire : silhouette homme ou femme au choix (bouton au-dessus de la carte ; par défaut selon le sexe du profil), dessin original dans `body.js`.
+- Carte musculaire : silhouette homme ou femme au choix (bouton au-dessus de la carte ; par défaut selon le sexe du profil). Dessins issus de la bibliothèque libre react-native-body-highlighter (licence MIT, `vendor/body-map-data.js` + `vendor/BODY-MAP-LICENSE`).
 - Bibliothèque d'environ 90 exercices (`exercises.js`) + exercices personnalisés (charge × reps, poids du corps + lest, durée, cardio).
 - *Mes aliments* (aliments créés, récents) est maintenant dans Profil.
 
@@ -102,4 +102,5 @@ Unbounded 900 (grands titres), Oxanium 800 (chiffres), Sora 700/600 (titres de c
 
 - Produits : [Open Food Facts](https://world.openfoodfacts.org) (base collaborative, licence ODbL). Si un produit est absent ou incomplet, crée-le dans l'app : il sera reconnu au prochain scan.
 - Aliments génériques (`foods.js`) : valeurs moyennes, modifiables.
+- Carte musculaire : react-native-body-highlighter (MIT, © 2022 ELABBASSI Hicham).
 - Scanner : détecteur natif du navigateur sur Android, bibliothèque ZXing (Apache 2.0, dans `vendor/`) sur iPhone.

@@ -68,7 +68,7 @@ window.KaloMuscuInit = K => {
   /* ---------- Carte musculaire (dessin original) ---------- */
   const bodySex = () => M.settings.body || (S.profile?.sex === 'f' ? 'f' : 'm');
   function bodySVG(side, sets) {
-    const fill = k => { const v = sets[k] || 0; return v > 0 ? `rgba(var(--accent-rgb),${(0.3 + Math.min(1, v / 12) * 0.7).toFixed(2)})` : 'rgba(148,163,184,.17)'; };
+    const fill = k => { const v = sets[k] || 0; return v > 0 ? `rgba(var(--accent-rgb),${(0.3 + Math.min(1, v / 12) * 0.7).toFixed(2)})` : 'rgba(148,163,184,.26)'; };
     return window.KaloBody ? window.KaloBody(side, fill, bodySex()) : '';
   }
 
