@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.12.0';
+  const APP_VERSION = '3.0.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -151,7 +151,7 @@
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme); S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme); S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -161,7 +161,7 @@
 
   function saveDay(k) {
     const d = S.days[k];
-    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !(d.mealsDone && Object.keys(d.mealsDone).length) && !(d.supps && Object.keys(d.supps).length))) { delete S.days[k]; return Store.del('day:' + k); }
+    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !(d.mealsDone && Object.keys(d.mealsDone).length) && !(d.supps && Object.keys(d.supps).length) && !d.water)) { delete S.days[k]; return Store.del('day:' + k); }
     if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, carbs: g.carbs, tdee: g.tdee }; }
     return Store.put('day:' + k, d);
   }
@@ -366,6 +366,7 @@
     Mu.updateBanner();
     const key = UI.tab + (UI.tab === 'journal' ? UI.date : '');
     if (UI._shown !== key && !stack.length) { UI._shown = key; playEnter(v); }
+    Bo.checkBadges(stack.length > 0);
   }
 
   // Accueil / onboarding
@@ -462,7 +463,7 @@
           <div class="grow"><h2>${name}</h2>${es.length ? `<div class="meal-macros num"><span class="mp">P ${r0(mp)} g</span><span class="mc">G ${r0(mc)} g</span><span class="mf">L ${r0(mf)} g</span></div>` : ''}</div>
           <span class="kcal num">${es.length ? `<span class="kv"><b>${r0(kc)}</b> kcal</span><small>${done ? 'mangé' : 'prévu'}</small>` : ''}</span></div>
         ${es.map(e => `<button class="entry" data-action="edit-entry" data-id="${e.id}"><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(entrySub(e))}</div></div><div class="val num">${r0(e.kcal)}<small>${r0(e.p)} g prot.</small></div></button>`).join('')}
-        ${locked || done ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}</div>`}</section>`;
+        ${locked || done ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}${es.length ? `<button data-action="fav-save" data-meal="${id}">⭐ Favori</button>` : ''}</div>`}</section>`;
     };
     return `
       <header class="hero">
@@ -470,7 +471,7 @@
         <div class="brand-row">${brandHTML()}<button class="icon-btn glass" data-tab="profile" aria-label="Profil et réglages">${ICON.gear}</button></div>
         <div class="hero-text ${S.photo ? '' : 'wide'}">
           <div class="day-title"><button class="icon-btn" data-action="day-prev" aria-label="Jour précédent">${ICON.left}</button><label>${esc(label)}<input type="date" value="${k}" data-input="date" aria-label="Choisir une date" style="position:absolute;inset:0;opacity:0;width:100%"></label><button class="icon-btn" data-action="day-next" aria-label="Jour suivant">${ICON.right}</button></div>
-          <p class="hero-sub">${sub}</p>
+          <p class="hero-sub">${sub}</p>${Bo.streakChip()}
           ${S.photo ? '' : '<button class="btn ghost small" data-action="photo-pick">📷 Ajoute ta photo objectif</button>'}
         </div>
       </header>
@@ -487,7 +488,10 @@
         </div>
         <div class="today-sub num">${split ? `Mangé ${r0(t.eatenK)} · prévu ${r0(t.planK)} · ` : ''}consommé ${r0(t.kcal)} / ${r0(g.kcal)} kcal</div>
       </section>
+      ${Bo.backupCard()}
+      ${Bo.coachCard(k)}
       ${suppsCard(k)}
+      ${Bo.waterCard(k)}
       ${locked ? validatedCard(k, t, burn) : ''}
       <section class="card">
         <div class="row between"><div class="card-title">${ICON.cal}Bilan du jour</div>${locked ? '' : `<button class="watch-pill ${burn.measured ? 'on' : ''}" data-action="burn">${ICON.watch}Ma montre<i></i></button>`}</div>
@@ -879,6 +883,7 @@
         : `<span><i style="background:var(--accent);border-radius:50%"></i>Pesées</span>${S.profile.target ? `<span><i class="dash"></i>Poids objectif (${r1(S.profile.target)} kg)</span>` : ''}`;
     const ws = sortedWeights().reverse().slice(0, 8);
     return `<h1>Progrès</h1>
+      ${Bo.weekHTML()}
       ${viewProjection()}
       <div class="seg">${[['week', 'Semaine'], ['month', 'Mois'], ['year', 'Année']].map(([v, l]) => `<button data-action="period" data-v="${v}" class="${UI.period === v ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="period-nav"><button class="icon-btn" data-action="per-prev" aria-label="Période précédente">${ICON.left}</button><b>${periodLabel(r)}</b><button class="icon-btn" data-action="per-next" aria-label="Période suivante" ${isCurrent ? 'disabled style="opacity:.3"' : ''}>${ICON.right}</button></div>
@@ -892,7 +897,8 @@
       <section class="card" style="margin-top:14px">
         <div class="row between" style="margin-bottom:6px"><h3 style="margin:0">Pesées</h3><button class="btn plain" data-action="add-weight">+ Ajouter</button></div>
         ${ws.length ? ws.map(w => `<button class="item" data-action="edit-weight" data-date="${w.date}" style="padding-left:0;padding-right:0"><div class="grow">${cap(F.dmy.format(dparse(w.date)))}</div><b class="num">${r1(w.kg)} kg</b></button>`).join('') : '<div class="empty small">Aucune pesée.</div>'}
-      </section>`;
+      </section>
+      ${Bo.trophiesHTML()}`;
   }
 
   /* ---------- Graphiques (SVG) ---------- */
@@ -1294,6 +1300,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       const local = q ? localSearch(q) : S.recents.slice(0, 25);
       list = [...local, ...(offList || [])];
       let h = '';
+      if (!q) h += Bo.favsHTML();
       if (!q) h += local.length ? `<h3>Récents</h3><section class="card list">${local.map((f, i) => foodItem(f, i)).join('')}</section>` : `<div class="empty">Scanne un produit ou recherche un aliment.<br><span class="small">Les aliments utilisés apparaîtront ici.</span></div>`;
       else {
         h += local.length ? `<h3>Mes aliments & génériques</h3><section class="card list">${local.map((f, i) => foodItem(f, i)).join('')}</section>` : '';
@@ -1315,6 +1322,8 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     input.addEventListener('input', () => { q = input.value; offList = null; offState = ''; draw(); });
     $('form', sh.body).addEventListener('submit', e => { e.preventDefault(); input.blur(); runOff(); });
     sh.body.addEventListener('click', e => {
+      const fr = Bo.favClick(e, ctx, msg => closeAll(() => toast(msg)));
+      if (fr === 'redraw') return draw(); if (fr) return;
       const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'scan') return openScanner(ctx);
       if (a === 'quick') return openQuick(ctx);
@@ -1342,6 +1351,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     const recent = S.recents.find(r => foodKey(r) === foodKey(food));
     let mode = 'g', qty = 100;
     if (entry) { if (entry.count && entry.unit) { mode = 'u'; qty = entry.count; } else qty = Math.round(entry.grams * 10) / 10; }
+    else if (ctx.grams) { mode = 'g'; qty = Math.round(ctx.grams); }
     else if (recent?.lastGrams) { if (recent.lastCount && food.unit) { mode = 'u'; qty = recent.lastCount; } else qty = recent.lastGrams; }
     else if (food.unit) { mode = 'u'; qty = 1; }
     const p = food.per100;
@@ -1567,16 +1577,16 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme, fx: S.fx, muscu: Mu.exportData() };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme, fx: S.fx, favs: S.favs, badges: S.badges, muscu: Mu.exportData() };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: 'Sauvegarde Kalo' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+      try { await navigator.share({ files: [file], title: 'Sauvegarde Kalo' }); Bo.markExport(); render(); return; } catch (e) { if (e.name === 'AbortError') return; }
     }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    toast('Sauvegarde téléchargée');
+    toast('Sauvegarde téléchargée'); Bo.markExport(); render();
   }
   async function importData(file) {
     try {
@@ -1586,7 +1596,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       const keepAI = S.ai;
       await Store.clear();
       await Store.put('ai', keepAI);
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx);
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx); if (d.favs) await Store.put('favs', d.favs); if (d.badges) { await Store.put('badges', d.badges); await Store.put('badgesInit', true); }
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await Mu.importData(d.muscu);
       await loadState(); render(); toast('Sauvegarde restaurée');
@@ -1595,6 +1605,10 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
 
   /* ---------- Musculation (muscu.js) ---------- */
   const Mu = window.KaloMuscuInit({ $, $$, esc, r0, r1, num, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, closeAll, niceStep, bindTip, currentWeight });
+
+  /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
+  const Bo = window.KaloBoostInit({ $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet,
+    goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData });
 
   /* ---------- Actions ---------- */
   const actions = {
@@ -1685,7 +1699,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     },
     install: async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice.catch(() => {}); installPrompt = null; render(); },
   };
-  Object.assign(actions, Mu.actions);
+  Object.assign(actions, Mu.actions, Bo.actions);
 
   document.addEventListener('click', e => {
     if (e.target.matches?.('input[type=date]')) { try { e.target.showPicker?.(); } catch (err) { /* ignore */ } }

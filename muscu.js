@@ -427,5 +427,7 @@ window.KaloMuscuInit = K => {
     for (const w of d.workouts || []) await Store.put('wo:' + w.id, w);
     await Store.put('routines', d.routines || []); await Store.put('exos', d.custom || []); if (d.settings) await Store.put('muscuSettings', d.settings);
   }
-  return { view, afterRender, actions, onLoad, updateBanner, exportData, importData, M };
+  const stats = (days = 7) => ({ n: M.workouts.length, streak: streakWeeks(), week: M.workouts.filter(w => w.start >= Date.now() - days * DAY).length,
+    prs: M.workouts.reduce((a, w) => a + recordsOf(w).length, 0) });
+  return { view, afterRender, actions, onLoad, updateBanner, exportData, importData, stats, M };
 };

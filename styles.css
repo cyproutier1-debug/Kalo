@@ -733,3 +733,79 @@ body::before { inset: -12%; animation: bgDrift 38s ease-in-out infinite alternat
   body::before, #ambient i, .brand svg path, .hero-photo, .ring-wrap::before, .ring-wrap .arc, .ring-center svg, .bar > div::after, .tab-plus, .card.glow, .body-map path, .watch-pill.on i, #wo-banner svg, .wo-row.done .set-check, .tab.active svg, #view.enter > *, #view.enter .bar > div { animation: none !important; }
   #ambient { display: none; }
 }
+
+/* ---------- v3.0 Boost ---------- */
+/* Série dans l'en-tête */
+.streak-chip { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 10px; padding: 6px 12px; border-radius: 999px; font: 700 13px var(--f-card); color: #FFD9A0;
+  background: linear-gradient(90deg, rgba(255, 120, 30, .22), rgba(255, 200, 60, .12)); border: 1px solid rgba(255, 150, 50, .35); box-shadow: 0 0 16px rgba(255, 120, 30, .2); animation: chipGlow 2.6s ease-in-out infinite; }
+@keyframes chipGlow { 50% { box-shadow: 0 0 24px rgba(255, 120, 30, .38); } }
+/* Coach */
+.coach { border-color: rgba(var(--accent-rgb), .25); background: linear-gradient(160deg, rgba(var(--accent-rgb), .10), rgba(9, 11, 18, .75) 55%); }
+.coach-tip { margin: 10px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.coach-tip b { color: var(--ink); font-family: var(--f-num); font-weight: 800; }
+.coach-sug { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.coach-food { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--card-border); background: rgba(255,255,255,.04); color: var(--ink); }
+.coach-food b { font: 600 15px var(--f-card); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coach-food span { grid-column: 1; font-size: 12.5px; color: var(--accent); }
+.coach-food i { grid-row: 1 / span 2; grid-column: 2; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 800 22px/34px var(--f-text); text-align: center; font-style: normal; }
+/* Hydratation */
+.water { display: flex; gap: 14px; align-items: center; }
+.water.done { border-color: rgba(56, 189, 248, .45); }
+.water-bottle { position: relative; flex: 0 0 auto; width: 58px; height: 86px; border-radius: 14px 14px 18px 18px; border: 2px solid rgba(125, 211, 252, .45); overflow: hidden; background: rgba(56, 189, 248, .06); }
+.water-bottle::before { content: ""; position: absolute; top: -2px; left: 50%; width: 22px; height: 8px; margin-left: -11px; border-radius: 0 0 6px 6px; background: rgba(125, 211, 252, .45); z-index: 2; }
+.water-fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #38BDF8, #2563EB); transition: top .6s cubic-bezier(.3, .8, .3, 1); }
+.water-fill svg { position: absolute; left: 0; top: -9px; width: 200%; height: 10px; fill: #38BDF8; animation: wave 2.4s linear infinite; }
+@keyframes wave { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.water-bottle b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.6); z-index: 3; }
+.water-val { font-size: 14px; color: #7DD3FC; }
+.glasses { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
+.glasses i { width: 13px; height: 17px; border-radius: 3px 3px 5px 5px; border: 1.5px solid rgba(125, 211, 252, .45); }
+.glasses i.on { background: linear-gradient(180deg, #38BDF8, #2563EB); border-color: #38BDF8; box-shadow: 0 0 6px rgba(56, 189, 248, .5); }
+.water-btns { display: flex; gap: 8px; }
+.water-btns .chip { flex: 1; color: var(--ink); padding: 8px 6px; }
+.water-btns .chip:first-child { flex: 0 0 44px; }
+.water-btns .chip:disabled { opacity: .35; }
+/* Repas favoris */
+.fav-item { padding: 6px 8px 6px 16px; }
+.fav-add { border: 0; background: none; color: inherit; text-align: left; padding: 6px 0; min-width: 0; }
+.meal-foot { flex-wrap: wrap; }
+/* Séries */
+.streaks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+.streak { text-align: center; padding: 14px 8px; border-radius: 20px; background: var(--card); border: 1px solid var(--card-border); }
+.streak .fl { font-size: 24px; display: block; filter: grayscale(1) opacity(.45); }
+.streak.on .fl { filter: none; animation: flicker 1.8s ease-in-out infinite; }
+.streak b { display: block; font-size: 26px; margin-top: 4px; }
+.streak small { color: var(--ink-3); font-size: 12px; }
+.streak.on { border-color: rgba(255, 150, 50, .35); background: linear-gradient(180deg, rgba(255, 120, 30, .12), rgba(9, 11, 18, .7)); }
+/* Trophées */
+.next-badge { display: flex; align-items: center; gap: 12px; }
+.next-badge .ico, .unlock-badge .ico { font-size: 34px; }
+.badges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.badge-t { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px 10px; border-radius: 16px; border: 1px solid var(--card-border); background: rgba(255,255,255,.03); color: var(--ink-3); }
+.badge-t .ico { font-size: 26px; filter: grayscale(1) opacity(.35); }
+.badge-t b { font: 600 10.5px/1.2 var(--f-card); text-align: center; }
+.badge-t i { position: absolute; left: 0; bottom: 0; height: 3px; background: rgba(var(--accent-rgb), .7); }
+.badge-t.ok { color: var(--ink); border-color: rgba(255, 196, 0, .4); background: radial-gradient(circle at 50% 25%, rgba(255, 196, 0, .16), rgba(255,255,255,.03) 70%); }
+.badge-t.ok .ico { filter: none; }
+.unlock { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; }
+.unlock-badge { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 26px 16px; border-radius: 24px; border: 1px solid rgba(255, 196, 0, .45); background: radial-gradient(circle at 50% 20%, rgba(255, 196, 0, .22), rgba(9, 11, 18, .85) 70%); animation: popIn .5s cubic-bezier(.2, 1.6, .4, 1) both; }
+.unlock-badge .ico { font-size: 64px; animation: flicker 2s ease-in-out infinite; }
+.unlock-badge b { font: 900 22px var(--f-title, var(--f-card)); }
+.unlock-badge small { color: var(--ink-2); font-size: 14px; }
+/* Bilan de la semaine */
+.week-top { display: flex; align-items: center; gap: 14px; margin: 12px 0 14px; }
+.score-ring { position: relative; width: 84px; height: 84px; flex: 0 0 auto; }
+.score-ring svg { width: 84px; height: 84px; filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), .45)); }
+.score-ring > div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-ring b { font-size: 28px; line-height: 1; color: var(--accent); }
+.score-ring small { font-size: 11px; color: var(--ink-3); }
+.week-grade { font: 800 20px var(--f-card); }
+.week-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.week-grid > div { padding: 10px 6px; border-radius: 14px; background: rgba(255,255,255,.04); text-align: center; }
+.week-grid b { display: block; font-size: 17px; }
+.week-grid small { font-size: 11px; color: var(--ink-3); }
+#view.enter .score-ring .arc { animation: arcIn 1.2s cubic-bezier(.3, .7, .2, 1) .2s both; }
+/* Sauvegarde */
+.backup { border-color: rgba(250, 204, 21, .35); background: linear-gradient(160deg, rgba(250, 204, 21, .10), rgba(9, 11, 18, .75) 60%); }
+.backup .ico { font-size: 28px; }
+@media (prefers-reduced-motion: reduce) { .streak-chip, .water-fill svg, .streak.on .fl, .unlock-badge, .unlock-badge .ico { animation: none !important; } }

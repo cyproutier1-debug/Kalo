@@ -8,7 +8,7 @@ L'app doit être servie en **https** (sinon pas de caméra ni d'installation). G
 
 1. Crée un compte sur https://github.com (gratuit).
 2. Clique **New repository** → nom : `kalo` → **Public** → **Create repository**.
-3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, fx.js, exercises.js, body.js, muscu.js, sw.js, manifest.webmanifest, et les dossiers `icons`, `vendor`, `fonts` et `exo-img`) → **Commit changes**.
+3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, fx.js, exercises.js, body.js, muscu.js, boost.js, sw.js, manifest.webmanifest, et les dossiers `icons`, `vendor`, `fonts` et `exo-img`) → **Commit changes**.
    - `index.html` doit être à la racine du dépôt, pas dans un sous-dossier.
 4. **Settings** → **Pages** → Source : **Deploy from a branch** → Branch : `main` / `(root)` → **Save**.
 5. Attends 1 à 2 minutes : l'adresse s'affiche en haut de la page Pages, du type `https://TON-PSEUDO.github.io/kalo/`.
@@ -45,6 +45,16 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Valider la journée** (bouton en bas du journal) : affiche le récap (objectifs atteints, déficit, projection sur 4 semaines) coche tous les repas et verrouille la journée. « Rouvrir » permet de la modifier.
 - Dans Progrès, le bilan estimé utilise ta dépense réelle quand tu l'as saisie.
 - **Animation de validation** (repas ou journée) : flammes qui montent le long des bords de la carte du bas jusqu'en haut, léger zoom de la carte, puis feu d'artifice (5 fusées qui partent du sommet de la carte et explosent en gerbes colorées qui retombent), avec sons de mèche, de flammes, de sifflement de fusée, d'explosion et de crépitements (sons synthétisés dans `fx.js`, aucun fichier audio). Profil → *Animation de validation* pour couper l'animation ou les sons. Sur iPhone, le mode silencieux coupe les sons.
+
+## Version 3 : coach, eau, favoris, séries, trophées
+
+- **Coach du jour** (Journal, aujourd'hui) : protéines et calories restantes, rappel d'hydratation et de compléments, et 3 idées tirées de **tes** aliments (les plus riches en protéines par calorie qui rentrent dans ce qu'il te reste). Touche une idée : la fiche s'ouvre avec la quantité habituelle.
+- **Hydratation** : objectif 35 ml par kg de poids (arrondi à 25 cl), boutons + 1 verre (25 cl), + 50 cl, −. Bouteille animée, fête quand l'objectif est atteint.
+- **Repas favoris** : dans un repas, « ⭐ Favori » enregistre tous ses aliments ; dans Ajouter, la section *Repas favoris* les ajoute en un geste (× pour supprimer un favori).
+- **Séries** (Progrès) : jours saisis d'affilée, jours protéines atteintes, jours sous l'objectif calories. La série en cours s'affiche aussi sous la date du Journal à partir de 2 jours.
+- **Trophées** (Progrès) : 24 trophées (régularité, protéines, déficit cumulé, kilos perdus, eau, compléments, muscu, records…), barre de progression vers le prochain, écran de célébration avec feu d'artifice au déblocage.
+- **Bilan des 7 derniers jours** (haut de Progrès) : note S / A / B / C / D sur 100 (protéines atteintes + calories tenues, pondéré par le nombre de jours saisis), moyenne kcal, jours dans l'objectif, graisse estimée, variation de poids, séances de muscu.
+- **Rappel de sauvegarde** : à partir de 5 jours saisis, si aucune sauvegarde depuis 14 jours, une carte propose l'export (« Plus tard » = 7 jours).
 
 ## Projection jusqu'à l'objectif (onglet Progrès)
 
