@@ -66,25 +66,10 @@ window.KaloMuscuInit = K => {
   const kcalEstimate = w => Math.round(5 * (currentWeight() || 80) * ((w.end || Date.now()) - w.start) / 36e5);
 
   /* ---------- Carte musculaire (dessin original) ---------- */
+  const bodySex = () => M.settings.body || (S.profile?.sex === 'f' ? 'f' : 'm');
   function bodySVG(side, sets) {
-    const L = [[45, 26], [30, 32], [23, 38], [20, 52], [18, 70], [15, 88], [14, 100], [14, 110], [19, 111], [21, 100], [24, 84], [27, 68], [31, 56], [34, 62], [35, 80], [34, 96], [33, 112], [34, 135], [36, 150], [35, 165], [37, 185], [39, 198], [37, 205], [47, 205], [47, 196], [47, 180], [48, 165], [47, 150], [48, 132], [49, 115], [50, 110]];
-    const pts = [...L, ...L.slice(0, -1).reverse().map(([x, y]) => [100 - x, y])];
-    const fill = k => { const v = sets[k] || 0; return v > 0 ? `rgba(var(--accent-rgb),${(0.25 + Math.min(1, v / 12) * 0.7).toFixed(2)})` : 'rgba(148,163,184,.16)'; };
-    const sym = (k, f) => f(false) + f(true);
-    const el = (k, cx, cy, rx, ry, rot = 0) => sym(k, m => { const x = m ? 100 - cx : cx, r = m ? -rot : rot; return `<ellipse data-m="${k}" cx="${x}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${r} ${x} ${cy})" style="fill:${fill(k)}"/>`; });
-    const poly = (k, p) => sym(k, m => `<polygon data-m="${k}" points="${p.map(([x, y]) => `${m ? 100 - x : x},${y}`).join(' ')}" style="fill:${fill(k)}"/>`);
-    let s = `<svg viewBox="0 0 100 212" class="body-svg" aria-label="Muscles ${side === 'front' ? 'face' : 'dos'}"><polygon points="${pts.map(p => p.join(',')).join(' ')}" class="body-base"/><circle cx="50" cy="15" r="10" class="body-base"/>`;
-    if (side === 'front') {
-      s += poly('trapezes', [[44.5, 27], [35, 33], [44.5, 34]]) + el('epaules', 29, 40, 6.8, 6, -20) + el('pecs', 41.3, 47, 8.2, 6.6, 8);
-      s += el('biceps', 24, 57, 4, 9, 10) + el('avantbras', 19.5, 84, 3.6, 12, 8) + `<rect data-m="abdos" x="43.5" y="56" width="13" height="31" rx="4" style="fill:${fill('abdos')}"/>` + el('abdos', 37.6, 72, 3, 10, -4);
-      s += el('quadriceps', 40.5, 129, 6.2, 20, 3) + el('adducteurs', 46.6, 120, 2.4, 10) + el('mollets', 39.6, 172, 3.8, 13, 2);
-      s += '<path d="M44 66h12M44 74h12M50 57v29" class="body-line"/>';
-    } else {
-      s += `<polygon data-m="trapezes" points="50,25 36,34 50,54 64,34" style="fill:${fill('trapezes')}"/>` + el('epaules', 29, 40, 6.8, 6, 20);
-      s += poly('dos', [[36.5, 43], [48.5, 52], [47.5, 74], [38, 67]]) + el('triceps', 24, 57, 4, 9, 10) + el('avantbras', 19.5, 84, 3.6, 12, 8);
-      s += `<rect data-m="lombaires" x="44" y="75" width="12" height="13" rx="3" style="fill:${fill('lombaires')}"/>` + el('fessiers', 42.6, 100, 7.4, 8) + el('ischios', 41, 131, 6.2, 18, 2) + el('mollets', 40, 170, 4.8, 13, 2);
-    }
-    return s + '</svg>';
+    const fill = k => { const v = sets[k] || 0; return v > 0 ? `rgba(var(--accent-rgb),${(0.3 + Math.min(1, v / 12) * 0.7).toFixed(2)})` : 'rgba(148,163,184,.17)'; };
+    return window.KaloBody ? window.KaloBody(side, fill, bodySex()) : '';
   }
 
   /* ---------- Vue de l'onglet ---------- */
@@ -107,6 +92,8 @@ window.KaloMuscuInit = K => {
         : '<section class="card"><p class="note" style="margin:0">Crée tes routines (ex. « Push », « Jambes & Dos ») pour lancer une séance pré-remplie en un geste, avec tes charges de la dernière fois. Tu peux aussi enregistrer une séance libre comme routine à la fin.</p></section>'}
       <div class="section-title"><h2>Muscles · 7 jours</h2></div>
       <section class="card">
+        <div class="seg body-seg"><button data-action="body-sex" data-v="m" class="${bodySex() === 'm' ? 'on' : ''}">Homme</button><button data-action="body-sex" data-v="f" class="${bodySex() === 'f' ? 'on' : ''}">Femme</button></div>
+        <div class="body-labels"><span>Face</span><span>Dos</span></div>
         <div class="body-map">${bodySVG('front', wk)}${bodySVG('back', wk)}</div>
         ${top.length ? `<div class="chips" style="justify-content:center;margin-top:12px">${top.slice(0, 8).map(([k, v]) => `<span class="chip mu-chip"><i style="background:rgba(var(--accent-rgb),${(0.25 + Math.min(1, v / 12) * 0.7).toFixed(2)})"></i>${esc(MUS[k] || k)} · ${r1(v)}</span>`).join('')}</div><p class="note" style="text-align:center;margin:8px 0 0">Séries par muscle (une série d'un muscle secondaire compte pour ½). Repère courant : 10 à 20 séries par muscle et par semaine.</p>` : '<p class="note" style="text-align:center;margin:10px 0 0">Aucune séance sur les 7 derniers jours.</p>'}
       </section>
@@ -415,6 +402,7 @@ window.KaloMuscuInit = K => {
     'wo-detail': b => { const w = M.workouts.find(x => x.id === b.dataset.id); if (w) openSummary(w, false); },
     'wo-all': () => openAll(),
     'exo-lib': () => openLibrary(),
+    'body-sex': b => { M.settings.body = b.dataset.v; Store.put('muscuSettings', M.settings); render(); },
   };
   const exportData = () => ({ workouts: M.workouts, routines: M.routines, custom: M.custom, settings: M.settings });
   async function importData(d) {
