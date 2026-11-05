@@ -9,6 +9,10 @@ window.KaloMuscuInit = K => {
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const exos = () => [...BASE, ...M.custom];
   const exo = id => exos().find(e => e.id === id) || { id, name: 'Exercice supprimé', muscle: 'autre', sec: [], equip: 'autre', type: 'w' };
+  const IMG = window.KALO_EXO_IMG || {};
+  const thumb = (id, cls = '') => IMG[id] ? `<img class="exo-thumb ${cls}" src="exo-img/${IMG[id]}/2.webp" alt="" loading="lazy">` : `<span class="exo-thumb ${cls} none">${ICON.dumbbell}</span>`;
+  const anim = id => IMG[id] ? `<div class="exo-anim">${[1, 2, 3].map(i => `<img class="f${i}" src="exo-img/${IMG[id]}/${i}.webp" alt="">`).join('')}</div>` : `<div class="exo-anim none">${ICON.dumbbell}</div>`;
+  const videoUrl = e => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(e.name + ' exécution technique musculation');
   const FIELDS = { w: ['kg', 'Reps'], bw: ['+kg', 'Reps'], time: [null, 'Sec'], cardio: ['Min', 'Km'] };
   const fmtDur = ms => { const s = Math.max(0, Math.round(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}` : `${m}:${String(ss).padStart(2, '0')}`; };
   const fmtDurShort = ms => { const m = Math.round(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}` : `${m} min`; };
@@ -166,7 +170,7 @@ window.KaloMuscuInit = K => {
     };
     const exCard = (x, xi, w) => {
       const e = exo(x.exId), [fa, fb] = FIELDS[e.type] || FIELDS.w, prev = lastPerf(x.exId, w.start);
-      return `<section class="card wo-ex"><div class="row between" style="align-items:flex-start"><div class="grow"><div class="wo-ex-name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div></div>
+      return `<section class="card wo-ex"><div class="row between" style="align-items:flex-start"><button class="wo-ex-info" data-a="info" data-id="${e.id}">${thumb(e.id)}</button><div class="grow" data-a="info" data-id="${e.id}"><div class="wo-ex-name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div></div>
         <div class="row" style="gap:0"><button class="icon-btn" data-a="up" data-x="${xi}" aria-label="Monter" ${xi ? '' : 'disabled style="opacity:.25"'}>${ICON.left.replace('M15 5l-7 7 7 7', 'M6 15l6-6 6 6')}</button><button class="icon-btn" data-a="rmex" data-x="${xi}" aria-label="Retirer" style="color:var(--danger)">${ICON.close}</button></div></div>
         <div class="wo-table ${fa ? '' : 'one'}"><div class="wo-row head"><span>Série</span><span>Précédent</span>${fa ? `<span>${fa}</span>` : ''}<span>${fb}</span><span></span></div>
         ${x.sets.map((s, si) => { const p = prev[si] || prev[prev.length - 1]; const pa = p ? (e.type === 'time' ? '' : p.kg ?? '') : '', pb = p ? p.reps ?? '' : '';
@@ -207,6 +211,7 @@ window.KaloMuscuInit = K => {
         } else { s.done = false; row.classList.remove('done'); }
         saveActive(); refreshMeta(); return;
       }
+      if (a === 'info') { openExercise(b.dataset.id); return; }
       if (a === 'addset') { const x = w.exercises[xi], last = x.sets[x.sets.length - 1]; x.sets.push({ kg: last?.kg ?? null, reps: last?.reps ?? null, done: false }); saveActive(); draw(); }
       if (a === 'rmset') { w.exercises[xi].sets.pop(); saveActive(); draw(); }
       if (a === 'rmex') { if (confirm(`Retirer « ${exo(w.exercises[xi].exId).name} » de la séance ?`)) { w.exercises.splice(xi, 1); saveActive(); draw(); } }
@@ -271,7 +276,7 @@ window.KaloMuscuInit = K => {
       const words = norm(q).split(/\s+/).filter(Boolean);
       const list = exos().filter(e => (!mus || e.muscle === mus || (e.sec || []).includes(mus) && mus !== 'cardio') && words.every(w => norm(e.name + ' ' + (MUS[e.muscle] || '') + ' ' + (EQ[e.equip] || '')).includes(w)));
       const recent = !q && !mus ? recentIds.map(exo) : [];
-      const item = e => `<button class="item pick ${sel.includes(e.id) ? 'on' : ''}" data-id="${e.id}"><span class="meal-check ${sel.includes(e.id) ? 'on' : ''}">${ICON.check}</span><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div></div></button>`;
+      const item = e => `<div class="item pick ${sel.includes(e.id) ? 'on' : ''}" data-id="${e.id}"><button class="pick-info" data-info="${e.id}" aria-label="Voir l'exercice">${thumb(e.id)}<i>i</i></button><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div></div><span class="meal-check ${sel.includes(e.id) ? 'on' : ''}">${ICON.check}</span></div>`;
       $('[data-w="list"]', sh.body).innerHTML = (recent.length ? `<h3>Récents</h3><section class="card list">${recent.map(item).join('')}</section><h3>Tous les exercices</h3>` : '') + (list.length ? `<section class="card list">${list.map(item).join('')}</section>` : '<div class="empty small">Aucun exercice. Crée-le avec le bouton ci-dessus.</div>');
       $$('[data-mus]', sh.body).forEach(c => c.classList.toggle('chip-on', c.dataset.mus === mus));
       sh.setFoot(sel.length ? `<button class="btn grow" data-a="ok">Ajouter ${sel.length} exercice${sel.length > 1 ? 's' : ''}</button>` : '');
@@ -285,6 +290,7 @@ window.KaloMuscuInit = K => {
     sh.body.addEventListener('click', e => {
       const m = e.target.closest('[data-mus]'); if (m) { mus = m.dataset.mus; draw(); return; }
       if (e.target.closest('[data-a="create"]')) return openExoForm(id => { sel.push(id); draw(); });
+      const inf = e.target.closest('[data-info]'); if (inf) return openExercise(inf.dataset.info);
       const it = e.target.closest('.pick'); if (it) { const id = it.dataset.id, i = sel.indexOf(id); if (i < 0) sel.push(id); else sel.splice(i, 1); draw(); }
     });
     sh.foot.onclick = e => { if (e.target.closest('[data-a="ok"]')) { const ids = sel.slice(); closeSheet(1, () => onDone(ids)); } };
@@ -351,7 +357,7 @@ window.KaloMuscuInit = K => {
       const words = norm(q).split(/\s+/).filter(Boolean);
       const list = exos().filter(e => (!mus || e.muscle === mus) && words.every(w => norm(e.name).includes(w)));
       const withH = list.map(e => ({ e, h: history(e.id) })).sort((a, b) => b.h.length - a.h.length);
-      $('[data-w="list"]', sh.body).innerHTML = `<section class="card list">${withH.map(({ e, h }) => { const best = e.type === 'w' ? Math.max(0, ...h.map(x => bestOf(x.sets))) : 0; return `<button class="item" data-id="${e.id}"><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${h.length ? `${h.length} séance${h.length > 1 ? 's' : ''}${best ? ` · 1RM est. ${r1(best)} kg` : ''}` : 'jamais fait'}</div></div><span class="muted">${ICON.right}</span></button>`; }).join('')}</section>`;
+      $('[data-w="list"]', sh.body).innerHTML = `<section class="card list">${withH.map(({ e, h }) => { const best = e.type === 'w' ? Math.max(0, ...h.map(x => bestOf(x.sets))) : 0; return `<button class="item" data-id="${e.id}">${thumb(e.id)}<div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${h.length ? `${h.length} séance${h.length > 1 ? 's' : ''}${best ? ` · 1RM est. ${r1(best)} kg` : ''}` : 'jamais fait'}</div></div><span class="muted">${ICON.right}</span></button>`; }).join('')}</section>`;
       $$('[data-mus]', sh.body).forEach(c => c.classList.toggle('chip-on', c.dataset.mus === mus));
     };
     sh.setBody(`<form class="searchbar"><input type="search" placeholder="Rechercher un exercice" autocomplete="off"></form><div class="mu-filter"><button type="button" class="chip" data-mus="">Tous</button>${Object.entries(MUS).map(([k, v]) => `<button type="button" class="chip" data-mus="${k}">${esc(v)}</button>`).join('')}</div><div data-w="list"></div>`);
@@ -366,11 +372,22 @@ window.KaloMuscuInit = K => {
     const best = all.reduce((b, s) => e1rm(s.kg, s.reps) > e1rm(b?.kg, b?.reps) ? s : b, null);
     const maxKg = all.length ? Math.max(...all.map(s => s.kg || 0)) : 0, maxReps = all.length ? Math.max(...all.map(s => s.reps || 0)) : 0;
     const bestVolSet = all.reduce((b, s) => (s.kg || 0) * (s.reps || 0) > (b ? b.kg * b.reps : 0) ? s : b, null);
-    sh.setBody(`<div class="sub" style="margin-bottom:12px">${esc(MUS[e.muscle] || '')}${e.sec?.length ? ' · secondaires : ' + e.sec.map(s => esc(MUS[s] || s)).join(', ') : ''} · ${esc(EQ[e.equip] || '')}</div>
+    const mfill = k => k === e.muscle ? 'var(--accent)' : (e.sec || []).includes(k) ? 'rgba(var(--accent-rgb),.42)' : 'rgba(148,163,184,.22)';
+    const front = window.KaloBody ? window.KaloBody('front', mfill, bodySex()) : '', back = window.KaloBody ? window.KaloBody('back', mfill, bodySex()) : '';
+    const approx = (window.KALO_EXO_IMG_APPROX || []).includes(id);
+    sh.setBody(`<section class="card exo-hero">${anim(id)}</section>${approx ? `<p class="note" style="margin:-6px 0 12px">Illustration de la variante la plus proche : à la salle, l'équipement est : <b>${esc(EQ[e.equip] || '')}</b>. La vidéo montre la version exacte.</p>` : ''}
+      <a class="btn outline block exo-video" href="${videoUrl(e)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" style="fill:currentColor;stroke:none"/></svg>Voir une vidéo du mouvement</a>
+      <section class="card"><div class="row between" style="margin-bottom:8px"><div class="card-title" style="font-size:18px">Muscles travaillés</div><div class="exo-legend"><i style="background:var(--accent)"></i>Principal <i style="background:rgba(var(--accent-rgb),.42)"></i>Secondaire</div></div>
+        <div class="body-map exo-map">${front}${back}</div>
+        <div class="vline"><span class="muted">Principal</span><b>${esc(MUS[e.muscle] || '–')}</b></div>
+        ${e.sec?.length ? `<div class="vline"><span class="muted">Secondaires</span><b style="text-align:right">${e.sec.map(s => esc(MUS[s] || s)).join(', ')}</b></div>` : ''}
+        <div class="vline" style="border-bottom:0"><span class="muted">Équipement</span><b>${esc(EQ[e.equip] || '–')}</b></div></section>
+      <h3>Mes performances</h3>
       <div class="stats" style="margin-bottom:14px">${e.type === 'w' ? `<div class="stat"><b class="num">${best ? r1(e1rm(best.kg, best.reps)) + ' kg' : '–'}</b><span>1RM estimé (record)</span></div><div class="stat"><b class="num">${maxKg ? r1(maxKg) + ' kg' : '–'}</b><span>charge max</span></div><div class="stat"><b class="num">${bestVolSet ? r1(bestVolSet.kg) + '×' + r0(bestVolSet.reps) : '–'}</b><span>meilleure série (volume)</span></div>` : `<div class="stat"><b class="num">${maxReps ? r0(maxReps) : '–'}</b><span>${e.type === 'time' ? 'secondes max' : e.type === 'cardio' ? 'km max' : 'reps max'}</span></div>`}<div class="stat"><b class="num">${h.length}</b><span>séance${h.length > 1 ? 's' : ''}</span></div></div>
       ${e.type === 'w' && h.length ? '<section class="card"><div class="card-title" style="font-size:17px;margin-bottom:6px">Progression du 1RM estimé</div><div class="chart-wrap" id="ex-chart"></div><p class="note" style="margin:6px 0 0">1RM estimé = charge × (1 + reps / 30), formule d\'Epley. Utile pour comparer des séries faites avec des répétitions différentes.</p></section>' : ''}
       <h3>Historique</h3>${h.length ? h.slice().reverse().slice(0, 15).map(x => `<section class="card wo-done-ex"><div class="sub" style="margin-bottom:6px">${cap(F.short.format(new Date(x.w.start)))} · ${esc(x.w.name)}</div>${x.sets.map((s, i) => `<div class="vline small"><span class="muted">Série ${i + 1}</span><b class="num">${esc(setTxt(s, e.type))}</b></div>`).join('')}</section>`).join('') : '<p class="note">Pas encore fait.</p>'}
-      ${id.startsWith('c-') ? '<button class="btn danger block" data-a="delex">Supprimer cet exercice personnalisé</button>' : ''}`);
+      ${id.startsWith('c-') ? '<button class="btn danger block" data-a="delex">Supprimer cet exercice personnalisé</button>' : ''}
+      ${IMG[id] ? '<p class="note">Illustration : <a href="https://github.com/bryllim/workout-guide" target="_blank" rel="noopener">Workout Guide</a> (Bryl Lim), d\'après <a href="https://github.com/everkinetic/data" target="_blank" rel="noopener">Everkinetic</a>, licence <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr" target="_blank" rel="noopener">CC BY-SA 4.0</a>. La vidéo ouvre une recherche YouTube.</p>' : ''}`);
     sh.body.addEventListener('click', ev => { if (ev.target.closest('[data-a="delex"]') && confirm('Supprimer cet exercice ? Il restera visible dans l\'historique.')) { M.custom = M.custom.filter(x => x.id !== id); saveCustom(); closeSheet(1); } });
     openSheet(sh.el);
     const wrap = $('#ex-chart', sh.body); if (!wrap) return;
