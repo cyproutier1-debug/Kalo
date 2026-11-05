@@ -62,29 +62,54 @@
     }
   }
 
-  /* ---------- Visuel ---------- */
+  /* ---------- Visuel (style dessin animé : formes pleines, contour sombre épais) ---------- */
   const CLIMB = 1100; // durée de la montée des flammes (ms)
-  function sprite(stops, size = 64) {
-    const c = document.createElement('canvas'); c.width = c.height = size; const x = c.getContext('2d');
-    const g = x.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-    stops.forEach(([o, col]) => g.addColorStop(o, col)); x.fillStyle = g; x.fillRect(0, 0, size, size); return c;
+  const INK = '#2A0C02';
+  // Forme de flamme : base arrondie, 3 langues de feu, pointe principale décalée par « w »
+  function flamePath(x, w, h, k) {
+    x.beginPath();
+    x.moveTo(0, h * 0.5);
+    x.bezierCurveTo(-w * 0.62, h * 0.5, -w * 0.66, h * 0.05, -w * 0.38, -h * 0.12);
+    x.bezierCurveTo(-w * 0.36, -h * 0.02, -w * 0.3, h * 0.04, -w * 0.22, h * 0.02);
+    x.bezierCurveTo(-w * 0.3, -h * 0.2, -w * 0.12, -h * 0.34, w * k, -h * 0.5);
+    x.bezierCurveTo(w * 0.04, -h * 0.3, w * 0.22, -h * 0.24, w * 0.2, -h * 0.06);
+    x.bezierCurveTo(w * 0.28, -h * 0.12, w * 0.34, -h * 0.2, w * 0.36, -h * 0.28);
+    x.bezierCurveTo(w * 0.66, -h * 0.02, w * 0.62, h * 0.5, 0, h * 0.5);
+    x.closePath();
+  }
+  function cartoonFlame(k) {
+    const W = 84, H = 116, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    x.translate(W / 2, H / 2 + 4); x.lineJoin = 'round';
+    flamePath(x, 66, 100, k); x.fillStyle = '#FF3D1F'; x.fill(); x.lineWidth = 5; x.strokeStyle = INK; x.stroke();
+    x.save(); x.translate(0, 13); flamePath(x, 46, 70, -k * 0.8); x.fillStyle = '#FF9416'; x.fill(); x.lineWidth = 2.5; x.strokeStyle = 'rgba(42,12,2,.55)'; x.stroke(); x.restore();
+    x.save(); x.translate(0, 25); flamePath(x, 26, 40, k * 0.6); x.fillStyle = '#FFE23D'; x.fill(); x.restore();
+    x.fillStyle = 'rgba(255,255,255,.75)'; x.beginPath(); x.ellipse(-12, 14, 3, 6, 0.3, 0, 7); x.fill();
+    return c;
+  }
+  function puff() {
+    const s = 44, c = document.createElement('canvas'); c.width = c.height = s; const x = c.getContext('2d');
+    x.translate(s / 2, s / 2); x.beginPath();
+    [[0, -6, 11], [-9, 3, 9], [9, 3, 9], [0, 7, 9]].forEach(([a, b, r]) => { x.moveTo(a + r, b); x.arc(a, b, r, 0, 7); });
+    x.fillStyle = '#9AA3B2'; x.lineWidth = 3; x.strokeStyle = '#1C2230'; x.stroke(); x.fill();
+    x.fillStyle = 'rgba(255,255,255,.35)'; x.beginPath(); x.arc(-4, -9, 4, 0, 7); x.fill(); return c;
   }
   let SPR = null;
   function sprites() {
     if (SPR) return SPR;
     const star = col => {
-      const s = 48, c = document.createElement('canvas'); c.width = c.height = s; const x = c.getContext('2d');
-      x.translate(s / 2, s / 2); x.shadowColor = col; x.shadowBlur = 10; x.fillStyle = col; x.beginPath();
-      for (let i = 0; i < 10; i++) { const r = i % 2 ? 6 : 15, a = -Math.PI / 2 + i * Math.PI / 5; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
-      x.closePath(); x.fill(); x.shadowBlur = 0; x.fillStyle = 'rgba(255,255,255,.75)'; x.beginPath(); x.arc(0, 0, 3.2, 0, 7); x.fill(); return c;
+      const s = 52, c = document.createElement('canvas'); c.width = c.height = s; const x = c.getContext('2d');
+      x.translate(s / 2, s / 2); x.lineJoin = 'round'; x.beginPath();
+      for (let i = 0; i < 10; i++) { const r = i % 2 ? 7.5 : 17, a = -Math.PI / 2 + i * Math.PI / 5; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+      x.closePath(); x.fillStyle = col; x.fill(); x.lineWidth = 3.2; x.strokeStyle = INK; x.stroke();
+      x.fillStyle = 'rgba(255,255,255,.7)'; x.beginPath(); x.ellipse(-4, -5, 2.4, 4, 0.5, 0, 7); x.fill(); return c;
     };
+    const dot = col => { const c = document.createElement('canvas'); c.width = c.height = 20; const x = c.getContext('2d'); x.beginPath(); x.arc(10, 10, 7, 0, 7); x.fillStyle = col; x.fill(); x.lineWidth = 2.4; x.strokeStyle = INK; x.stroke(); return c; };
     const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#2EE68A';
     SPR = {
-      hot: sprite([[0, 'rgba(255,255,235,1)'], [0.25, 'rgba(255,230,120,.95)'], [0.55, 'rgba(255,140,30,.55)'], [1, 'rgba(255,60,0,0)']]),
-      mid: sprite([[0, 'rgba(255,200,80,.95)'], [0.4, 'rgba(255,110,20,.6)'], [1, 'rgba(200,30,0,0)']]),
-      cool: sprite([[0, 'rgba(255,90,20,.6)'], [0.5, 'rgba(160,20,0,.25)'], [1, 'rgba(60,0,0,0)']]),
+      flames: [0.1, -0.12, 0.2, -0.2].map(cartoonFlame),
+      puff: puff(),
       stars: ['#FFD23F', '#FFFFFF', '#FF9A2E', accent, '#FFE98A', '#7FE9FF'].map(star),
-      glint: sprite([[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,240,180,.7)'], [1, 'rgba(255,200,80,0)']], 32),
+      dots: ['#FFD23F', '#FF9A2E', '#FFFFFF'].map(dot),
     };
     return SPR;
   }
@@ -92,7 +117,7 @@
   function halfPath(r, rad) {
     const w = r.width, h = r.height, cx = r.left + w / 2, R0 = Math.min(rad, w / 2, h / 2);
     const segs = [w / 2 - R0, Math.PI * R0 / 2, h - 2 * R0, Math.PI * R0 / 2, w / 2 - R0], L = segs.reduce((a, b) => a + b, 0);
-    return (u, side) => {
+    const fn = (u, side) => {
       let d = u * L, i = 0; while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; }
       const s = side, b = r.top + h, t = r.top, xl = cx + s * (w / 2);
       if (i === 0) return [cx + s * d, b];
@@ -101,6 +126,7 @@
       if (i === 3) { const a = d / R0; return [xl - s * R0 + s * Math.cos(a) * R0, t + R0 - Math.sin(a) * R0]; }
       return [xl - s * R0 - s * d, t];
     };
+    fn.L = L; return fn;
   }
   const ease = x => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
 
@@ -121,65 +147,78 @@
     size();
     let el = getEl(), rect = el?.getBoundingClientRect();
     if (!rect) { cv.remove(); return; }
-    // léger zoom avant de la carte
     const zoom = on => { const e = getEl(); if (!e) return; e.classList.toggle('fx-zoom', on); };
     zoom(true); setTimeout(() => zoom(false), CLIMB + 450);
-    const flamesP = [], stars = [], start = performance.now();
-    let bursts = [{ at: CLIMB, dx: 0, dy: 0, n: 70, done: false }, { at: CLIMB + 280, dx: -90, dy: 40, n: 34, done: false }, { at: CLIMB + 550, dx: 90, dy: 30, n: 34, done: false }];
+    // Flammes accrochées au contour (u = position le long du demi-contour), qui naissent au passage de la tête
+    const tongues = [], puffs = [], stars = [], sparks = [], start = performance.now();
+    const STEP = 15; let placed = 0;
+    const bursts = [{ at: CLIMB, dx: 0, dy: 0, n: 60 }, { at: CLIMB + 280, dx: -90, dy: 40, n: 28 }, { at: CLIMB + 550, dx: 90, dy: 30, n: 28 }];
     const burst = (x, y, n) => {
       for (let i = 0; i < n; i++) {
         const a = R(0, Math.PI * 2), sp = R(2.5, 9.5);
-        stars.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - R(1.5, 4), rot: R(0, 6.3), vr: R(-0.2, 0.2), s: R(0.35, 0.8), spr: S.stars[i % S.stars.length], tw: R(0, 6) });
+        stars.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - R(1.5, 4), rot: R(0, 6.3), vr: R(-0.2, 0.2), s: R(0.4, 0.85), spr: S.stars[i % S.stars.length], pop: 0 });
       }
-      for (let i = 0; i < 24; i++) { const a = R(0, Math.PI * 2), sp = R(1, 6); flamesP.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: R(250, 500), s: R(10, 22), glint: true }); }
+      for (let i = 0; i < 16; i++) { const a = R(0, Math.PI * 2), sp = R(2, 7); sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: R(300, 550), spr: S.dots[i % 3] }); }
+      for (let i = 0; i < 5; i++) puffs.push({ x: x + R(-14, 14), y: y + R(-8, 8), vx: R(-1, 1), vy: R(-1.2, -0.3), life: 0, max: R(500, 800), s: R(0.8, 1.3) });
     };
-    let last = start, raf;
+    let last = start;
     const frame = now => {
       const t = now - start, dt = Math.min(40, now - last) / 16.7; last = now;
       const cur = getEl(); if (cur && cur !== el) el = cur; if (el?.isConnected) rect = el.getBoundingClientRect();
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
-      ctx.globalCompositeOperation = 'lighter';
-      const path = halfPath(rect, 26), p = ease(Math.min(1, t / CLIMB));
-      // traînée de feu le long du contour
-      if (t < CLIMB + 700) {
-        const fade = t < CLIMB ? 1 : 1 - (t - CLIMB) / 700;
-        for (const side of [-1, 1]) {
-          ctx.beginPath();
-          for (let k = 0; k <= 48; k++) { const [x, y] = path(p * k / 48, side); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-          ctx.strokeStyle = `rgba(255,120,20,${0.35 * fade})`; ctx.lineWidth = 9; ctx.stroke();
-          ctx.strokeStyle = `rgba(255,210,90,${0.9 * fade})`; ctx.lineWidth = 2.6; ctx.stroke();
-          if (t < CLIMB) {
-            const [hx, hy] = path(p, side);
-            for (let k = 0; k < 5; k++) flamesP.push({ x: hx + R(-4, 4), y: hy + R(-3, 3), vx: R(-0.7, 0.7) - side * 0.4, vy: R(-2.4, -0.8), life: 0, max: R(380, 720), s: R(16, 30) });
-            if (Math.random() < 0.6) { const [ex, ey] = path(p * Math.random(), side); flamesP.push({ x: ex, y: ey, vx: R(-0.3, 0.3), vy: R(-1.4, -0.4), life: 0, max: R(300, 600), s: R(8, 16) }); }
-          }
-        }
+      const path = halfPath(rect, 26), p = ease(Math.min(1, t / CLIMB)), tick = Math.floor(t / 85);
+      const burnOut = t < CLIMB + 250 ? 1 : Math.max(0, 1 - (t - CLIMB - 250) / 450);
+      // bande brûlée le long du bord (trait épais avec contour)
+      if (burnOut > 0) for (const side of [-1, 1]) {
+        ctx.beginPath();
+        for (let k = 0; k <= 48; k++) { const [x, y] = path(p * k / 48, side); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = burnOut;
+        ctx.strokeStyle = INK; ctx.lineWidth = 9; ctx.stroke();
+        ctx.strokeStyle = '#FF8A1E'; ctx.lineWidth = 4.5; ctx.stroke();
+        ctx.strokeStyle = '#FFE23D'; ctx.lineWidth = 1.6; ctx.stroke();
+        ctx.globalAlpha = 1;
       }
-      // explosions d'étoiles au sommet
+      // nouvelles langues de feu au fil de la progression
+      const target = Math.floor(p * path.L / STEP);
+      while (placed <= target && placed * STEP <= path.L) { const u = Math.min(1, placed * STEP / path.L); for (const side of [-1, 1]) tongues.push({ u, side, born: t, ph: R(0, 9), v: Math.floor(R(0, 4)), sz: R(0.75, 1.05) }); placed++; }
+      // fumée cartoon à la tête
+      if (t < CLIMB && Math.random() < 0.35) for (const side of [-1, 1]) { const [hx, hy] = path(p, side); puffs.push({ x: hx, y: hy - 18, vx: R(-0.5, 0.5), vy: R(-1.6, -0.8), life: 0, max: R(500, 800), s: R(0.45, 0.8) }); }
       for (const b of bursts) if (!b.done && t >= b.at) { b.done = true; burst(rect.left + rect.width / 2 + b.dx, rect.top + b.dy, b.n); try { navigator.vibrate?.(b.dx ? 12 : 30); } catch (e) { /* ignore */ } }
-      // flammes
-      for (let i = flamesP.length - 1; i >= 0; i--) {
-        const f = flamesP[i]; f.life += dt * 16.7; if (f.life > f.max) { flamesP.splice(i, 1); continue; }
-        f.x += f.vx * dt; f.y += f.vy * dt; f.vy -= 0.03 * dt; f.vx *= 0.98;
-        const k = f.life / f.max, sz = f.s * (1 - k * 0.6);
-        ctx.globalAlpha = 1 - k; ctx.drawImage(f.glint ? S.glint : k < 0.3 ? S.hot : k < 0.65 ? S.mid : S.cool, f.x - sz / 2, f.y - sz / 2, sz, sz);
-      }
-      // étoiles qui retombent
-      ctx.globalCompositeOperation = 'source-over';
-      for (let i = stars.length - 1; i >= 0; i--) {
-        const s = stars[i]; s.vy += 0.2 * dt; s.vx *= Math.pow(0.985, dt); s.vy *= Math.pow(0.992, dt); s.x += s.vx * dt; s.y += s.vy * dt; s.rot += s.vr * dt; s.tw += 0.25 * dt;
-        if (s.y > innerHeight + 30) { stars.splice(i, 1); continue; }
-        const sz = 48 * s.s; ctx.globalAlpha = 0.75 + 0.25 * Math.sin(s.tw);
-        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); ctx.drawImage(s.spr, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+      // fumée
+      for (let i = puffs.length - 1; i >= 0; i--) {
+        const f = puffs[i]; f.life += dt * 16.7; if (f.life > f.max) { puffs.splice(i, 1); continue; }
+        f.x += f.vx * dt; f.y += f.vy * dt; const k = f.life / f.max, sz = 44 * f.s * (0.6 + k * 0.8);
+        ctx.globalAlpha = Math.min(1, (1 - k) * 1.6); ctx.drawImage(S.puff, f.x - sz / 2, f.y - sz / 2, sz, sz);
       }
       ctx.globalAlpha = 1;
-      if (t > CLIMB + 800 && !flamesP.length && !stars.length) { cv.remove(); window.removeEventListener('resize', size); return; }
-      if (t > 9000) { cv.remove(); return; }
-      raf = requestAnimationFrame(frame);
+      // langues de feu : image par image (changement de dessin toutes les 85 ms), toujours pointées vers le haut
+      for (const g of tongues) {
+        const age = t - g.born, grow = Math.min(1, age / 120), isHead = t < CLIMB && g.u >= p - 0.04;
+        const s = g.sz * grow * burnOut * (isHead ? 1.45 : 1) * (0.9 + 0.12 * Math.sin(t / 70 + g.ph));
+        if (s <= 0.02) continue;
+        const [x, y] = path(g.u, g.side), spr = S.flames[(g.v + tick) % 4], w = 30 * s, h = 41 * s;
+        ctx.save(); ctx.translate(x, y); if ((tick + g.v) % 2) ctx.scale(-1, 1);
+        ctx.drawImage(spr, -w / 2, -h * 0.82, w, h); ctx.restore();
+      }
+      // étincelles de l'explosion
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const f = sparks[i]; f.life += dt * 16.7; if (f.life > f.max) { sparks.splice(i, 1); continue; }
+        f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 0.12 * dt; const sz = 14 * (1 - f.life / f.max * 0.6);
+        ctx.drawImage(f.spr, f.x - sz / 2, f.y - sz / 2, sz, sz);
+      }
+      // étoiles qui retombent (effet « pop » à l'apparition)
+      for (let i = stars.length - 1; i >= 0; i--) {
+        const s = stars[i]; s.vy += 0.2 * dt; s.vx *= Math.pow(0.985, dt); s.vy *= Math.pow(0.992, dt); s.x += s.vx * dt; s.y += s.vy * dt; s.rot += s.vr * dt; s.pop = Math.min(1, s.pop + 0.12 * dt);
+        if (s.y > innerHeight + 30) { stars.splice(i, 1); continue; }
+        const sz = 52 * s.s * (s.pop < 1 ? 0.4 + s.pop * 0.8 : 1);
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); ctx.drawImage(s.spr, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+      }
+      if (t > CLIMB + 800 && !puffs.length && !stars.length && !sparks.length) { cv.remove(); window.removeEventListener('resize', size); return; }
+      if (t > 9000) { cv.remove(); window.removeEventListener('resize', size); return; }
+      requestAnimationFrame(frame);
     };
     window.addEventListener('resize', size);
-    raf = requestAnimationFrame(frame);
+    requestAnimationFrame(frame);
   }
   window.KaloFX = { celebrate, prime: audio };
 })();

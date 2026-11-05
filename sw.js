@@ -1,6 +1,6 @@
 // Service worker : réseau d'abord (toujours la dernière version en ligne), cache en secours hors connexion.
 // Incrémente VERSION à chaque mise à jour.
-const VERSION = 'kalo-v2.10.0';
+const VERSION = 'kalo-v2.10.1';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './fx.js', './foods.js', './exercises.js', './body.js', './vendor/body-map-data.js', './muscu.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './vendor/zxing-browser.min.js',
   './fonts/inter-latin-400-normal.woff2', './fonts/inter-latin-500-normal.woff2', './fonts/inter-latin-600-normal.woff2', './fonts/inter-latin-ext-400-normal.woff2', './fonts/inter-latin-ext-500-normal.woff2', './fonts/inter-latin-ext-600-normal.woff2', './fonts/oxanium-latin-800-normal.woff2', './fonts/oxanium-latin-ext-800-normal.woff2', './fonts/sora-latin-600-normal.woff2', './fonts/sora-latin-700-normal.woff2', './fonts/sora-latin-ext-600-normal.woff2', './fonts/sora-latin-ext-700-normal.woff2', './fonts/unbounded-latin-900-normal.woff2', './fonts/unbounded-latin-ext-900-normal.woff2'];
