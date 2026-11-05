@@ -379,3 +379,10 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .btn > svg.ico-check path { fill: none; }
 input[type=password] { width: 100%; font-size: 16px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.04); color: var(--ink); min-height: 48px; -webkit-appearance: none; appearance: none; }
 input[type=password]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Macros par repas */
+.meal-macros { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 3px; font-size: 12.5px; font-weight: 650; }
+.meal-macros span::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+.meal-macros .mp { color: var(--accent); } .meal-macros .mp::before { background: var(--accent); }
+.meal-macros .mc { color: #8FA6FF; } .meal-macros .mc::before { background: #6E8BFF; }
+.meal-macros .mf { color: var(--fat); } .meal-macros .mf::before { background: var(--fat); }

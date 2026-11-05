@@ -63,6 +63,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Compléments** (entre le résumé du jour et le bilan) : crayon → ajoute tes compléments (suggestions créatine, magnésium, oméga 3, D3 + K2… ou nom/dose libres). Touche une pastille pour la cocher ; elles se décochent chaque nouveau jour. « Tous pris ✓ » quand tout est coché.
 
 - **Photo objectif** : Profil → *Ma photo objectif* → Ajouter. L'image (idéalement générée par IA à ton poids objectif) s'affiche en haut de l'accueil. Le Profil fournit le texte à coller dans ChatGPT / Gemini avec ta photo. L'image est compressée et stockée sur le téléphone (incluse dans l'export).
+- **Repas** : sous chaque nom de repas, total protéines (P), glucides (G) et lipides (L) du repas, à côté des kcal.
 - **Anneau calories** : calories restantes, arc plein = mangé, arc clair = prévu.
 - **Barres protéines et glucides** : couleur selon la progression : rouge au départ, orange à mi-chemin, vert quand l'objectif est atteint.
 - Bouton **+** central : ajoute un aliment au repas en cours (scan, recherche, ajout rapide).

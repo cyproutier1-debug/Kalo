@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.2.0';
+  const APP_VERSION = '2.3.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -415,11 +415,12 @@
     const meal = ([id, name]) => {
       const es = (S.days[k]?.entries || []).filter(e => e.meal === id);
       const kc = es.reduce((s, e) => s + e.kcal, 0);
+      const mp = es.reduce((s, e) => s + (e.p || 0), 0), mc = es.reduce((s, e) => s + (e.c || 0), 0), mf = es.reduce((s, e) => s + (e.f || 0), 0);
       const done = mealDone(k, id);
       const canCopy = !locked && !done && !es.length && prev && prev.entries.some(e => e.meal === id);
       return `<section class="card meal ${done ? 'done' : ''}"><div class="meal-head">
           <button class="meal-check ${done ? 'on' : ''}" data-action="meal-done" data-meal="${id}" ${locked ? 'disabled' : ''} aria-pressed="${done}" aria-label="${done ? 'Décocher' : 'Valider'} ${name}">${ICON.check}</button>
-          <h2 class="grow">${name}</h2>
+          <div class="grow"><h2>${name}</h2>${es.length ? `<div class="meal-macros num"><span class="mp">P ${r0(mp)} g</span><span class="mc">G ${r0(mc)} g</span><span class="mf">L ${r0(mf)} g</span></div>` : ''}</div>
           <span class="kcal num">${es.length ? r0(kc) + ' kcal' : ''}${es.length ? `<small>${done ? 'mangé' : 'prévu'}</small>` : ''}</span></div>
         ${es.map(e => `<button class="entry" data-action="edit-entry" data-id="${e.id}"><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(entrySub(e))}</div></div><div class="val num">${r0(e.kcal)}<small>${r0(e.p)} g prot.</small></div></button>`).join('')}
         ${locked || done ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}</div>`}</section>`;
