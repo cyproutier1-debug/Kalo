@@ -865,3 +865,11 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .exo-key span { display: inline-flex; align-items: center; gap: 6px; }
 .exo-key i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .exo-key .k1 { background: #FF3446; } .exo-key .k2 { background: #FF8A3D; }
+
+/* v3.5 — animations 3D */
+.exo-anim .exo-canvas3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .45s ease; cursor: grab; touch-action: pan-y; }
+.exo-anim .exo-canvas3d.ready { opacity: 1; }
+.exo-anim .exo-canvas3d.grab { cursor: grabbing; }
+.exo-3dhint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: rgba(10, 13, 20, .55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-size: 11.5px; color: var(--ink-2); pointer-events: none; animation: hint3d 4.5s ease forwards; }
+.exo-3dhint svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes hint3d { 0%, 8% { opacity: 0; transform: translate(-50%, 6px); } 16%, 78% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }

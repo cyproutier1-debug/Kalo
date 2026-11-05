@@ -56,8 +56,8 @@
   }
 
   /* ---------- Dessin ---------- */
-  function cap(ctx, a, b, w, col) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
-  function dot(ctx, p, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill(); }
+  function cap(ctx, a, b, w, col) { if (ctx.is3d) return ctx.cap(a, b, w, col); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  function dot(ctx, p, r, col) { if (ctx.is3d) return ctx.dot(p, r, col); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fill(); }
   // Muscle posé sur un segment : côté s (+1 / -1 / 0), portion u0 → u1
   function musc(ctx, a, b, w, s, u0, u1, col, k = 0.62) {
     const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1, nx = dy / len, ny = -dx / len, off = s * w * 0.2;
@@ -130,7 +130,7 @@
       if ((c = col('epaules'))) dot(ctx, s, 7.4, c);
     }
   }
-  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); ctx.fill(); }
+  function rr(ctx, x, y, w, h, r) { if (ctx.is3d) return ctx.rr(x, y, w, h, r); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); ctx.fill(); }
 
   /* ---------- Matériel ---------- */
   const EQ = {
@@ -150,6 +150,9 @@
     handle(ctx, p) { cap(ctx, [p[0], p[1] - 6], [p[0], p[1] + 6], 4, C.dark); },
   };
 
+  // En 3D (anim3d.js), le contexte fournit ses propres versions du matériel
+  for (const k of Object.keys(EQ)) { const f = EQ[k]; EQ[k] = (c, ...a) => c.is3d ? c.eq[k]?.(...a) : f(c, ...a); }
+
   /* ---------- Poses de base ---------- */
   const G = GROUND - 2; // hauteur de la cheville au sol
   const P = (o) => o;
@@ -166,7 +169,7 @@
     eq: (c, J) => { EQ.pad(c, [J.hip[0] + 4, J.hip[1] + 11], at([J.hip[0] + 4, J.hip[1] + 11], 70, 289), 9); cap(c, [J.hip[0], J.hip[1] + 14], [J.hip[0], GROUND], 4, C.steel); }, hold: (c, J) => EQ.bar(c, J.ha) };
   T.chestPress = { view: 'side', A: { hip: [82, 128], t: 192, hand: [142, 78], ab: -1, foot: [120, G], lb: 1 }, B: { hip: [82, 128], t: 192, hand: [104, 82], ab: -1, foot: [120, G], lb: 1 },
     eq: (c, J) => { EQ.seat(c, J.hip[0], J.hip[1] + 11, 34); EQ.pad(c, [J.hip[0] - 14, J.hip[1] + 6], [J.hip[0] - 22, J.hip[1] - 52], 9); EQ.tower(c, 172, 40); cap(c, [172, 78], [J.ha[0] + 6, J.ha[1]], 4, C.steel); }, hold: (c, J) => EQ.handle(c, J.ha) };
-  T.pushup = { view: 'side', A: { hip: [92, 136], t: 98, hand: [140, G - 2], ab: 1, foot: [36, G], lb: 1, ft: 160 }, B: { hip: [90, 150], t: 94, hand: [140, G - 2], ab: 1, foot: [36, G], lb: 1, ft: 160 } };
+  T.pushup = { view: 'side', A: { hip: [92, 136], t: 98, hand: [140, G - 2], ab: 1, foot: [18, G], lb: 1, ft: 160 }, B: { hip: [90, 150], t: 94, hand: [140, G - 2], ab: 1, foot: [18, G], lb: 1, ft: 160 } };
   T.dips = { view: 'side', A: { hip: [100, 102], t: 186, hand: [104, 84], ab: 1, th: 10, sh: -25, ft: 60 }, B: { hip: [100, 130], t: 196, hand: [104, 84], ab: 1, th: 30, sh: -15, ft: 60 },
     eq: (c) => { cap(c, [86, 86], [150, 86], 4, C.steel); cap(c, [140, 86], [140, GROUND], 4, C.steel); } };
   T.fly = { view: 'front', A: { hip: [100, 98], a: 82, f: 92 }, B: { hip: [100, 98], a: 20, f: -10 },
@@ -229,7 +232,7 @@
   T.legRaise = { view: 'side', A: { hip: [100, 166], t: 270, ua: 80, fa: 90, th: 85, sh: 88, ft: 170 }, B: { hip: [100, 166], t: 270, ua: 80, fa: 90, th: 175, sh: 175, ft: 260 } };
   T.flutter = { view: 'side', loop: true, fn: k => { const s = Math.sin(k * Math.PI * 4); return { hip: [100, 166], t: 270, h: 14, ua: 80, fa: 90, th: 112 + 14 * s, sh: 112 + 14 * s, ft: 190, th2: 112 - 14 * s, sh2: 112 - 14 * s, ft2: 190 }; } };
   T.vup = { view: 'side', A: { hip: [100, 166], t: 270, ua: 270, fa: 270, th: 88, sh: 90, ft: 170 }, B: { hip: [100, 164], t: 216, h: 10, ua: 145, fa: 145, th: 146, sh: 146, ft: 230 } };
-  T.plank = { view: 'side', A: { hip: [96, 150], t: 96, hand: [146, G - 2], ab: 1, foot: [36, G], lb: 1, ft: 160 }, B: { hip: [96, 147], t: 96, hand: [146, G - 2], ab: 1, foot: [36, G], lb: 1, ft: 160 } };
+  T.plank = { view: 'side', A: { hip: [96, 150], t: 96, hand: [146, G - 2], ab: 1, foot: [20, G], lb: 1, ft: 160 }, B: { hip: [96, 147], t: 96, hand: [146, G - 2], ab: 1, foot: [20, G], lb: 1, ft: 160 } };
   T.twist = { view: 'front', loop: true, fn: k => { const s = Math.sin(k * Math.PI * 2); return { hip: [100, 150], seat: 1, hx: 6 * s, hand: [100 + 26 * s + 6, 120], handL: [100 + 26 * s - 6, 120], ab: 1, l: 40, s: 10 }; }, hold: (c, J) => EQ.db(c, [(J.haR[0] + J.haL[0]) / 2, J.haR[1]], 90) };
   T.wheel = { view: 'side', A: { hip: [96, 140], t: 140, h: -20, hand: [116, G - 6], ab: 1, foot: [64, G], lb: 1, ft: 180 }, B: { hip: [86, 150], t: 100, h: -6, hand: [160, G - 6], ab: 1, foot: [64, G], lb: 1, ft: 180 }, hold: (c, J) => { dot(c, [J.ha[0], G - 4], 9, C.plate); dot(c, [J.ha[0], G - 4], 3, C.steel); } };
   T.woodchop = { view: 'front', A: { hip: [100, 98], hand: [148, 40], ab: -1, handL: [140, 50] }, B: { hip: [100, 98], hand: [70, 130], ab: 1, handL: [62, 136] }, eq: (c) => EQ.tower(c, 172, 10), hold: (c, J) => EQ.cable(c, [168, 26], J.haR) };
@@ -346,12 +349,15 @@
   }
   // Vignette fixe (pose « effort ») mise en cache
   const cache = {};
+  // vignettes 3D pré-rendues (thumbs/*.webp) pour les exercices de base, dessin 2D pour les exercices perso
+  const TH3 = new Set('abdos-bras-jambes,abducteurs,adducteurs,barre-front,battements,bucheron,bulgare,corde,crunch,crunch-machine,crunch-poulie,curl-barre,curl-bayesien,curl-concentre,curl-ez,curl-halt,curl-incline,curl-marteau,curl-poignets,curl-poulie,curl-pupitre,dc-barre,dc-halt,dc-serre,dc-smith,dd-barre,de-halt,de-machine,de-smith,di-barre,di-halt,di-smith,dips,dips-banc,dips-machine,dm-barre,ecarte-bas-haut,ecarte-halt,ecarte-inverse,ecarte-poulie,elev-front,elev-front-corde,elev-lat-halt,elev-lat-machine,elev-lat-poulie,elliptique,ext-barre-poulie,ext-corde,ext-lombaires,ext-nuque,ext-tete-poulie,ext-triceps-allonge,face-pull,farmer,fentes,front-squat,gainage,goblet,good-morning,hack-squat,hip-thrust,kickback,kickback-fessier,leg-curl-allonge,leg-curl-assis,leg-ext,mollets-assis,mollets-debout,mollets-machine,mollets-presse,oiseau,pec-deck,pompes,pont-fessier,presse,presse-pec,presse-pieds-hauts,pull-over,pullover-poulie,rameur,releve-jambes,releve-jambes-sol,roue,rowing-barre,rowing-halt,rowing-machine,rowing-menton,rowing-smith,russian-twist,sdt,sdt-jt,sdt-roumain,sdt-roumain-halt,shrug-barre,shrug-halt,squat,squat-smith,stairs,step-up,tapis,tbar,tirage-bras-tendus,tirage-haut-machine,tirage-horiz,tirage-horiz-unilat,tirage-unilat-genou,tirage-vert,tractions,velo'.split(','));
   function thumb(id) {
+    if (TH3.has(id)) return 'thumbs/' + id + '.webp';
     if (cache[id]) return cache[id];
     const c = document.createElement('canvas'); c.width = c.height = 120; const ctx = c.getContext('2d');
     ctx.setTransform(120 / 200, 0, 0, 120 / 200, 0, 0);
     const { tpl } = resolve(id); render(ctx, id, tpl.fn ? (tpl.dur || 2.6) * 0.3 : (tpl.dur || 2.6) * 0.45);
     return (cache[id] = c.toDataURL('image/png'));
   }
-  window.KaloAnim = { render, play, thumb, has: id => !!X[id] || !!exoInfo(id), templates: T, map: X };
+  window.KaloAnim = { render, play, thumb, has: id => !!X[id] || !!exoInfo(id), templates: T, map: X, _: { T, X, resolve, poseAt, sideJoints, frontJoints, exoInfo, L, C, GROUND, ease } };
 })();

@@ -12,7 +12,20 @@ window.KaloMuscuInit = K => {
   const A = window.KaloAnim;
   const thumb = (id, cls = '') => A ? `<img class="exo-thumb anim ${cls}" src="${A.thumb(id)}" alt="">` : `<span class="exo-thumb ${cls} none">${ICON.dumbbell}</span>`;
   const anim = id => A ? `<div class="exo-anim"><canvas class="exo-canvas" data-anim="${esc(id)}"></canvas></div><div class="exo-key"><span><i class="k1"></i>Muscle principal</span><span><i class="k2"></i>Muscles secondaires</span></div>` : `<div class="exo-anim none">${ICON.dumbbell}</div>`;
-  const startAnims = root => { if (A) $$('canvas[data-anim]', root).forEach(c => A.play(c, c.dataset.anim)); };
+  // 2D tout de suite, puis bascule en 3D (three.js chargé à la demande) dès que le premier rendu est prêt
+  const startAnims = root => {
+    if (!A) return;
+    $$('canvas[data-anim]', root).forEach(c => {
+      A.play(c, c.dataset.anim);
+      const A3 = window.KaloAnim3D; if (!A3?.ok) return;
+      const wrap = c.parentElement, c3 = document.createElement('canvas');
+      c3.className = 'exo-canvas3d'; wrap.appendChild(c3);
+      A3.play(c3, c.dataset.anim, { sex: bodySex() }).then(p => {
+        if (!p || !c3.isConnected) return;
+        requestAnimationFrame(() => { c3.classList.add('ready'); setTimeout(() => c.remove(), 450); wrap.insertAdjacentHTML('beforeend', '<span class="exo-3dhint"><svg viewBox="0 0 24 24"><path d="M4 12a8 4 0 0 0 16 0M4 12a8 4 0 0 1 16 0"/><path d="M17 15l3-3 1.5 3.5"/></svg>Glisse pour tourner</span>'); });
+      }).catch(() => c3.remove());
+    });
+  };
   const videoUrl = e => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(e.name + ' exécution technique musculation');
   const FIELDS = { w: ['kg', 'Reps'], bw: ['+kg', 'Reps'], time: [null, 'Sec'], cardio: ['Min', 'Km'] };
   const fmtDur = ms => { const s = Math.max(0, Math.round(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}` : `${m}:${String(ss).padStart(2, '0')}`; };
