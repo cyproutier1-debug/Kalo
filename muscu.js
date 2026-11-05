@@ -4,7 +4,7 @@ window.KaloMuscuInit = K => {
   const { $, $$, esc, r0, r1, num, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, closeAll, niceStep, bindTip, currentWeight } = K;
   const MUS = window.KALO_MUSCLES || {}, EQ = window.KALO_EQUIP || {};
   const BASE = (window.KALO_EXOS || []).map(([id, name, muscle, sec, equip, type]) => ({ id, name, muscle, sec, equip, type }));
-  const M = { workouts: [], routines: [], custom: [], active: null, settings: { rest: 90 }, rest: null };
+  const M = { workouts: [], routines: [], custom: [], active: null, settings: { rest: 90 }, rest: null, programs: [], activeProg: null };
   const DAY = 864e5;
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const exos = () => [...BASE, ...M.custom];
@@ -25,15 +25,18 @@ window.KaloMuscuInit = K => {
   const saveActive = () => { clearTimeout(saveT); saveT = setTimeout(() => { if (M.active) Store.put('activeWo', M.active); else Store.del('activeWo'); }, 300); };
   const saveRoutines = () => Store.put('routines', M.routines);
   const saveCustom = () => Store.put('exos', M.custom);
+  const savePrograms = () => { Store.put('programs', M.programs); if (M.activeProg) Store.put('activeProg', M.activeProg); else Store.del('activeProg'); };
   function onLoad(all) {
     M.workouts = Object.keys(all).filter(k => k.startsWith('wo:')).map(k => all[k]).sort((a, b) => a.start - b.start);
     M.routines = all.routines || []; M.custom = all.exos || []; M.active = all.activeWo || null;
     M.settings = { rest: 90, ...(all.muscuSettings || {}) };
+    M.programs = all.programs || []; M.activeProg = all.activeProg || null;
   }
 
   /* ---------- Calculs ---------- */
-  const doneSets = w => w.exercises.reduce((n, x) => n + x.sets.filter(s => isDone(s, exo(x.exId).type)).length, 0);
-  const volume = w => w.exercises.reduce((v, x) => { const t = exo(x.exId).type; return v + x.sets.filter(s => isDone(s, t) && (t === 'w' || t === 'bw')).reduce((a, s) => a + (s.kg || 0) * (s.reps || 0), 0); }, 0);
+  const isWork = (s, t) => isDone(s, t) && !s.w;
+  const doneSets = w => w.exercises.reduce((n, x) => n + x.sets.filter(s => isWork(s, exo(x.exId).type)).length, 0);
+  const volume = w => w.exercises.reduce((v, x) => { const t = exo(x.exId).type; return v + x.sets.filter(s => isWork(s, t) && (t === 'w' || t === 'bw')).reduce((a, s) => a + (s.kg || 0) * (s.reps || 0), 0); }, 0);
   const history = (exId, before = Infinity) => M.workouts.filter(w => w.start < before && w.exercises.some(x => x.exId === exId)).map(w => ({ w, sets: w.exercises.filter(x => x.exId === exId).flatMap(x => x.sets).filter(s => isDone(s, exo(exId).type)) })).filter(h => h.sets.length);
   const lastPerf = (exId, before) => { const h = history(exId, before); return h.length ? h[h.length - 1].sets : []; };
   const bestOf = sets => sets.reduce((b, s) => Math.max(b, e1rm(s.kg, s.reps)), 0);
@@ -89,6 +92,7 @@ window.KaloMuscuInit = K => {
         <div class="stat"><b class="num">${month}</b><span>séance${month > 1 ? 's' : ''} · 30 j</span></div>
         <div class="stat"><b class="num">${vol7 >= 10000 ? r1(vol7 / 1000) + ' t' : r0(vol7) + ' kg'}</b><span>volume · 7 j</span></div>
       </div>
+      ${programCard()}
       <div class="section-title"><h2>Nouvelle séance</h2></div>
       <button class="card mu-start" data-action="wo-free"><div><div class="card-title">${ICON.bolt}Séance libre</div><div class="sub">Ajoute tes exercices au fur et à mesure</div></div><span class="mu-go">${ICON.right}</span></button>
       <div class="section-title"><h2>Mes routines</h2><button class="btn plain" data-action="rt-new">+ Créer</button></div>
@@ -136,10 +140,25 @@ window.KaloMuscuInit = K => {
   setInterval(updateBanner, 1000);
 
   /* ---------- Séance en cours ---------- */
-  function newWorkout(name, exs = [], routineId = null) {
-    M.active = { id: uid(), start: Date.now(), name, routineId, exercises: exs.map(e => ({ uid: uid(), exId: e.exId, sets: Array.from({ length: Math.max(1, e.sets || 3) }, () => ({ kg: null, reps: null, done: false })) })) };
+  function newWorkout(name, exs = [], routineId = null, extra = {}) {
+    M.active = { id: uid(), start: Date.now(), name, routineId, prog: extra.prog || null, exercises: exs.map((e, i) => {
+      const sets = Array.from({ length: Math.max(1, e.sets || 3) }, () => ({ kg: null, reps: null, done: false }));
+      if (extra.warmup && i === 0 && exo(e.exId).type === 'w') sets.unshift({ kg: null, reps: null, done: false, w: 1 }, { kg: null, reps: null, done: false, w: 2 });
+      return { uid: uid(), exId: e.exId, sets, tgt: e.min ? { sets: e.sets, min: e.min, max: e.max, rest: e.rest } : null, alt: e.alt || null, note: e.note || '' };
+    }) };
     saveActive();
   }
+  // Progression : si toutes les séries de la dernière fois ont atteint le haut de la fourchette, +2,5 à 5 % de charge
+  function suggestion(exId, tgt, before = Infinity) {
+    if (!tgt || exo(exId).type !== 'w') return null;
+    const h = history(exId, before); if (!h.length) return null;
+    const sets = h[h.length - 1].sets, top = Math.max(...sets.map(x => x.kg || 0)); if (!top) return null;
+    const allTop = sets.length >= tgt.sets && sets.every(x => (x.reps || 0) >= tgt.max);
+    if (!allTop) return { kg: top, up: false };
+    const r = v => Math.round(v * 2) / 2, lo = r(top + Math.max(1, top * 0.025)), hi = r(top + Math.max(2, top * 0.05));
+    return { kg: lo, hi, up: true, from: top };
+  }
+  const restLabel = s => s >= 150 ? '2-3 min' : s >= 100 ? '1,5-2 min' : r0(s) + ' s';
   function startGuard(fn) {
     if (M.active) { if (confirm('Une séance est déjà en cours. Veux-tu l\'abandonner pour en commencer une nouvelle ?\n(Annuler = reprendre la séance en cours)')) { M.active = null; saveActive(); fn(); } else openWorkout(); return; }
     fn();
@@ -161,7 +180,7 @@ window.KaloMuscuInit = K => {
     const draw = () => {
       const body = sh.el.querySelector('.sheet-body'), st = body.scrollTop, w = A();
       sh.setBody(`
-        <div class="wo-top"><button class="wo-name" data-a="rename">${esc(w.name)} ${ICON.edit}</button><div class="row between"><b class="num wo-clock" data-w="elapsed">${fmtDur(Date.now() - w.start)}</b><button class="chip" data-a="restcfg">⏱ Repos ${M.settings.rest} s</button></div><div class="sub" data-w="meta">${meta()}</div></div>
+        <div class="wo-top"><button class="wo-name" data-a="rename">${esc(w.name)} ${ICON.edit}</button><div class="row between"><b class="num wo-clock" data-w="elapsed">${fmtDur(Date.now() - w.start)}</b>${w.prog ? '<span class="chip">⏱ Repos selon le programme</span>' : `<button class="chip" data-a="restcfg">⏱ Repos ${M.settings.rest} s</button>`}</div><div class="sub" data-w="meta">${meta()}</div></div>
         ${w.exercises.map((x, xi) => exCard(x, xi, w)).join('')}
         <button class="btn ghost block" data-a="addex" style="margin:4px 0 12px">+ Ajouter des exercices</button>
         <button class="btn danger block" data-a="cancel">Abandonner la séance</button>`);
@@ -169,13 +188,17 @@ window.KaloMuscuInit = K => {
       drawFoot();
     };
     const exCard = (x, xi, w) => {
-      const e = exo(x.exId), [fa, fb] = FIELDS[e.type] || FIELDS.w, prev = lastPerf(x.exId, w.start);
-      return `<section class="card wo-ex"><div class="row between" style="align-items:flex-start"><button class="wo-ex-info" data-a="info" data-id="${e.id}">${thumb(e.id)}</button><div class="grow" data-a="info" data-id="${e.id}"><div class="wo-ex-name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div></div>
+      const e = exo(x.exId), [fa, fb] = FIELDS[e.type] || FIELDS.w, prev = lastPerf(x.exId, w.start), tg = x.tgt, sg = suggestion(x.exId, tg, w.start);
+      let wi = 0;
+      return `<section class="card wo-ex"><div class="row between" style="align-items:flex-start"><button class="wo-ex-info" data-a="info" data-id="${e.id}">${thumb(e.id)}</button><div class="grow" data-a="info" data-id="${e.id}"><div class="wo-ex-name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div>${tg ? `<div class="wo-tgt">🎯 ${tg.sets} × ${tg.min}-${tg.max} reps · repos ${restLabel(tg.rest)}${x.note ? ' · ' + esc(x.note) : ''}</div>` : ''}${sg?.up ? `<div class="wo-up">🔼 Tout au max la dernière fois (${r1(sg.from)} kg) : passe à <b>${r1(sg.kg)}</b>-${r1(sg.hi)} kg</div>` : ''}${x.alt ? `<button class="chip wo-alt" data-a="alt" data-x="${xi}">↔ ${esc(exo(x.alt).name)}</button>` : ''}</div>
         <div class="row" style="gap:0"><button class="icon-btn" data-a="up" data-x="${xi}" aria-label="Monter" ${xi ? '' : 'disabled style="opacity:.25"'}>${ICON.left.replace('M15 5l-7 7 7 7', 'M6 15l6-6 6 6')}</button><button class="icon-btn" data-a="rmex" data-x="${xi}" aria-label="Retirer" style="color:var(--danger)">${ICON.close}</button></div></div>
         <div class="wo-table ${fa ? '' : 'one'}"><div class="wo-row head"><span>Série</span><span>Précédent</span>${fa ? `<span>${fa}</span>` : ''}<span>${fb}</span><span></span></div>
-        ${x.sets.map((s, si) => { const p = prev[si] || prev[prev.length - 1]; const pa = p ? (e.type === 'time' ? '' : p.kg ?? '') : '', pb = p ? p.reps ?? '' : '';
-          return `<div class="wo-row ${s.done ? 'done' : ''}" data-x="${xi}" data-s="${si}"><span class="set-n">${si + 1}</span><span class="prev">${p ? esc(setTxt(p, e.type)) : '—'}</span>${fa ? `<input class="wo-in" data-f="kg" inputmode="decimal" value="${s.kg ?? ''}" placeholder="${pa}" data-ph="${pa}">` : ''}<input class="wo-in" data-f="reps" inputmode="decimal" value="${s.reps ?? ''}" placeholder="${pb}" data-ph="${pb}"><button class="set-check" data-a="check" aria-label="Valider la série">${ICON.check}</button></div>`; }).join('')}
-        </div><div class="wo-ex-foot"><button data-a="addset" data-x="${xi}">+ Série</button>${x.sets.length > 1 ? `<button data-a="rmset" data-x="${xi}">− Série</button>` : ''}</div></section>`;
+        ${x.sets.map((s, si) => {
+          if (s.w) { const base = sg?.kg || (prev[0]?.kg) || 0, wk = base ? Math.round(base * (s.w === 1 ? 0.5 : 0.7) * 2) / 2 : ''; return `<div class="wo-row warm ${s.done ? 'done' : ''}" data-x="${xi}" data-s="${si}"><span class="set-n">É</span><span class="prev">Échauffement</span>${fa ? `<input class="wo-in" data-f="kg" inputmode="decimal" value="${s.kg ?? ''}" placeholder="${wk}" data-ph="${wk}">` : ''}<input class="wo-in" data-f="reps" inputmode="decimal" value="${s.reps ?? ''}" placeholder="${s.w === 1 ? 10 : 5}" data-ph="${s.w === 1 ? 10 : 5}"><button class="set-check" data-a="check" aria-label="Valider l'échauffement">${ICON.check}</button></div>`; }
+          const n = wi++, p = prev[n] || prev[prev.length - 1];
+          const pa = sg ? sg.kg : p ? (e.type === 'time' ? '' : p.kg ?? '') : '', pb = p ? p.reps ?? '' : tg ? tg.min : '';
+          return `<div class="wo-row ${s.done ? 'done' : ''}" data-x="${xi}" data-s="${si}"><span class="set-n">${n + 1}</span><span class="prev">${p ? esc(setTxt(p, e.type)) : '—'}</span>${fa ? `<input class="wo-in" data-f="kg" inputmode="decimal" value="${s.kg ?? ''}" placeholder="${pa}" data-ph="${pa}">` : ''}<input class="wo-in" data-f="reps" inputmode="decimal" value="${s.reps ?? ''}" placeholder="${pb}" data-ph="${pb}"><button class="set-check" data-a="check" aria-label="Valider la série">${ICON.check}</button></div>`; }).join('')}
+        </div><div class="wo-ex-foot"><button data-a="addset" data-x="${xi}">+ Série</button>${x.sets.filter(z => !z.w).length > 1 ? `<button data-a="rmset" data-x="${xi}">− Série</button>` : ''}</div></section>`;
     };
     const drawFoot = () => {
       const r = M.rest, left = r ? Math.max(0, r.end - Date.now()) : 0;
@@ -207,13 +230,15 @@ window.KaloMuscuInit = K => {
           if (!isDone({ ...s, done: true }, t) || (t === 'w' && s.kg == null)) { toast(t === 'cardio' ? 'Indique la durée' : t === 'time' ? 'Indique la durée' : 'Indique la charge et les répétitions'); return; }
           s.done = true; row.classList.add('done');
           try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume?.(); } catch (err) { /* ignore */ }
-          if (t !== 'cardio' && M.settings.rest > 0) { M.rest = { end: Date.now() + M.settings.rest * 1000, total: M.settings.rest }; drawFoot(); }
+          const rs = s.w ? 60 : x.tgt?.rest || M.settings.rest;
+          if (t !== 'cardio' && rs > 0) { M.rest = { end: Date.now() + rs * 1000, total: rs }; drawFoot(); }
         } else { s.done = false; row.classList.remove('done'); }
         saveActive(); refreshMeta(); return;
       }
       if (a === 'info') { openExercise(b.dataset.id); return; }
+      if (a === 'alt') { const x = w.exercises[xi]; [x.exId, x.alt] = [x.alt, x.exId]; saveActive(); draw(); return; }
       if (a === 'addset') { const x = w.exercises[xi], last = x.sets[x.sets.length - 1]; x.sets.push({ kg: last?.kg ?? null, reps: last?.reps ?? null, done: false }); saveActive(); draw(); }
-      if (a === 'rmset') { w.exercises[xi].sets.pop(); saveActive(); draw(); }
+      if (a === 'rmset') { const ss = w.exercises[xi].sets; if (ss.filter(z => !z.w).length > 1) { ss.pop(); saveActive(); draw(); } }
       if (a === 'rmex') { if (confirm(`Retirer « ${exo(w.exercises[xi].exId).name} » de la séance ?`)) { w.exercises.splice(xi, 1); saveActive(); draw(); } }
       if (a === 'up' && xi > 0) { [w.exercises[xi - 1], w.exercises[xi]] = [w.exercises[xi], w.exercises[xi - 1]]; saveActive(); draw(); }
       if (a === 'addex') openPicker(ids => { ids.forEach(id => w.exercises.push({ uid: uid(), exId: id, sets: Array.from({ length: 3 }, () => ({ kg: null, reps: null, done: false })) })); saveActive(); draw(); });
@@ -237,9 +262,9 @@ window.KaloMuscuInit = K => {
     const w = M.active; if (!w) return;
     const n = doneSets(w);
     if (!n) { if (confirm('Aucune série validée. Abandonner la séance ?')) { M.active = null; M.rest = null; saveActive(); closeSheet(1); } return; }
-    const pending = w.exercises.reduce((a, x) => a + x.sets.filter(s => !s.done).length, 0);
+    const pending = w.exercises.reduce((a, x) => a + x.sets.filter(s => !s.done && !s.w).length, 0);
     if (pending && !confirm(`${pending} série${pending > 1 ? 's non validées seront ignorées' : ' non validée sera ignorée'}. Terminer la séance ?`)) return;
-    const fin = { ...w, end: Date.now(), exercises: w.exercises.map(x => ({ exId: x.exId, sets: x.sets.filter(s => isDone(s, exo(x.exId).type)).map(s => ({ kg: s.kg, reps: s.reps, done: true })) })).filter(x => x.sets.length) };
+    const fin = { ...w, end: Date.now(), exercises: w.exercises.map(x => ({ exId: x.exId, sets: x.sets.filter(s => isWork(s, exo(x.exId).type)).map(s => ({ kg: s.kg, reps: s.reps, done: true })) })).filter(x => x.sets.length) };
     M.workouts.push(fin); M.workouts.sort((a, b) => a.start - b.start); Store.put('wo:' + fin.id, fin);
     M.active = null; M.rest = null; saveActive();
     UI.tab = 'muscu';
@@ -256,7 +281,7 @@ window.KaloMuscuInit = K => {
       <div class="chips" style="margin-bottom:12px">${Object.entries(ms).map(([k, v]) => `<span class="chip">${esc(MUS[k] || k)} · ${v}</span>`).join('')}</div>
       ${w.exercises.map(x => { const e = exo(x.exId); return `<section class="card wo-done-ex"><div class="wo-ex-name">${esc(e.name)}</div>${x.sets.map((s, i) => `<div class="vline small"><span class="muted">Série ${i + 1}</span><b class="num">${esc(setTxt(s, e.type))}</b></div>`).join('')}</section>`; }).join('')}
       <p class="note">${fresh ? 'Les kcal de la séance sont une estimation (MET 5) donnée à titre indicatif ; elles ne sont pas ajoutées au bilan : ta montre les compte déjà.' : ''}</p>`);
-    sh.setFoot(`${fresh && !w.routineId ? '<button class="btn outline" data-a="asroutine">Créer une routine</button>' : !fresh ? '<button class="btn danger" data-a="del">Supprimer</button><button class="btn outline" data-a="repeat">Refaire</button>' : ''}<button class="btn grow" data-a="close">${fresh ? 'Super !' : 'Fermer'}</button>`);
+    sh.setFoot(`${fresh && !w.routineId && !w.prog ? '<button class="btn outline" data-a="asroutine">Créer une routine</button>' : !fresh ? '<button class="btn danger" data-a="del">Supprimer</button><button class="btn outline" data-a="repeat">Refaire</button>' : ''}<button class="btn grow" data-a="close">${fresh ? 'Super !' : 'Fermer'}</button>`);
     sh.foot.onclick = e => {
       const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
       if (a === 'close') closeSheet(1);
@@ -409,6 +434,131 @@ window.KaloMuscuInit = K => {
     });
   }
 
+  /* ---------- Programmes ---------- */
+  const DOW = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'], DOW_S = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  const H = 150, I = 105; // repos : polyarticulaires lourds 2-3 min, isolation 1,5-2 min
+  const it = (exId, sets, min, max, rest, more = {}) => ({ exId, sets, min, max, rest, ...more });
+  const PRESETS = [{
+    id: 'preset-hb5', name: 'Haut / Bas · 5 jours (75 séries)',
+    desc: '5 séances par semaine (lundi, mardi, jeudi, vendredi, samedi), chaque muscle 2 fois par semaine, environ 75 séries de travail. Repos mercredi et dimanche.',
+    rules: ['Séries à 1-2 répétitions de l\'échec, la dernière de chaque exercice à 0-1.', 'Repos de 2-3 min sur les exercices lourds et de 1,5-2 min sur l\'isolation (le minuteur s\'adapte tout seul).', 'Progression : quand tu atteins le haut de la fourchette sur toutes les séries, ajoute 2,5 à 5 % de charge (Kalo te le propose).', '1 à 2 séries d\'échauffement sur le premier exercice, en plus des séries de travail (ajoutées automatiquement).'],
+    days: [
+      { dow: 1, name: 'Haut A', items: [it('dc-barre', 3, 6, 8, H), it('tirage-haut-machine', 3, 8, 10, H), it('di-smith', 3, 8, 10, H), it('rowing-smith', 3, 8, 10, H), it('ext-tete-poulie', 4, 10, 12, I)] },
+      { dow: 2, name: 'Bas A', items: [it('presse', 4, 8, 10, H), it('leg-ext', 3, 10, 12, I), it('leg-curl-allonge', 3, 8, 12, I), it('mollets-machine', 3, 10, 12, I)] },
+      { dow: 4, name: 'Haut B', items: [it('presse-pec', 3, 8, 10, H), it('tirage-unilat-genou', 3, 10, 12, H), it('ecarte-bas-haut', 2, 12, 15, I), it('elev-lat-poulie', 3, 12, 20, I), it('curl-incline', 4, 10, 12, I, { alt: 'curl-bayesien', note: 'ou curl bayésien' })] },
+      { dow: 5, name: 'Bas B', items: [it('sdt-roumain', 3, 8, 10, H), it('leg-curl-assis', 3, 10, 12, I), it('presse-pieds-hauts', 3, 10, 12, H), it('mollets-machine', 3, 10, 12, I), it('releve-jambes', 3, 10, 15, I)] },
+      { dow: 6, name: 'Épaules, bras, abdos', items: [it('ecarte-inverse', 3, 12, 15, I), it('elev-lat-poulie', 3, 12, 20, I), it('curl-pupitre', 3, 8, 12, I), it('ext-triceps-allonge', 3, 8, 12, I), it('crunch-poulie', 3, 10, 15, I)] },
+    ],
+  }];
+  const prog = () => M.programs.find(p => p.id === M.activeProg) || null;
+  const daySets = d => d.items.reduce((a, x) => a + x.sets, 0);
+  const progSets = p => p.days.reduce((a, d) => a + daySets(d), 0);
+  const doneThisWeek = (p, di) => { const ws = weekStart(Date.now()).getTime(); return M.workouts.some(w => w.start >= ws && w.prog?.pid === p.id && w.prog.day === di); };
+  function nextDay(p) {
+    const today = new Date().getDay();
+    for (let k = 0; k < 7; k++) { const dw = (today + k) % 7, di = p.days.findIndex(d => d.dow === dw); if (di >= 0) return { di, k }; }
+    return null;
+  }
+  function programCard() {
+    const p = prog();
+    if (!p) return `<div class="section-title"><h2>Mon programme</h2></div>
+      <button class="card mu-start prog-empty" data-action="prog-list"><div><div class="card-title">📋 Choisir un programme</div><div class="sub">Programme tout prêt ou le tien : la séance du jour s'affiche ici, avec tes objectifs de séries, de répétitions et de repos.</div></div><span class="mu-go">${ICON.right}</span></button>`;
+    const today = new Date().getDay(), di = p.days.findIndex(d => d.dow === today), nx = nextDay(p);
+    const strip = [1, 2, 3, 4, 5, 6, 0].map(dw => { const i = p.days.findIndex(d => d.dow === dw); const done = i >= 0 && doneThisWeek(p, i); return `<span class="pd ${i >= 0 ? 'train' : 'rest'} ${dw === today ? 'today' : ''} ${done ? 'done' : ''}"><b>${DOW_S[dw]}</b><i>${done ? '✓' : i >= 0 ? '' : '·'}</i></span>`; }).join('');
+    const d = di >= 0 ? p.days[di] : null, done = d && doneThisWeek(p, di);
+    return `<div class="section-title"><h2>Mon programme</h2><button class="btn plain" data-action="prog-list">Changer</button></div>
+      <section class="card prog-card glow">
+        <div class="row between"><button class="prog-name" data-action="prog-view">${esc(p.name)} ${ICON.right}</button></div>
+        <div class="prog-strip">${strip}</div>
+        ${d ? `<div class="prog-today"><div class="small muted">Aujourd'hui · ${DOW[today]}</div><div class="card-title" style="font-size:20px">${esc(d.name)}</div><div class="sub">${d.items.length} exercices · ${daySets(d)} séries${done ? ' · déjà faite ✓' : ''}</div>
+            <div class="prog-ex">${d.items.map(x => `<span>${thumb(x.exId, 'mini')}</span>`).join('')}</div>
+            <button class="btn block" data-action="prog-start" data-d="${di}" style="margin-top:12px">${done ? 'Refaire la séance' : 'Commencer la séance'}</button></div>`
+          : `<div class="prog-today"><div class="card-title" style="font-size:19px">😴 Jour de repos</div><div class="sub">${nx ? `Prochaine séance : ${DOW[p.days[nx.di].dow]} · ${esc(p.days[nx.di].name)}` : ''}</div>
+            <p class="note" style="margin:8px 0 0">La récupération fait partie du programme : c'est là que le muscle se construit.</p>${nx ? `<button class="btn outline block small" data-action="prog-start" data-d="${nx.di}" style="margin-top:10px">Faire quand même ${esc(p.days[nx.di].name)}</button>` : ''}</div>`}
+      </section>`;
+  }
+  function startProgDay(di) {
+    const p = prog(); if (!p) return; const d = p.days[di]; if (!d) return;
+    startGuard(() => { newWorkout(d.name, d.items, null, { prog: { pid: p.id, day: di }, warmup: true }); openWorkout(); });
+  }
+  function openProgList() {
+    const sh = makeSheet('Programmes');
+    const draw = () => {
+      const mine = M.programs, installed = new Set(mine.map(p => p.from));
+      sh.setBody(`<p class="note" style="margin-top:0">Chaque téléphone a ses propres données : ton programme n'apparaît pas chez les autres utilisateurs de Kalo, et le leur n'apparaît pas chez toi.</p>
+        ${mine.length ? `<h3>Mes programmes</h3>${mine.map((p, i) => `<section class="card prog-item ${p.id === M.activeProg ? 'on' : ''}"><div class="grow"><div class="card-title" style="font-size:17px">${esc(p.name)}${p.id === M.activeProg ? ' <span class="pill-on">Actif</span>' : ''}</div><div class="sub">${p.days.length} séance${p.days.length > 1 ? 's' : ''} / semaine · ${progSets(p)} séries · ${p.days.map(d => DOW[d.dow].slice(0, 3)).join(', ')}</div>
+          <div class="row" style="gap:6px;margin-top:10px">${p.id === M.activeProg ? '<button class="btn small outline" data-a="off">Désactiver</button>' : `<button class="btn small" data-a="on" data-i="${i}">Activer</button>`}<button class="btn small outline" data-a="edit" data-i="${i}">Modifier</button><button class="btn small danger" data-a="del" data-i="${i}">Supprimer</button></div></div></section>`).join('')}` : ''}
+        <h3>Programmes proposés</h3>${PRESETS.map((p, i) => `<section class="card prog-item"><div class="grow"><div class="card-title" style="font-size:17px">${esc(p.name)}</div><div class="sub">${esc(p.desc)}</div>
+          <button class="btn small ${installed.has(p.id) ? 'outline' : ''}" data-a="install" data-i="${i}" style="margin-top:10px">${installed.has(p.id) ? 'Ajouter une autre copie' : 'Utiliser ce programme'}</button></div></section>`).join('')}
+        <button class="btn ghost block" data-a="new" style="margin-top:6px">+ Créer mon propre programme</button>`);
+    };
+    sh.body.addEventListener('click', e => {
+      const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a, i = +b.dataset.i;
+      if (a === 'install') { const src = PRESETS[i], cp = JSON.parse(JSON.stringify(src)); cp.id = uid(); cp.from = src.id; M.programs.push(cp); M.activeProg = cp.id; savePrograms(); closeSheet(1, () => toast(`Programme « ${cp.name} » activé ✓`)); return; }
+      if (a === 'on') { M.activeProg = M.programs[i].id; savePrograms(); closeSheet(1, () => toast('Programme activé ✓')); return; }
+      if (a === 'off') { M.activeProg = null; savePrograms(); draw(); return; }
+      if (a === 'del') { const p = M.programs[i]; if (confirm(`Supprimer le programme « ${p.name} » ? Tes séances déjà faites restent dans l'historique.`)) { M.programs.splice(i, 1); if (M.activeProg === p.id) M.activeProg = null; savePrograms(); draw(); } return; }
+      if (a === 'edit') return openProgEdit(i, draw);
+      if (a === 'new') return openProgEdit(null, draw);
+    });
+    draw(); openSheet(sh.el);
+  }
+  function openProgView() {
+    const p = prog(); if (!p) return;
+    const sh = makeSheet(p.name);
+    sh.setBody(`${p.desc ? `<p class="note" style="margin-top:0">${esc(p.desc)}</p>` : ''}
+      ${p.days.map((d, di) => `<section class="card prog-day"><div class="row between"><div><div class="small muted">${DOW[d.dow]}${doneThisWeek(p, di) ? ' · faite cette semaine ✓' : ''}</div><div class="card-title" style="font-size:18px">${esc(d.name)} <span class="muted small">(${daySets(d)} séries)</span></div></div><button class="btn small" data-a="start" data-d="${di}">Go</button></div>
+        ${d.items.map(x => `<div class="prog-line" data-a="info" data-id="${x.exId}">${thumb(x.exId, 'mini')}<span class="grow">${esc(exo(x.exId).name)}${x.note ? ` <em class="muted">(${esc(x.note)})</em>` : ''}</span><b class="num">${x.sets}×${x.min}-${x.max}</b></div>`).join('')}</section>`).join('')}
+      ${p.rules?.length ? `<section class="card"><div class="card-title" style="font-size:18px;margin-bottom:6px">📏 Règles</div><ol class="prog-rules">${p.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol></section>` : ''}`);
+    sh.setFoot(`<button class="btn outline grow" data-a="edit">Modifier</button>`);
+    sh.body.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; if (b.dataset.a === 'start') { const di = +b.dataset.d; closeSheet(1, () => startProgDay(di)); } if (b.dataset.a === 'info') openExercise(b.dataset.id); });
+    sh.foot.onclick = e => { if (e.target.closest('[data-a="edit"]')) closeSheet(1, () => openProgEdit(M.programs.findIndex(x => x.id === p.id))); };
+    openSheet(sh.el);
+  }
+  function openProgEdit(i, onSaved) {
+    const p = i == null ? { id: uid(), name: '', desc: '', rules: [], days: [{ dow: 1, name: 'Séance A', items: [] }] } : JSON.parse(JSON.stringify(M.programs[i]));
+    const sh = makeSheet(i == null ? 'Nouveau programme' : 'Modifier le programme');
+    const restOpts = [60, 90, 105, 120, 150, 180];
+    const draw = () => {
+      const st = sh.el.querySelector('.sheet-body').scrollTop;
+      sh.setBody(`<section class="card stack"><label class="field"><span>Nom du programme</span><input type="text" data-f="name" value="${esc(p.name)}" placeholder="ex. Full body 3 jours"></label>
+        <label class="field"><span>Règles (une par ligne, facultatif)</span><textarea data-f="rules" rows="3" placeholder="ex. Dernière série à l'échec">${esc((p.rules || []).join('\n'))}</textarea></label></section>
+        ${p.days.map((d, di) => `<section class="card prog-edit-day"><div class="row" style="gap:8px"><select data-f="dow" data-d="${di}">${[1, 2, 3, 4, 5, 6, 0].map(v => `<option value="${v}" ${d.dow === v ? 'selected' : ''}>${DOW[v]}</option>`).join('')}</select><input type="text" data-f="dname" data-d="${di}" value="${esc(d.name)}" placeholder="Nom de la séance"><button class="icon-btn" data-a="dday" data-d="${di}" style="color:var(--danger)" aria-label="Supprimer la séance">${ICON.close}</button></div>
+          ${d.items.map((x, xi) => `<div class="pe-item"><div class="row between"><b class="pe-name">${esc(exo(x.exId).name)}</b><button class="icon-btn" data-a="dex" data-d="${di}" data-x="${xi}" style="color:var(--danger)" aria-label="Retirer">${ICON.close}</button></div>
+            <div class="pe-grid"><label><span>Séries</span><input type="number" inputmode="numeric" data-f="sets" data-d="${di}" data-x="${xi}" value="${x.sets}"></label><label><span>Reps min</span><input type="number" inputmode="numeric" data-f="min" data-d="${di}" data-x="${xi}" value="${x.min}"></label><label><span>Reps max</span><input type="number" inputmode="numeric" data-f="max" data-d="${di}" data-x="${xi}" value="${x.max}"></label>
+            <label><span>Repos</span><select data-f="rest" data-d="${di}" data-x="${xi}">${restOpts.map(v => `<option value="${v}" ${x.rest === v ? 'selected' : ''}>${v >= 60 ? (v % 60 ? r1(v / 60).replace('.', ',') : v / 60) + ' min' : v + ' s'}</option>`).join('')}</select></label></div></div>`).join('')}
+          <button class="btn ghost block small" data-a="addex" data-d="${di}">+ Exercices</button></section>`).join('')}
+        <button class="btn outline block" data-a="addday">+ Ajouter une séance</button>`);
+      sh.el.querySelector('.sheet-body').scrollTop = st;
+    };
+    sh.body.addEventListener('input', e => {
+      const f = e.target.dataset.f, di = +e.target.dataset.d, xi = +e.target.dataset.x; if (!f) return;
+      if (f === 'name') p.name = e.target.value; else if (f === 'rules') p.rules = e.target.value.split('\n').map(x => x.trim()).filter(Boolean);
+      else if (f === 'dname') p.days[di].name = e.target.value; else if (f === 'dow') p.days[di].dow = +e.target.value;
+      else if (['sets', 'min', 'max', 'rest'].includes(f)) { const v = num(e.target.value); if (v != null) p.days[di].items[xi][f] = Math.max(f === 'rest' ? 0 : 1, Math.round(v)); }
+    });
+    sh.body.addEventListener('click', e => {
+      const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a, di = +b.dataset.d, xi = +b.dataset.x;
+      if (a === 'addday') { const used = new Set(p.days.map(d => d.dow)), dow = [1, 2, 3, 4, 5, 6, 0].find(v => !used.has(v)) ?? 1; p.days.push({ dow, name: `Séance ${String.fromCharCode(65 + p.days.length)}`, items: [] }); draw(); }
+      if (a === 'dday') { if (p.days.length > 1 && confirm('Supprimer cette séance du programme ?')) { p.days.splice(di, 1); draw(); } }
+      if (a === 'dex') { p.days[di].items.splice(xi, 1); draw(); }
+      if (a === 'addex') openPicker(ids => { ids.forEach(id => p.days[di].items.push(it(id, 3, 8, 12, exo(id).type === 'w' ? 120 : 90))); draw(); });
+    });
+    sh.setFoot('<button class="btn grow" data-a="save">Enregistrer</button>');
+    sh.foot.onclick = e => {
+      if (!e.target.closest('[data-a="save"]')) return;
+      $$('select[data-f]', sh.body).forEach(sel => { const di = +sel.dataset.d, xi = +sel.dataset.x; if (sel.dataset.f === 'dow') p.days[di].dow = +sel.value; if (sel.dataset.f === 'rest') p.days[di].items[xi].rest = +sel.value; });
+      if (!p.name.trim()) { toast('Donne un nom au programme'); return; }
+      if (!p.days.some(d => d.items.length)) { toast('Ajoute au moins un exercice'); return; }
+      if (new Set(p.days.map(d => d.dow)).size < p.days.length) { toast('Deux séances tombent le même jour'); return; }
+      p.days.forEach(d => d.items.forEach(x => { if (x.max < x.min) [x.min, x.max] = [x.max, x.min]; }));
+      p.days.sort((a, b) => ((a.dow + 6) % 7) - ((b.dow + 6) % 7));
+      p.name = p.name.trim(); if (i == null) { M.programs.push(p); M.activeProg = p.id; } else M.programs[i] = p;
+      savePrograms(); closeSheet(1, () => { onSaved?.(); toast(i == null ? 'Programme créé et activé ✓' : 'Programme enregistré ✓'); });
+    };
+    draw(); openSheet(sh.el);
+  }
+
   /* ---------- Actions exposées ---------- */
   const actions = {
     'wo-open': () => openWorkout(),
@@ -419,13 +569,16 @@ window.KaloMuscuInit = K => {
     'wo-detail': b => { const w = M.workouts.find(x => x.id === b.dataset.id); if (w) openSummary(w, false); },
     'wo-all': () => openAll(),
     'exo-lib': () => openLibrary(),
+    'prog-list': () => openProgList(),
+    'prog-view': () => openProgView(),
+    'prog-start': b => startProgDay(+b.dataset.d),
     'body-sex': b => { M.settings.body = b.dataset.v; Store.put('muscuSettings', M.settings); render(); },
   };
-  const exportData = () => ({ workouts: M.workouts, routines: M.routines, custom: M.custom, settings: M.settings });
+  const exportData = () => ({ workouts: M.workouts, routines: M.routines, custom: M.custom, settings: M.settings, programs: M.programs, activeProg: M.activeProg });
   async function importData(d) {
     if (!d) return;
     for (const w of d.workouts || []) await Store.put('wo:' + w.id, w);
-    await Store.put('routines', d.routines || []); await Store.put('exos', d.custom || []); if (d.settings) await Store.put('muscuSettings', d.settings);
+    await Store.put('routines', d.routines || []); await Store.put('exos', d.custom || []); await Store.put('programs', d.programs || []); if (d.activeProg) await Store.put('activeProg', d.activeProg); if (d.settings) await Store.put('muscuSettings', d.settings);
   }
   const stats = (days = 7) => ({ n: M.workouts.length, streak: streakWeeks(), week: M.workouts.filter(w => w.start >= Date.now() - days * DAY).length,
     prs: M.workouts.reduce((a, w) => a + recordsOf(w).length, 0) });

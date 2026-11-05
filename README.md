@@ -90,7 +90,12 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Suivi** : semaines d'affilée avec au moins une séance, séances sur 30 jours, volume sur 7 jours, carte des muscles travaillés sur 7 jours (séries par muscle, un muscle secondaire compte pour ½), volume par semaine sur 8 semaines, historique, fiche par exercice (records, courbe du 1RM estimé, historique).
 - Carte musculaire : silhouette homme ou femme au choix (bouton au-dessus de la carte ; par défaut selon le sexe du profil). Dessins issus de la bibliothèque libre react-native-body-highlighter (licence MIT, `vendor/body-map-data.js` + `vendor/BODY-MAP-LICENSE`).
 - **Fiche exercice** (touche la vignette avec « i » dans la liste, ou le nom d'un exercice pendant la séance) : illustration animée du mouvement (3 positions), bouton « Voir une vidéo du mouvement » (recherche YouTube), carte des muscles principal / secondaires, équipement, records et historique.
-- Bibliothèque d'environ 90 exercices (`exercises.js`) + exercices personnalisés (charge × reps, poids du corps + lest, durée, cardio).
+- **Programmes** (haut de l'onglet Muscu) : *Choisir un programme* → programme proposé « Haut / Bas · 5 jours (75 séries) » ou *Créer mon propre programme* (séances par jour de la semaine, exercices avec séries, fourchette de répétitions et repos). Le programme actif affiche la semaine (jours d'entraînement, séances faites ✓) et la séance du jour, ou le jour de repos et la prochaine séance.
+  - Pendant une séance de programme : objectif affiché sous chaque exercice (ex. 3 × 6-8 reps · repos 2-3 min), minuteur de repos réglé par exercice (2 min 30 pour les lourds, 1 min 45 pour l'isolation), 2 séries d'échauffement (É) sur le premier exercice à ~50 % et ~70 % de la charge de travail, exclues des statistiques.
+  - **Progression automatique** : si toutes les séries de la dernière fois ont atteint le haut de la fourchette, Kalo propose +2,5 à 5 % de charge et pré-remplit la nouvelle charge.
+  - Exercice avec alternative (ex. curl incliné ↔ curl bayésien) : bouton pour échanger pendant la séance.
+  - Chaque téléphone a ses propres programmes : rien n'est partagé entre utilisateurs.
+- Bibliothèque d'environ 100 exercices (`exercises.js`) + exercices personnalisés (charge × reps, poids du corps + lest, durée, cardio).
 - *Mes aliments* (aliments créés, récents) est maintenant dans Profil.
 
 ## Polices
