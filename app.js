@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.11.1';
+  const APP_VERSION = '2.12.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -338,6 +338,20 @@
     if (afterClose) { const f = afterClose; afterClose = null; f(); }
   });
 
+  /* ---------- Animations d'entrée ---------- */
+  const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  function playEnter(v) {
+    if (reducedMotion()) return;
+    v.classList.remove('enter'); void v.offsetWidth; v.classList.add('enter');
+    clearTimeout(playEnter._t); playEnter._t = setTimeout(() => v.classList.remove('enter'), 1400);
+    $$('[data-count]', v).forEach(el => {
+      const end = +el.dataset.count, t0 = performance.now(), dur = 900;
+      if (!(end > 0)) return;
+      const step = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = r0(end * e); if (k < 1 && el.isConnected) requestAnimationFrame(step); };
+      el.textContent = '0'; requestAnimationFrame(step);
+    });
+  }
+
   /* ---------- Vues ---------- */
   function render() {
     const v = $('#view');
@@ -350,6 +364,8 @@
     if (UI.tab === 'journal') drawMini();
     if (UI.tab === 'muscu') Mu.afterRender();
     Mu.updateBanner();
+    const key = UI.tab + (UI.tab === 'journal' ? UI.date : '');
+    if (UI._shown !== key && !stack.length) { UI._shown = key; playEnter(v); }
   }
 
   // Accueil / onboarding
@@ -417,8 +433,8 @@
     const main = over ? '#FF9F43' : 'url(#ringGrad)';
     return `<svg viewBox="0 0 150 150" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent-hi)"/><stop offset="1" style="stop-color:var(--accent-lo)"/></linearGradient></defs>
       <circle cx="75" cy="75" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="13"/>
-      ${b > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" style="stroke:${over ? '#FF9F43' : 'var(--accent)'}" stroke-opacity=".3" stroke-width="13" stroke-linecap="round" stroke-dasharray="${((a + b) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)"/>` : ''}
-      ${a > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" stroke="${main}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${(a * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)" style="filter:drop-shadow(0 0 5px ${over ? 'rgba(255,159,67,.6)' : 'rgba(var(--accent-rgb),.6)'})"/>` : ''}
+      ${b > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" style="stroke:${over ? '#FF9F43' : 'var(--accent)'}" stroke-opacity=".3" class="arc" stroke-width="13" stroke-linecap="round" stroke-dasharray="${((a + b) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)"/>` : ''}
+      ${a > 0.002 ? `<circle class="arc" cx="75" cy="75" r="${R}" fill="none" stroke="${main}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${(a * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)" style="filter:drop-shadow(0 0 5px ${over ? 'rgba(255,159,67,.6)' : 'rgba(var(--accent-rgb),.6)'})"/>` : ''}
     </svg>`;
   }
   const QUOTES = ['On reste focus 💪', 'Chaque repas compte 🔥', 'Un jour après l\'autre 💚', 'La régularité paie ⚡'];
@@ -461,7 +477,7 @@
       <section class="card glow">
         <div class="today-card">
           <div class="ring-wrap">${kcalRing(E.k, P.k, g.kcal)}
-            <div class="ring-center">${ICON.flame}<b class="num ${over ? 'over-text' : ''}">${r0(Math.abs(rem))}</b><span>${over ? 'kcal en trop' : 'kcal restantes'}</span></div>
+            <div class="ring-center">${ICON.flame}<b class="num ${over ? 'over-text' : ''}" data-count="${Math.round(Math.abs(rem))}">${r0(Math.abs(rem))}</b><span>${over ? 'kcal en trop' : 'kcal restantes'}</span></div>
             <div class="ring-goal num">Objectif : ${r0(g.kcal)} kcal</div></div>
           <div class="macros">
             <div class="macro"><div class="row">${ICON.muscle}<span>Protéines</span><b class="num">${r0(t.p)} / ${r0(g.protein)} g</b></div>${gradBar(E.p, P.p, g.protein)}</div>

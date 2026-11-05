@@ -69,6 +69,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Anneau calories** : calories restantes, arc plein = mangé, arc clair = prévu.
 - **Barres protéines et glucides** : couleur selon la progression : rouge au départ, orange à mi-chemin, vert quand l'objectif est atteint.
 - Bouton **+** central : ajoute un aliment au repas en cours (scan, recherche, ajout rapide).
+- **Animations d'ambiance** : halos de fond qui dérivent, particules lumineuses qui montent, logo qui tourne, photo objectif en zoom lent, halo tournant et flamme qui vacille dans l'anneau, reflet qui balaie les barres, bouton + qui respire, muscles travaillés qui pulsent, enfoncement léger au toucher. À l'ouverture d'un onglet : cartes en cascade, anneau et barres qui se remplissent, compteur de calories qui défile. Tout est coupé si l'iPhone a « Réduire les animations » activé (Réglages → Accessibilité).
 
 ## Musculation (onglet Muscu)
 

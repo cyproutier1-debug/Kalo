@@ -669,3 +669,67 @@ body.has-wo #toast { bottom: calc(var(--tabbar-h) + var(--safe-b) + 70px); }
 .fx-zoom { transform: scale(1.04); position: relative; z-index: 2; box-shadow: 0 0 0 1px rgba(255, 150, 40, .45), 0 18px 50px rgba(255, 110, 20, .28) !important; }
 .fx-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .fx-row .seg { width: 150px; }
+
+/* ---------- v2.12 Animations d'ambiance ---------- */
+/* Fond : halos qui dérivent lentement */
+body::before { inset: -12%; animation: bgDrift 38s ease-in-out infinite alternate; will-change: transform; }
+@keyframes bgDrift { 0% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-3%, 2%, 0) scale(1.06); } 100% { transform: translate3d(3%, -2%, 0) scale(1.03); } }
+/* Particules lumineuses qui montent en fond */
+#ambient { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+#ambient i { position: absolute; bottom: -10px; border-radius: 50%; background: rgba(var(--accent-rgb), .55); box-shadow: 0 0 8px rgba(var(--accent-rgb), .7); opacity: 0; animation: rise linear infinite; }
+#ambient i:nth-child(3n) { background: rgba(110, 160, 255, .55); box-shadow: 0 0 8px rgba(110, 160, 255, .7); }
+@keyframes rise { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 10% { opacity: .7; } 80% { opacity: .35; } 100% { transform: translate3d(var(--dx), -105vh, 0); opacity: 0; } }
+/* Logo : l'arc tourne doucement */
+.brand svg path { transform-origin: 20px 20px; animation: spin 14s linear infinite; }
+/* Photo objectif : zoom lent (effet Ken Burns) */
+.hero-photo { animation: kenburns 22s ease-in-out infinite alternate; transform-origin: 60% 30%; }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+/* Anneau calories : halo qui respire + flamme qui vacille */
+.ring-wrap { isolation: isolate; }
+.ring-wrap::before { content: ""; position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1; z-index: -1; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 60%, rgba(var(--accent-rgb), .22) 75%, transparent 90%); animation: spin 6s linear infinite; filter: blur(6px); pointer-events: none; }
+.ring-wrap .arc { animation: arcBreath 3.2s ease-in-out infinite; }
+@keyframes arcBreath { 0%, 100% { stroke-width: 13; } 50% { stroke-width: 14.5; } }
+.ring-center svg { animation: flicker 1.6s ease-in-out infinite; transform-origin: 50% 85%; }
+@keyframes flicker { 0%, 100% { transform: scale(1) rotate(0); } 30% { transform: scale(1.12, .94) rotate(-4deg); } 60% { transform: scale(.94, 1.1) rotate(3deg); } }
+/* Barres : reflet qui balaie */
+.bar > div:not(.plan) { position: relative; overflow: hidden; }
+.bar > div:not(.plan)::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.45) 50%, transparent 80%); transform: translateX(-120%); animation: sheen 3.6s ease-in-out infinite; }
+.macro:nth-child(2) .bar > div::after { animation-delay: .5s; } .macro:nth-child(3) .bar > div::after { animation-delay: 1s; }
+@keyframes sheen { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+/* Bouton + : respiration lumineuse */
+.tab-plus { animation: breathe 2.8s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { box-shadow: 0 0 0 6px rgba(var(--accent-rgb), .10), 0 8px 26px rgba(var(--accent-rgb), .45); } 50% { box-shadow: 0 0 0 10px rgba(var(--accent-rgb), .06), 0 8px 34px rgba(var(--accent-rgb), .7); } }
+/* Cartes en surbrillance : bordure qui pulse doucement */
+.card.glow { animation: glowPulse 4s ease-in-out infinite; }
+@keyframes glowPulse { 0%, 100% { border-color: rgba(var(--accent-rgb), .22); } 50% { border-color: rgba(var(--accent-rgb), .45); } }
+/* Muscles travaillés : pulsation */
+.body-map path[style*="accent"] { animation: musclePulse 2.6s ease-in-out infinite; }
+@keyframes musclePulse { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
+/* Pastille montre active et séance en cours */
+.watch-pill.on i, #wo-banner svg { animation: blink 1.8s ease-in-out infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+/* Retour tactile : léger enfoncement au toucher */
+.btn, .card button, .chip, .tab, .swatch, .meal-check, .set-check, .item, .entry, .supp { transition: transform .12s ease, background .2s, box-shadow .2s, opacity .2s; }
+.btn:active, .chip:active, .tab:active, .swatch:active, .meal-check:active, .set-check:active, .supp:active { transform: scale(.94); }
+.item:active, .entry:active, button.card:active { transform: scale(.985); }
+.wo-row.done .set-check { animation: popIn .35s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes popIn { from { transform: scale(.6); } to { transform: scale(1); } }
+.tab.active svg { animation: tabBounce .45s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes tabBounce { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-4px) scale(1.12); } 100% { transform: none; } }
+
+/* Entrée animée à l'ouverture d'un onglet : cartes en cascade, anneau et barres qui se remplissent */
+#view.enter > * { animation: enterUp .55s cubic-bezier(.2, .8, .2, 1) both; }
+#view.enter > *:nth-child(2) { animation-delay: .05s; } #view.enter > *:nth-child(3) { animation-delay: .1s; } #view.enter > *:nth-child(4) { animation-delay: .15s; }
+#view.enter > *:nth-child(5) { animation-delay: .2s; } #view.enter > *:nth-child(6) { animation-delay: .25s; } #view.enter > *:nth-child(7) { animation-delay: .3s; }
+#view.enter > *:nth-child(8) { animation-delay: .35s; } #view.enter > *:nth-child(n+9) { animation-delay: .4s; }
+@keyframes enterUp { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: none; } }
+#view.enter .ring-wrap .arc { animation: arcIn 1.1s cubic-bezier(.3, .7, .2, 1) .15s both, arcBreath 3.2s ease-in-out 1.3s infinite; }
+@keyframes arcIn { from { stroke-dasharray: 0 400; } }
+#view.enter .bar > div { animation: barIn .9s cubic-bezier(.3, .7, .2, 1) .25s both; transform-origin: left center; }
+@keyframes barIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, #ambient i, .brand svg path, .hero-photo, .ring-wrap::before, .ring-wrap .arc, .ring-center svg, .bar > div::after, .tab-plus, .card.glow, .body-map path, .watch-pill.on i, #wo-banner svg, .wo-row.done .set-check, .tab.active svg, #view.enter > *, #view.enter .bar > div { animation: none !important; }
+  #ambient { display: none; }
+}

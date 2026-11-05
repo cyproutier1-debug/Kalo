@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="ambient" aria-hidden="true"></div>
   <div id="app">
     <main id="view" aria-live="polite"></main>
     <nav id="tabbar" aria-label="Navigation principale">
@@ -38,6 +39,7 @@
   <script src="vendor/body-map-data.js"></script>
   <script src="body.js"></script>
   <script src="muscu.js"></script>
+  <script>(function(){var a=document.getElementById('ambient'),h='';for(var i=0;i<16;i++){var s=(2+Math.random()*3).toFixed(1);h+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;width:'+s+'px;height:'+s+'px;animation-duration:'+(14+Math.random()*14).toFixed(1)+'s;animation-delay:-'+(Math.random()*28).toFixed(1)+'s;--dx:'+((Math.random()-.5)*60).toFixed(0)+'px"></i>';}a.innerHTML=h;})();</script>
   <script src="fx.js"></script>
   <script src="app.js"></script>
 </body>
