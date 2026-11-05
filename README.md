@@ -8,7 +8,7 @@ L'app doit être servie en **https** (sinon pas de caméra ni d'installation). G
 
 1. Crée un compte sur https://github.com (gratuit).
 2. Clique **New repository** → nom : `kalo` → **Public** → **Create repository**.
-3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, sw.js, manifest.webmanifest, et les dossiers `icons` et `vendor`) → **Commit changes**.
+3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, exercises.js, muscu.js, sw.js, manifest.webmanifest, et les dossiers `icons` et `vendor`) → **Commit changes**.
    - `index.html` doit être à la racine du dépôt, pas dans un sous-dossier.
 4. **Settings** → **Pages** → Source : **Deploy from a branch** → Branch : `main` / `(root)` → **Save**.
 5. Attends 1 à 2 minutes : l'adresse s'affiche en haut de la page Pages, du type `https://TON-PSEUDO.github.io/kalo/`.
@@ -68,6 +68,16 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Anneau calories** : calories restantes, arc plein = mangé, arc clair = prévu.
 - **Barres protéines et glucides** : couleur selon la progression : rouge au départ, orange à mi-chemin, vert quand l'objectif est atteint.
 - Bouton **+** central : ajoute un aliment au repas en cours (scan, recherche, ajout rapide).
+
+## Musculation (onglet Muscu)
+
+- **Séance libre** ou **routine** (Push, Jambes…) : pour chaque exercice, lignes Série · Précédent · kg · Reps · ✓. La colonne *Précédent* et les champs vides reprennent ta dernière performance : cocher ✓ sur une ligne vide valide la même charge que la dernière fois.
+- **Minuteur de repos** : démarre à chaque série validée (90 s par défaut ; touche « ⏱ Repos » pour 0 / 60 / 90 / 120 / 150 / 180 s), ±15 s, bip + vibration à la fin.
+- La séance en cours est enregistrée en continu : tu peux quitter l'app ou changer d'onglet (bandeau « Séance en cours » au-dessus des onglets).
+- **Fin de séance** : durée, volume soulevé (kg × reps), séries, records battus (1RM estimé Epley = charge × (1 + reps/30), ou charge max), kcal estimées (MET 5, indicatif, non ajoutées au bilan car la montre les compte déjà). Possibilité d'enregistrer la séance comme routine.
+- **Suivi** : semaines d'affilée avec au moins une séance, séances sur 30 jours, volume sur 7 jours, carte des muscles travaillés sur 7 jours (séries par muscle, un muscle secondaire compte pour ½), volume par semaine sur 8 semaines, historique, fiche par exercice (records, courbe du 1RM estimé, historique).
+- Bibliothèque d'environ 90 exercices (`exercises.js`) + exercices personnalisés (charge × reps, poids du corps + lest, durée, cardio).
+- *Mes aliments* (aliments créés, récents) est maintenant dans Profil.
 
 ## Polices
 

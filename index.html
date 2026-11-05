@@ -25,14 +25,17 @@
       <button data-tab="journal" class="tab"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Journal</span></button>
       <button data-tab="progress" class="tab"><svg viewBox="0 0 24 24"><path d="M4 20V11M9.3 20V6M14.6 20v-6M20 20V9M2.5 20.5h19"/></svg><span>Progrès</span></button>
       <button data-action="add-global" class="tab tab-plus" aria-label="Ajouter un aliment"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-      <button data-tab="foods" class="tab"><svg viewBox="0 0 24 24"><path d="M6 3v7a2 2 0 002 2v9M10 3v7a2 2 0 01-2 2M8 3v6M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg><span>Aliments</span></button>
+      <button data-tab="muscu" class="tab"><svg viewBox="0 0 24 24"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg><span>Muscu</span></button>
       <button data-tab="profile" class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Profil</span></button>
     </nav>
+    <button id="wo-banner" data-action="wo-open" hidden></button>
     <div id="sheets"></div>
     <div id="toast" role="status"></div>
     <input type="file" id="photoInput" data-input="photo" accept="image/*" hidden>
   </div>
   <script src="foods.js"></script>
+  <script src="exercises.js"></script>
+  <script src="muscu.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

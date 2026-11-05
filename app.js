@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.7.0';
+  const APP_VERSION = '2.8.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -53,6 +53,7 @@
     watch: '<svg viewBox="0 0 24 24" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="3.5"/><path d="M9 6l.6-3h4.8L15 6M9 18l.6 3h4.8l.6-3M12 9.5V12l1.5 1"/></svg>',
     muscle: '<svg viewBox="0 0 24 24"><path style="fill:var(--accent)" d="M3.5 16.5c0-4.6 1.8-10 5.6-11.6 1.4-.6 2.8.4 2.4 1.9l-.9 3.1c2.4-1.3 5.8-1.2 7.9.9 2.7 2.6 2.3 6.4-.8 8.3-3.6 2.2-10.5 2.4-14.2-.9z"/></svg>',
     drop: c => `<svg viewBox="0 0 24 24"><path fill="${c}" d="M12 2.5C9 7 6 10.2 6 14a6 6 0 0012 0c0-3.8-3-7-6-11.5z"/></svg>`,
+    dumbbell: '<svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg>',
     body: '<svg viewBox="0 0 48 48"><circle cx="24" cy="12" r="6"/><path d="M10 44c0-11 3-20 14-20s14 9 14 20M17 30c2 2 4.5 3 7 3s5-1 7-3M24 33v8M18 38h12"/></svg>',
   };
 
@@ -149,7 +150,7 @@
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme); Mu.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -341,11 +342,13 @@
     const v = $('#view');
     $('#tabbar').style.display = S.profile ? '' : 'none';
     if (!S.profile) { v.innerHTML = viewOnboarding(); bindOnboarding(); return; }
-    $$('#tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === UI.tab));
-    const views = { journal: viewJournal, progress: viewProgress, foods: viewFoods, profile: viewProfile };
+    $$('#tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === (UI.tab === 'foods' ? 'profile' : UI.tab)));
+    const views = { journal: viewJournal, progress: viewProgress, muscu: Mu.view, foods: viewFoods, profile: viewProfile };
     v.innerHTML = (views[UI.tab] || viewJournal)();
     if (UI.tab === 'progress') { drawChart(); drawProjection(); }
     if (UI.tab === 'journal') drawMini();
+    if (UI.tab === 'muscu') Mu.afterRender();
+    Mu.updateBanner();
   }
 
   // Accueil / onboarding
@@ -688,7 +691,7 @@
     return `<button class="item" data-i="${i}">${thumb}<div class="grow"><div class="name">${esc(f.name)}</div><div class="sub">${esc(sub)}</div></div>${f.ns ? `<span class="badge ns ns-${f.ns}">${f.ns.toUpperCase()}</span>` : ''}</button>`;
   }
   function viewFoods() {
-    return `<h1>Aliments</h1>
+    return `<button class="btn plain back-link" data-tab="profile">${ICON.back} Profil</button><h1>Mes aliments</h1>
       <button class="btn block ghost" data-action="create-food" style="margin-bottom:16px">+ Créer un aliment</button>
       <h3>Mes aliments</h3>
       <section class="card list" data-list="custom">${S.foods.length ? S.foods.map(foodItem).join('') : '<div class="empty small">Crée ici tes recettes ou les produits introuvables au scan.</div>'}</section>
@@ -747,6 +750,7 @@
         </details>
       </section>
       ${install}
+      <button class="card mu-start" data-tab="foods"><div><div class="card-title">${ICON.fork}Mes aliments</div><div class="sub">Aliments créés, recettes et récemment utilisés</div></div><span class="mu-go">${ICON.right}</span></button>
       <section class="card">
         <h3>Objectifs quotidiens</h3>
         <div class="row between"><div><div class="big num" style="font-size:28px;font-weight:800">${r0(g.kcal)} kcal</div><div class="num" style="color:var(--accent);font-weight:700">${r0(g.protein)} g protéines · ${r0(g.carbs)} g glucides</div><div class="num small muted">lipides ≈ ${r0(g.fat)} g (25 % des calories)</div></div>
@@ -1534,7 +1538,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme, muscu: Mu.exportData() };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
@@ -1555,9 +1559,13 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       await Store.put('ai', keepAI);
       await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme);
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
+      await Mu.importData(d.muscu);
       await loadState(); render(); toast('Sauvegarde restaurée');
     } catch (e) { toast('Fichier de sauvegarde invalide'); }
   }
+
+  /* ---------- Musculation (muscu.js) ---------- */
+  const Mu = window.KaloMuscuInit({ $, $$, esc, r0, r1, num, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, closeAll, niceStep, bindTip, currentWeight });
 
   /* ---------- Actions ---------- */
   const actions = {
@@ -1646,6 +1654,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     },
     install: async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice.catch(() => {}); installPrompt = null; render(); },
   };
+  Object.assign(actions, Mu.actions);
 
   document.addEventListener('click', e => {
     if (e.target.matches?.('input[type=date]')) { try { e.target.showPicker?.(); } catch (err) { /* ignore */ } }
@@ -1673,7 +1682,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     if (t.dataset.input === 'photo' && t.files[0]) { handlePhoto(t.files[0]); t.value = ''; }
   });
 
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!stack.length) { if (UI.tab === 'progress') { drawChart(); drawProjection(); } if (UI.tab === 'journal') drawMini(); } }, 150); });
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!stack.length) { if (UI.tab === 'progress') { drawChart(); drawProjection(); } if (UI.tab === 'journal') drawMini(); if (UI.tab === 'muscu') Mu.afterRender(); } }, 150); });
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if (UI.tab === 'profile') render(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && UI.date !== today() && UI.tab === 'journal' && !stack.length && UI._lastToday !== today()) { UI.date = today(); render(); } UI._lastToday = today(); });
 
