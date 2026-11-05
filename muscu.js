@@ -144,8 +144,8 @@ window.KaloMuscuInit = K => {
     M.active = { id: uid(), start: Date.now(), name, routineId, prog: extra.prog || null, exercises: exs.map((e, i) => {
       const sets = Array.from({ length: Math.max(1, e.sets || 3) }, () => ({ kg: null, reps: null, done: false }));
       if (extra.warmup && i === 0 && exo(e.exId).type === 'w') sets.unshift({ kg: null, reps: null, done: false, w: 1 }, { kg: null, reps: null, done: false, w: 2 });
-      return { uid: uid(), exId: e.exId, sets, tgt: e.min ? { sets: e.sets, min: e.min, max: e.max, rest: e.rest } : null, alt: e.alt || null, note: e.note || '' };
-    }) };
+      return { uid: uid(), exId: e.exId, sets, tgt: e.min ? { sets: e.sets, min: e.min, max: e.max, rest: e.rest ?? 90, kg: e.kg || null } : null, alt: e.alt || null, note: e.note || '' };
+    }), note: extra.note || '' };
     saveActive();
   }
   // Progression : si toutes les séries de la dernière fois ont atteint le haut de la fourchette, +2,5 à 5 % de charge
@@ -158,7 +158,9 @@ window.KaloMuscuInit = K => {
     const r = v => Math.round(v * 2) / 2, lo = r(top + Math.max(1, top * 0.025)), hi = r(top + Math.max(2, top * 0.05));
     return { kg: lo, hi, up: true, from: top };
   }
-  const restLabel = s => s >= 150 ? '2-3 min' : s >= 100 ? '1,5-2 min' : r0(s) + ' s';
+  const REST_TXT = { 0: 'aucun', 45: '45 s', 60: '1 min', 75: '1-1,5 min', 90: '1 min 30', 105: '1,5-2 min', 120: '2 min', 150: '2-3 min', 180: '3 min' };
+  const restLabel = s => REST_TXT[s] || (s >= 60 ? r1(s / 60).replace('.', ',') + ' min' : s + ' s');
+  const tgtLabel = (t, type) => `${t.sets} × ${t.min === t.max ? t.min : t.min + '-' + t.max}${type === 'time' ? ' s' : ' reps'}`;
   function startGuard(fn) {
     if (M.active) { if (confirm('Une séance est déjà en cours. Veux-tu l\'abandonner pour en commencer une nouvelle ?\n(Annuler = reprendre la séance en cours)')) { M.active = null; saveActive(); fn(); } else openWorkout(); return; }
     fn();
@@ -180,7 +182,7 @@ window.KaloMuscuInit = K => {
     const draw = () => {
       const body = sh.el.querySelector('.sheet-body'), st = body.scrollTop, w = A();
       sh.setBody(`
-        <div class="wo-top"><button class="wo-name" data-a="rename">${esc(w.name)} ${ICON.edit}</button><div class="row between"><b class="num wo-clock" data-w="elapsed">${fmtDur(Date.now() - w.start)}</b>${w.prog ? '<span class="chip">⏱ Repos selon le programme</span>' : `<button class="chip" data-a="restcfg">⏱ Repos ${M.settings.rest} s</button>`}</div><div class="sub" data-w="meta">${meta()}</div></div>
+        <div class="wo-top"><button class="wo-name" data-a="rename">${esc(w.name)} ${ICON.edit}</button><div class="row between"><b class="num wo-clock" data-w="elapsed">${fmtDur(Date.now() - w.start)}</b>${w.prog ? '<span class="chip">⏱ Repos selon le programme</span>' : `<button class="chip" data-a="restcfg">⏱ Repos ${M.settings.rest} s</button>`}</div><div class="sub" data-w="meta">${meta()}</div>${w.note ? `<div class="wo-note">${esc(w.note)}</div>` : ''}</div>
         ${w.exercises.map((x, xi) => exCard(x, xi, w)).join('')}
         <button class="btn ghost block" data-a="addex" style="margin:4px 0 12px">+ Ajouter des exercices</button>
         <button class="btn danger block" data-a="cancel">Abandonner la séance</button>`);
@@ -190,13 +192,13 @@ window.KaloMuscuInit = K => {
     const exCard = (x, xi, w) => {
       const e = exo(x.exId), [fa, fb] = FIELDS[e.type] || FIELDS.w, prev = lastPerf(x.exId, w.start), tg = x.tgt, sg = suggestion(x.exId, tg, w.start);
       let wi = 0;
-      return `<section class="card wo-ex"><div class="row between" style="align-items:flex-start"><button class="wo-ex-info" data-a="info" data-id="${e.id}">${thumb(e.id)}</button><div class="grow" data-a="info" data-id="${e.id}"><div class="wo-ex-name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div>${tg ? `<div class="wo-tgt">🎯 ${tg.sets} × ${tg.min}-${tg.max} reps · repos ${restLabel(tg.rest)}${x.note ? ' · ' + esc(x.note) : ''}</div>` : ''}${sg?.up ? `<div class="wo-up">🔼 Tout au max la dernière fois (${r1(sg.from)} kg) : passe à <b>${r1(sg.kg)}</b>-${r1(sg.hi)} kg</div>` : ''}${x.alt ? `<button class="chip wo-alt" data-a="alt" data-x="${xi}">↔ ${esc(exo(x.alt).name)}</button>` : ''}</div>
+      return `<section class="card wo-ex"><div class="row between" style="align-items:flex-start"><button class="wo-ex-info" data-a="info" data-id="${e.id}">${thumb(e.id)}</button><div class="grow" data-a="info" data-id="${e.id}"><div class="wo-ex-name">${esc(e.name)}</div><div class="sub">${esc(MUS[e.muscle] || '')} · ${esc(EQ[e.equip] || '')}</div>${tg ? `<div class="wo-tgt">🎯 ${tgtLabel(tg, e.type)} · ${tg.rest ? 'repos ' + restLabel(tg.rest) : 'sans repos'}${x.note ? ' · ' + esc(x.note) : ''}</div>` : ''}${sg?.up ? `<div class="wo-up">🔼 Tout au max la dernière fois (${r1(sg.from)} kg) : passe à <b>${r1(sg.kg)}</b>-${r1(sg.hi)} kg</div>` : ''}${x.alt ? `<button class="chip wo-alt" data-a="alt" data-x="${xi}">↔ ${esc(exo(x.alt).name)}</button>` : ''}</div>
         <div class="row" style="gap:0"><button class="icon-btn" data-a="up" data-x="${xi}" aria-label="Monter" ${xi ? '' : 'disabled style="opacity:.25"'}>${ICON.left.replace('M15 5l-7 7 7 7', 'M6 15l6-6 6 6')}</button><button class="icon-btn" data-a="rmex" data-x="${xi}" aria-label="Retirer" style="color:var(--danger)">${ICON.close}</button></div></div>
         <div class="wo-table ${fa ? '' : 'one'}"><div class="wo-row head"><span>Série</span><span>Précédent</span>${fa ? `<span>${fa}</span>` : ''}<span>${fb}</span><span></span></div>
         ${x.sets.map((s, si) => {
-          if (s.w) { const base = sg?.kg || (prev[0]?.kg) || 0, wk = base ? Math.round(base * (s.w === 1 ? 0.5 : 0.7) * 2) / 2 : ''; return `<div class="wo-row warm ${s.done ? 'done' : ''}" data-x="${xi}" data-s="${si}"><span class="set-n">É</span><span class="prev">Échauffement</span>${fa ? `<input class="wo-in" data-f="kg" inputmode="decimal" value="${s.kg ?? ''}" placeholder="${wk}" data-ph="${wk}">` : ''}<input class="wo-in" data-f="reps" inputmode="decimal" value="${s.reps ?? ''}" placeholder="${s.w === 1 ? 10 : 5}" data-ph="${s.w === 1 ? 10 : 5}"><button class="set-check" data-a="check" aria-label="Valider l'échauffement">${ICON.check}</button></div>`; }
+          if (s.w) { const base = sg?.kg || (prev[0]?.kg) || tg?.kg || 0, wk = base ? Math.round(base * (s.w === 1 ? 0.5 : 0.7) * 2) / 2 : ''; return `<div class="wo-row warm ${s.done ? 'done' : ''}" data-x="${xi}" data-s="${si}"><span class="set-n">É</span><span class="prev">Échauffement</span>${fa ? `<input class="wo-in" data-f="kg" inputmode="decimal" value="${s.kg ?? ''}" placeholder="${wk}" data-ph="${wk}">` : ''}<input class="wo-in" data-f="reps" inputmode="decimal" value="${s.reps ?? ''}" placeholder="${s.w === 1 ? 10 : 5}" data-ph="${s.w === 1 ? 10 : 5}"><button class="set-check" data-a="check" aria-label="Valider l'échauffement">${ICON.check}</button></div>`; }
           const n = wi++, p = prev[n] || prev[prev.length - 1];
-          const pa = sg ? sg.kg : p ? (e.type === 'time' ? '' : p.kg ?? '') : '', pb = p ? p.reps ?? '' : tg ? tg.min : '';
+          const pa = sg ? sg.kg : p ? (e.type === 'time' ? '' : p.kg ?? '') : tg?.kg ?? '', pb = p ? p.reps ?? '' : tg ? tg.min : '';
           return `<div class="wo-row ${s.done ? 'done' : ''}" data-x="${xi}" data-s="${si}"><span class="set-n">${n + 1}</span><span class="prev">${p ? esc(setTxt(p, e.type)) : '—'}</span>${fa ? `<input class="wo-in" data-f="kg" inputmode="decimal" value="${s.kg ?? ''}" placeholder="${pa}" data-ph="${pa}">` : ''}<input class="wo-in" data-f="reps" inputmode="decimal" value="${s.reps ?? ''}" placeholder="${pb}" data-ph="${pb}"><button class="set-check" data-a="check" aria-label="Valider la série">${ICON.check}</button></div>`; }).join('')}
         </div><div class="wo-ex-foot"><button data-a="addset" data-x="${xi}">+ Série</button>${x.sets.filter(z => !z.w).length > 1 ? `<button data-a="rmset" data-x="${xi}">− Série</button>` : ''}</div></section>`;
     };
@@ -230,7 +232,7 @@ window.KaloMuscuInit = K => {
           if (!isDone({ ...s, done: true }, t) || (t === 'w' && s.kg == null)) { toast(t === 'cardio' ? 'Indique la durée' : t === 'time' ? 'Indique la durée' : 'Indique la charge et les répétitions'); return; }
           s.done = true; row.classList.add('done');
           try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume?.(); } catch (err) { /* ignore */ }
-          const rs = s.w ? 60 : x.tgt?.rest || M.settings.rest;
+          const rs = s.w ? 60 : x.tgt ? x.tgt.rest : M.settings.rest;
           if (t !== 'cardio' && rs > 0) { M.rest = { end: Date.now() + rs * 1000, total: rs }; drawFoot(); }
         } else { s.done = false; row.classList.remove('done'); }
         saveActive(); refreshMeta(); return;
@@ -450,13 +452,28 @@ window.KaloMuscuInit = K => {
       { dow: 6, name: 'Épaules, bras, abdos', items: [it('ecarte-inverse', 3, 12, 15, I), it('elev-lat-poulie', 3, 12, 20, I), it('curl-pupitre', 3, 8, 12, I), it('ext-triceps-allonge', 3, 8, 12, I), it('crunch-poulie', 3, 10, 15, I)] },
     ],
   }];
+  PRESETS.push({
+    id: 'preset-fessiers', name: 'Fessiers / Quads / Ischios + haut du corps',
+    desc: 'Bas du corps 3 fois par semaine (lundi fessiers, jeudi quadriceps, samedi ischios) + séances Épaules / Triceps, Dos / Biceps et circuit Abdos à placer les jours que tu veux (fixe leurs jours avec « Modifier »).',
+    rules: ['Charges notées dans le programme = charges de départ : Kalo propose d\'augmenter quand tu atteins le haut de la fourchette sur toutes les séries.', 'Hip thrust du lundi : lourd.', 'Abdos : circuit à faire 3 fois (enchaîne les 5 exercices, puis recommence).'],
+    days: [
+      { dow: 1, name: 'Fessiers', items: [it('ext-lombaires', 2, 15, 15, 75, { note: 'poids du corps' }), it('sdt-roumain', 3, 8, 10, 150), it('hip-thrust', 3, 6, 8, 150, { note: 'lourd' }), it('step-up', 2, 8, 10, 105), it('kickback-fessier', 2, 15, 20, 105), it('abducteurs', 3, 15, 20, 105)] },
+      { dow: 4, name: 'Quadriceps', items: [it('squat', 3, 6, 8, 150), it('presse', 3, 8, 10, 120), it('leg-ext', 3, 10, 12, 90), it('bulgare', 2, 10, 10, 105, { note: '10 pas par jambe' }), it('hip-thrust', 3, 8, 8, 120), it('adducteurs', 3, 20, 20, 75)] },
+      { dow: 6, name: 'Ischios', items: [it('leg-curl-assis', 3, 8, 10, 105), it('sdt-roumain-halt', 3, 10, 10, 120), it('hip-thrust', 3, 8, 10, 120), it('ext-lombaires', 2, 15, 20, 75, { note: 'lesté' }), it('kickback-fessier', 2, 12, 15, 75), it('adducteurs', 3, 20, 20, 75)] },
+      { dow: null, name: 'Épaules / Triceps', items: [it('dm-barre', 3, 6, 8, 120, { kg: 14 }), it('elev-lat-poulie', 3, 12, 15, 60), it('ecarte-inverse', 3, 12, 15, 60, { note: 'arrière d\'épaule' }), it('elev-front-corde', 2, 12, 15, 60), it('elev-lat-halt', 3, 12, 15, 60), it('ext-barre-poulie', 3, 12, 15, 60), it('ext-tete-poulie', 2, 10, 12, 60, { note: 'à la corde' })] },
+      { dow: null, name: 'Dos / Biceps', items: [it('tirage-vert', 3, 8, 10, 105, { kg: 45 }), it('rowing-barre', 3, 6, 8, 150, { kg: 51.3, alt: 'rowing-smith', note: 'ou à la Smith' }), it('tirage-horiz-unilat', 3, 8, 10, 120, { kg: 45 }), it('pull-over', 2, 12, 15, 75, { kg: 18 }), it('face-pull', 2, 12, 15, 75), it('ext-lombaires', 3, 10, 20, 75, { note: 'jusqu\'à l\'échec' }), it('curl-barre', 3, 8, 10, 90), it('curl-marteau', 2, 10, 15, 75)] },
+      { dow: null, name: 'Abdos (circuit ×3)', warmup: false, note: 'Circuit à faire 3 fois : enchaîne les 5 exercices sans pause, puis recommence. Valide une série de chaque exercice à chaque tour.', items: [it('abdos-bras-jambes', 3, 10, 10, 0), it('releve-jambes-sol', 3, 10, 10, 0), it('battements', 3, 10, 10, 0, { note: '10 de chaque côté' }), it('russian-twist', 3, 10, 10, 0, { note: '10 de chaque côté' }), it('gainage', 3, 60, 60, 60)] },
+    ],
+  });
   const prog = () => M.programs.find(p => p.id === M.activeProg) || null;
+  const dayLabel = d => d.dow == null ? 'Quand tu veux' : DOW[d.dow];
+  const dowOrder = d => d.dow == null ? 9 : (d.dow + 6) % 7;
   const daySets = d => d.items.reduce((a, x) => a + x.sets, 0);
   const progSets = p => p.days.reduce((a, d) => a + daySets(d), 0);
   const doneThisWeek = (p, di) => { const ws = weekStart(Date.now()).getTime(); return M.workouts.some(w => w.start >= ws && w.prog?.pid === p.id && w.prog.day === di); };
   function nextDay(p) {
     const today = new Date().getDay();
-    for (let k = 0; k < 7; k++) { const dw = (today + k) % 7, di = p.days.findIndex(d => d.dow === dw); if (di >= 0) return { di, k }; }
+    for (let k = 1; k < 8; k++) { const dw = (today + k) % 7, di = p.days.findIndex(d => d.dow === dw); if (di >= 0) return { di, k }; }
     return null;
   }
   function programCard() {
@@ -466,6 +483,8 @@ window.KaloMuscuInit = K => {
     const today = new Date().getDay(), di = p.days.findIndex(d => d.dow === today), nx = nextDay(p);
     const strip = [1, 2, 3, 4, 5, 6, 0].map(dw => { const i = p.days.findIndex(d => d.dow === dw); const done = i >= 0 && doneThisWeek(p, i); return `<span class="pd ${i >= 0 ? 'train' : 'rest'} ${dw === today ? 'today' : ''} ${done ? 'done' : ''}"><b>${DOW_S[dw]}</b><i>${done ? '✓' : i >= 0 ? '' : '·'}</i></span>`; }).join('');
     const d = di >= 0 ? p.days[di] : null, done = d && doneThisWeek(p, di);
+    const free = p.days.map((x, i) => ({ x, i })).filter(o => o.x.dow == null);
+    const freeHTML = free.length ? `<div class="prog-free"><div class="small muted">${d ? 'Autres séances' : 'Séances à placer quand tu veux'}</div><div class="prog-free-row">${free.map(o => `<button class="chip ${doneThisWeek(p, o.i) ? 'chip-done' : ''}" data-action="prog-start" data-d="${o.i}">${doneThisWeek(p, o.i) ? '✓ ' : ''}${esc(o.x.name)}</button>`).join('')}</div></div>` : '';
     return `<div class="section-title"><h2>Mon programme</h2><button class="btn plain" data-action="prog-list">Changer</button></div>
       <section class="card prog-card glow">
         <div class="row between"><button class="prog-name" data-action="prog-view">${esc(p.name)} ${ICON.right}</button></div>
@@ -473,20 +492,21 @@ window.KaloMuscuInit = K => {
         ${d ? `<div class="prog-today"><div class="small muted">Aujourd'hui · ${DOW[today]}</div><div class="card-title" style="font-size:20px">${esc(d.name)}</div><div class="sub">${d.items.length} exercices · ${daySets(d)} séries${done ? ' · déjà faite ✓' : ''}</div>
             <div class="prog-ex">${d.items.map(x => `<span>${thumb(x.exId, 'mini')}</span>`).join('')}</div>
             <button class="btn block" data-action="prog-start" data-d="${di}" style="margin-top:12px">${done ? 'Refaire la séance' : 'Commencer la séance'}</button></div>`
-          : `<div class="prog-today"><div class="card-title" style="font-size:19px">😴 Jour de repos</div><div class="sub">${nx ? `Prochaine séance : ${DOW[p.days[nx.di].dow]} · ${esc(p.days[nx.di].name)}` : ''}</div>
-            <p class="note" style="margin:8px 0 0">La récupération fait partie du programme : c'est là que le muscle se construit.</p>${nx ? `<button class="btn outline block small" data-action="prog-start" data-d="${nx.di}" style="margin-top:10px">Faire quand même ${esc(p.days[nx.di].name)}</button>` : ''}</div>`}
+          : `<div class="prog-today"><div class="card-title" style="font-size:19px">${free.length ? '📅 Pas de séance fixe aujourd\'hui' : '😴 Jour de repos'}</div><div class="sub">${nx ? `Prochaine séance : ${DOW[p.days[nx.di].dow]} · ${esc(p.days[nx.di].name)}` : ''}</div>
+            ${free.length ? '' : `<p class="note" style="margin:8px 0 0">La récupération fait partie du programme : c'est là que le muscle se construit.</p>`}${nx ? `<button class="btn outline block small" data-action="prog-start" data-d="${nx.di}" style="margin-top:10px">Faire quand même ${esc(p.days[nx.di].name)}</button>` : ''}</div>`}
+        ${freeHTML}
       </section>`;
   }
   function startProgDay(di) {
     const p = prog(); if (!p) return; const d = p.days[di]; if (!d) return;
-    startGuard(() => { newWorkout(d.name, d.items, null, { prog: { pid: p.id, day: di }, warmup: true }); openWorkout(); });
+    startGuard(() => { newWorkout(d.name, d.items, null, { prog: { pid: p.id, day: di }, warmup: d.warmup !== false, note: d.note }); openWorkout(); });
   }
   function openProgList() {
     const sh = makeSheet('Programmes');
     const draw = () => {
       const mine = M.programs, installed = new Set(mine.map(p => p.from));
       sh.setBody(`<p class="note" style="margin-top:0">Chaque téléphone a ses propres données : ton programme n'apparaît pas chez les autres utilisateurs de Kalo, et le leur n'apparaît pas chez toi.</p>
-        ${mine.length ? `<h3>Mes programmes</h3>${mine.map((p, i) => `<section class="card prog-item ${p.id === M.activeProg ? 'on' : ''}"><div class="grow"><div class="card-title" style="font-size:17px">${esc(p.name)}${p.id === M.activeProg ? ' <span class="pill-on">Actif</span>' : ''}</div><div class="sub">${p.days.length} séance${p.days.length > 1 ? 's' : ''} / semaine · ${progSets(p)} séries · ${p.days.map(d => DOW[d.dow].slice(0, 3)).join(', ')}</div>
+        ${mine.length ? `<h3>Mes programmes</h3>${mine.map((p, i) => `<section class="card prog-item ${p.id === M.activeProg ? 'on' : ''}"><div class="grow"><div class="card-title" style="font-size:17px">${esc(p.name)}${p.id === M.activeProg ? ' <span class="pill-on">Actif</span>' : ''}</div><div class="sub">${p.days.length} séance${p.days.length > 1 ? 's' : ''} / semaine · ${progSets(p)} séries · ${p.days.map(d => d.dow == null ? 'libre' : DOW[d.dow].slice(0, 3)).join(', ')}</div>
           <div class="row" style="gap:6px;margin-top:10px">${p.id === M.activeProg ? '<button class="btn small outline" data-a="off">Désactiver</button>' : `<button class="btn small" data-a="on" data-i="${i}">Activer</button>`}<button class="btn small outline" data-a="edit" data-i="${i}">Modifier</button><button class="btn small danger" data-a="del" data-i="${i}">Supprimer</button></div></div></section>`).join('')}` : ''}
         <h3>Programmes proposés</h3>${PRESETS.map((p, i) => `<section class="card prog-item"><div class="grow"><div class="card-title" style="font-size:17px">${esc(p.name)}</div><div class="sub">${esc(p.desc)}</div>
           <button class="btn small ${installed.has(p.id) ? 'outline' : ''}" data-a="install" data-i="${i}" style="margin-top:10px">${installed.has(p.id) ? 'Ajouter une autre copie' : 'Utiliser ce programme'}</button></div></section>`).join('')}
@@ -507,8 +527,8 @@ window.KaloMuscuInit = K => {
     const p = prog(); if (!p) return;
     const sh = makeSheet(p.name);
     sh.setBody(`${p.desc ? `<p class="note" style="margin-top:0">${esc(p.desc)}</p>` : ''}
-      ${p.days.map((d, di) => `<section class="card prog-day"><div class="row between"><div><div class="small muted">${DOW[d.dow]}${doneThisWeek(p, di) ? ' · faite cette semaine ✓' : ''}</div><div class="card-title" style="font-size:18px">${esc(d.name)} <span class="muted small">(${daySets(d)} séries)</span></div></div><button class="btn small" data-a="start" data-d="${di}">Go</button></div>
-        ${d.items.map(x => `<div class="prog-line" data-a="info" data-id="${x.exId}">${thumb(x.exId, 'mini')}<span class="grow">${esc(exo(x.exId).name)}${x.note ? ` <em class="muted">(${esc(x.note)})</em>` : ''}</span><b class="num">${x.sets}×${x.min}-${x.max}</b></div>`).join('')}</section>`).join('')}
+      ${p.days.map((d, di) => `<section class="card prog-day"><div class="row between"><div><div class="small muted">${dayLabel(d)}${doneThisWeek(p, di) ? ' · faite cette semaine ✓' : ''}</div><div class="card-title" style="font-size:18px">${esc(d.name)} <span class="muted small">(${daySets(d)} séries)</span></div></div><button class="btn small" data-a="start" data-d="${di}">Go</button></div>
+        ${d.items.map(x => `<div class="prog-line" data-a="info" data-id="${x.exId}">${thumb(x.exId, 'mini')}<span class="grow">${esc(exo(x.exId).name)}${x.note ? ` <em class="muted">(${esc(x.note)})</em>` : ''}</span><b class="num">${x.sets}×${x.min === x.max ? x.min : x.min + '-' + x.max}${exo(x.exId).type === 'time' ? ' s' : ''}${x.kg ? ` · ${r1(x.kg)} kg` : ''}</b></div>`).join('')}${d.note ? `<p class="note" style="margin:8px 0 0">${esc(d.note)}</p>` : ''}</section>`).join('')}
       ${p.rules?.length ? `<section class="card"><div class="card-title" style="font-size:18px;margin-bottom:6px">📏 Règles</div><ol class="prog-rules">${p.rules.map(r => `<li>${esc(r)}</li>`).join('')}</ol></section>` : ''}`);
     sh.setFoot(`<button class="btn outline grow" data-a="edit">Modifier</button>`);
     sh.body.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; if (b.dataset.a === 'start') { const di = +b.dataset.d; closeSheet(1, () => startProgDay(di)); } if (b.dataset.a === 'info') openExercise(b.dataset.id); });
@@ -518,15 +538,15 @@ window.KaloMuscuInit = K => {
   function openProgEdit(i, onSaved) {
     const p = i == null ? { id: uid(), name: '', desc: '', rules: [], days: [{ dow: 1, name: 'Séance A', items: [] }] } : JSON.parse(JSON.stringify(M.programs[i]));
     const sh = makeSheet(i == null ? 'Nouveau programme' : 'Modifier le programme');
-    const restOpts = [60, 90, 105, 120, 150, 180];
+    const restOpts = [0, 45, 60, 75, 90, 105, 120, 150, 180];
     const draw = () => {
       const st = sh.el.querySelector('.sheet-body').scrollTop;
       sh.setBody(`<section class="card stack"><label class="field"><span>Nom du programme</span><input type="text" data-f="name" value="${esc(p.name)}" placeholder="ex. Full body 3 jours"></label>
         <label class="field"><span>Règles (une par ligne, facultatif)</span><textarea data-f="rules" rows="3" placeholder="ex. Dernière série à l'échec">${esc((p.rules || []).join('\n'))}</textarea></label></section>
-        ${p.days.map((d, di) => `<section class="card prog-edit-day"><div class="row" style="gap:8px"><select data-f="dow" data-d="${di}">${[1, 2, 3, 4, 5, 6, 0].map(v => `<option value="${v}" ${d.dow === v ? 'selected' : ''}>${DOW[v]}</option>`).join('')}</select><input type="text" data-f="dname" data-d="${di}" value="${esc(d.name)}" placeholder="Nom de la séance"><button class="icon-btn" data-a="dday" data-d="${di}" style="color:var(--danger)" aria-label="Supprimer la séance">${ICON.close}</button></div>
+        ${p.days.map((d, di) => `<section class="card prog-edit-day"><div class="row" style="gap:8px"><select data-f="dow" data-d="${di}">${[1, 2, 3, 4, 5, 6, 0].map(v => `<option value="${v}" ${d.dow === v ? 'selected' : ''}>${DOW[v]}</option>`).join('')}<option value="-1" ${d.dow == null ? 'selected' : ''}>Libre</option></select><input type="text" data-f="dname" data-d="${di}" value="${esc(d.name)}" placeholder="Nom de la séance"><button class="icon-btn" data-a="dday" data-d="${di}" style="color:var(--danger)" aria-label="Supprimer la séance">${ICON.close}</button></div>
           ${d.items.map((x, xi) => `<div class="pe-item"><div class="row between"><b class="pe-name">${esc(exo(x.exId).name)}</b><button class="icon-btn" data-a="dex" data-d="${di}" data-x="${xi}" style="color:var(--danger)" aria-label="Retirer">${ICON.close}</button></div>
             <div class="pe-grid"><label><span>Séries</span><input type="number" inputmode="numeric" data-f="sets" data-d="${di}" data-x="${xi}" value="${x.sets}"></label><label><span>Reps min</span><input type="number" inputmode="numeric" data-f="min" data-d="${di}" data-x="${xi}" value="${x.min}"></label><label><span>Reps max</span><input type="number" inputmode="numeric" data-f="max" data-d="${di}" data-x="${xi}" value="${x.max}"></label>
-            <label><span>Repos</span><select data-f="rest" data-d="${di}" data-x="${xi}">${restOpts.map(v => `<option value="${v}" ${x.rest === v ? 'selected' : ''}>${v >= 60 ? (v % 60 ? r1(v / 60).replace('.', ',') : v / 60) + ' min' : v + ' s'}</option>`).join('')}</select></label></div></div>`).join('')}
+            <label><span>Repos</span><select data-f="rest" data-d="${di}" data-x="${xi}">${restOpts.map(v => `<option value="${v}" ${x.rest === v ? 'selected' : ''}>${restLabel(v)}</option>`).join('')}</select></label></div></div>`).join('')}
           <button class="btn ghost block small" data-a="addex" data-d="${di}">+ Exercices</button></section>`).join('')}
         <button class="btn outline block" data-a="addday">+ Ajouter une séance</button>`);
       sh.el.querySelector('.sheet-body').scrollTop = st;
@@ -534,12 +554,12 @@ window.KaloMuscuInit = K => {
     sh.body.addEventListener('input', e => {
       const f = e.target.dataset.f, di = +e.target.dataset.d, xi = +e.target.dataset.x; if (!f) return;
       if (f === 'name') p.name = e.target.value; else if (f === 'rules') p.rules = e.target.value.split('\n').map(x => x.trim()).filter(Boolean);
-      else if (f === 'dname') p.days[di].name = e.target.value; else if (f === 'dow') p.days[di].dow = +e.target.value;
+      else if (f === 'dname') p.days[di].name = e.target.value; else if (f === 'dow') p.days[di].dow = +e.target.value < 0 ? null : +e.target.value;
       else if (['sets', 'min', 'max', 'rest'].includes(f)) { const v = num(e.target.value); if (v != null) p.days[di].items[xi][f] = Math.max(f === 'rest' ? 0 : 1, Math.round(v)); }
     });
     sh.body.addEventListener('click', e => {
       const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a, di = +b.dataset.d, xi = +b.dataset.x;
-      if (a === 'addday') { const used = new Set(p.days.map(d => d.dow)), dow = [1, 2, 3, 4, 5, 6, 0].find(v => !used.has(v)) ?? 1; p.days.push({ dow, name: `Séance ${String.fromCharCode(65 + p.days.length)}`, items: [] }); draw(); }
+      if (a === 'addday') { const used = new Set(p.days.map(d => d.dow)), dow = [1, 2, 3, 4, 5, 6, 0].find(v => !used.has(v)) ?? null; p.days.push({ dow, name: `Séance ${String.fromCharCode(65 + p.days.length)}`, items: [] }); draw(); }
       if (a === 'dday') { if (p.days.length > 1 && confirm('Supprimer cette séance du programme ?')) { p.days.splice(di, 1); draw(); } }
       if (a === 'dex') { p.days[di].items.splice(xi, 1); draw(); }
       if (a === 'addex') openPicker(ids => { ids.forEach(id => p.days[di].items.push(it(id, 3, 8, 12, exo(id).type === 'w' ? 120 : 90))); draw(); });
@@ -547,12 +567,12 @@ window.KaloMuscuInit = K => {
     sh.setFoot('<button class="btn grow" data-a="save">Enregistrer</button>');
     sh.foot.onclick = e => {
       if (!e.target.closest('[data-a="save"]')) return;
-      $$('select[data-f]', sh.body).forEach(sel => { const di = +sel.dataset.d, xi = +sel.dataset.x; if (sel.dataset.f === 'dow') p.days[di].dow = +sel.value; if (sel.dataset.f === 'rest') p.days[di].items[xi].rest = +sel.value; });
+      $$('select[data-f]', sh.body).forEach(sel => { const di = +sel.dataset.d, xi = +sel.dataset.x; if (sel.dataset.f === 'dow') p.days[di].dow = +sel.value < 0 ? null : +sel.value; if (sel.dataset.f === 'rest') p.days[di].items[xi].rest = +sel.value; });
       if (!p.name.trim()) { toast('Donne un nom au programme'); return; }
       if (!p.days.some(d => d.items.length)) { toast('Ajoute au moins un exercice'); return; }
-      if (new Set(p.days.map(d => d.dow)).size < p.days.length) { toast('Deux séances tombent le même jour'); return; }
+      const fixed = p.days.filter(d => d.dow != null); if (new Set(fixed.map(d => d.dow)).size < fixed.length) { toast('Deux séances tombent le même jour'); return; }
       p.days.forEach(d => d.items.forEach(x => { if (x.max < x.min) [x.min, x.max] = [x.max, x.min]; }));
-      p.days.sort((a, b) => ((a.dow + 6) % 7) - ((b.dow + 6) % 7));
+      p.days.sort((a, b) => dowOrder(a) - dowOrder(b));
       p.name = p.name.trim(); if (i == null) { M.programs.push(p); M.activeProg = p.id; } else M.programs[i] = p;
       savePrograms(); closeSheet(1, () => { onSaved?.(); toast(i == null ? 'Programme créé et activé ✓' : 'Programme enregistré ✓'); });
     };
