@@ -544,3 +544,12 @@ h1, .day-title label, .section-title h2, .proj-head, .meal-head h2 { font-style:
 .meal-head .kcal .kv b { font-size: 29px; }
 .meal-head .kcal .kv { font-size: 15px; }
 body::before { filter: saturate(1.15); }
+/* v2.6.1 : chiffres contenus dans l'anneau et le bilan */
+.ring-center { padding: 0 14px; }
+.ring-wrap .ring-center svg { width: 18px; height: 18px; }
+.ring-center b { font-size: 29px; letter-spacing: -.02em; max-width: 100%; }
+.ring-center span { font-size: 11.5px; margin-top: 4px; white-space: nowrap; }
+.bilan-row > * { min-width: 0; padding: 4px 3px; }
+.bilan-row .v { font-size: clamp(17px, 5.4vw, 22px); gap: 4px; white-space: nowrap; }
+.bilan-row .v svg { width: 17px; height: 17px; }
+.bilan-row .l { font-size: 13px; }
