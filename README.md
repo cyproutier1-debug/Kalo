@@ -44,7 +44,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Bilan** = dépense − consommé. Un nombre négatif est un déficit (perte), un positif un excédent.
 - **Valider la journée** (bouton en bas du journal) : affiche le récap (objectifs atteints, déficit, projection sur 4 semaines) coche tous les repas et verrouille la journée. « Rouvrir » permet de la modifier.
 - Dans Progrès, le bilan estimé utilise ta dépense réelle quand tu l'as saisie.
-- **Animation de validation** (repas ou journée) : flammes qui montent le long des bords de la carte du bas jusqu'en haut, léger zoom de la carte, puis explosion d'étoiles qui retombent, avec sons de mèche, de flammes et de feu d'artifice (sons synthétisés dans `fx.js`, aucun fichier audio). Profil → *Animation de validation* pour couper l'animation ou les sons. Sur iPhone, le mode silencieux coupe les sons.
+- **Animation de validation** (repas ou journée) : flammes qui montent le long des bords de la carte du bas jusqu'en haut, léger zoom de la carte, puis feu d'artifice (5 fusées qui partent du sommet de la carte et explosent en gerbes colorées qui retombent), avec sons de mèche, de flammes, de sifflement de fusée, d'explosion et de crépitements (sons synthétisés dans `fx.js`, aucun fichier audio). Profil → *Animation de validation* pour couper l'animation ou les sons. Sur iPhone, le mode silencieux coupe les sons.
 
 ## Projection jusqu'à l'objectif (onglet Progrès)
 

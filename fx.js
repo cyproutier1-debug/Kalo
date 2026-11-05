@@ -41,6 +41,15 @@
     const g = gain(0); chain(noiseSrc(t, len + 0.02), filter('bandpass', f, 2.5), g, master);
     g.gain.setValueAtTime(amp, t); g.gain.exponentialRampToValueAtTime(0.0005, t + len);
   }
+  // Fusée qui monte : sifflement ascendant + souffle
+  function whistle(t0, dur = 0.55) {
+    const o = ac.createOscillator(), g = gain(0); o.type = 'sine';
+    o.frequency.setValueAtTime(R(700, 900), t0); o.frequency.exponentialRampToValueAtTime(R(2200, 2800), t0 + dur);
+    chain(o, g, master); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.05, t0 + 0.05); g.gain.setValueAtTime(0.05, t0 + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+    const h = gain(0); chain(noiseSrc(t0, dur), filter('highpass', 3000), h, master);
+    h.gain.setValueAtTime(0.0001, t0); h.gain.exponentialRampToValueAtTime(0.12, t0 + 0.04); h.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  }
   // Explosion de feu d'artifice : boum grave + souffle
   function boom(t0, big = 1) {
     const o = ac.createOscillator(), og = gain(0); o.type = 'sine';
@@ -64,8 +73,7 @@
 
   /* ---------- Visuel (style dessin animé : formes pleines, contour sombre épais) ---------- */
   const CLIMB = 1100; // durée de la montée des flammes (ms)
-  const INK = '#2A0C02';
-  // Forme de flamme : base arrondie, 3 langues de feu, pointe principale décalée par « w »
+    // Forme de flamme : base arrondie, 3 langues de feu, pointe principale décalée par « w »
   // Grande flamme dessinée à chaque image : aplats rouge / orange / jaune, halo, langues qui ondulent
   function flameEdge(H, W, t, seed, side) {
     const pts = [], N = 22;
@@ -104,24 +112,6 @@
     ctx.shadowBlur = 0; ctx.beginPath(); ctx.moveTo(0, 4); ctx.bezierCurveTo(-3, 3, -3, -1, -0.5, -4); ctx.bezierCurveTo(0, -1, 3, 0, 2.5, 2); ctx.fillStyle = '#FFC93A'; ctx.fill();
     ctx.restore();
   }
-  let SPR = null;
-  function sprites() {
-    if (SPR) return SPR;
-    const star = col => {
-      const s = 52, c = document.createElement('canvas'); c.width = c.height = s; const x = c.getContext('2d');
-      x.translate(s / 2, s / 2); x.lineJoin = 'round'; x.beginPath();
-      for (let i = 0; i < 10; i++) { const r = i % 2 ? 7.5 : 17, a = -Math.PI / 2 + i * Math.PI / 5; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
-      x.closePath(); x.fillStyle = col; x.fill(); x.lineWidth = 3.2; x.strokeStyle = INK; x.stroke();
-      x.fillStyle = 'rgba(255,255,255,.7)'; x.beginPath(); x.ellipse(-4, -5, 2.4, 4, 0.5, 0, 7); x.fill(); return c;
-    };
-    const dot = col => { const c = document.createElement('canvas'); c.width = c.height = 20; const x = c.getContext('2d'); x.beginPath(); x.arc(10, 10, 7, 0, 7); x.fillStyle = col; x.fill(); x.lineWidth = 2.4; x.strokeStyle = INK; x.stroke(); return c; };
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#2EE68A';
-    SPR = {
-      stars: ['#FFD23F', '#FFFFFF', '#FF9A2E', accent, '#FFE98A', '#7FE9FF'].map(star),
-      dots: ['#FFD23F', '#FF9A2E', '#FFFFFF'].map(dot),
-    };
-    return SPR;
-  }
   // Point sur la moitié du contour (du milieu du bas au milieu du haut), côté gauche (-1) ou droit (+1)
   function halfPath(r, rad) {
     const w = r.width, h = r.height, cx = r.left + w / 2, R0 = Math.min(rad, w / 2, h / 2);
@@ -137,19 +127,27 @@
     };
     fn.L = L; return fn;
   }
+  const SHOW = [
+    { at: 0, fly: 520, dx: 0, dy: 0.2, big: 1.15 },
+    { at: 220, fly: 560, dx: -0.28, dy: 0.28, big: 0.8 },
+    { at: 420, fly: 540, dx: 0.27, dy: 0.24, big: 0.85 },
+    { at: 750, fly: 600, dx: -0.12, dy: 0.12, big: 0.7 },
+    { at: 950, fly: 580, dx: 0.15, dy: 0.32, big: 0.75 },
+  ];
   const ease = x => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
 
   function celebrate(getEl, opts = {}) {
     const sound = opts.sound !== false, anim = opts.anim !== false;
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (sound && audio()) {
+    const visual = anim && !reduce, snd = sound && audio();
+    if (snd) {
       const t0 = ac.currentTime + 0.03, climb = CLIMB / 1000;
       fuse(t0, climb); flames(t0 + 0.05, climb);
-      boom(t0 + climb, 1); sparkle(t0 + climb + 0.05, 1.8, 70);
-      boom(t0 + climb + 0.28, 0.6); boom(t0 + climb + 0.55, 0.5); sparkle(t0 + climb + 0.6, 1.4, 35);
+      if (!visual) SHOW.forEach(f => { whistle(t0 + (CLIMB + f.at) / 1000, f.fly / 1000); boom(t0 + (CLIMB + f.at + f.fly) / 1000, f.big); sparkle(t0 + (CLIMB + f.at + f.fly) / 1000 + 0.05, 1.6, 40); });
     }
-    if (!anim || reduce) return;
-    const S = sprites(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (!visual) return;
+    const sfx = (fn, ...a) => { if (snd) try { fn(ac.currentTime + 0.01, ...a); } catch (e) { /* ignore */ } };
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
     const cv = document.createElement('canvas'); cv.className = 'fx-canvas'; document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
     const size = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px'; };
@@ -159,16 +157,20 @@
     const zoom = on => { const e = getEl(); if (!e) return; e.classList.toggle('fx-zoom', on); };
     zoom(true); setTimeout(() => zoom(false), CLIMB + 450);
     // Une grande flamme par côté, qui monte le long du bord et fusionne au sommet
-    const wisps = [], stars = [], sparks = [], start = performance.now();
+    const wisps = [], rockets = [], parts = [], flashes = [], start = performance.now();
     const MERGE = 200, BIG = 130, SMALL = 84;
-    const bursts = [{ at: CLIMB, dx: 0, dy: 0, n: 60 }, { at: CLIMB + 280, dx: -90, dy: 40, n: 28 }, { at: CLIMB + 550, dx: 90, dy: 30, n: 28 }];
-    const burst = (x, y, n) => {
-      for (let i = 0; i < n; i++) {
-        const a = R(0, Math.PI * 2), sp = R(2.5, 9.5);
-        stars.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - R(1.5, 4), rot: R(0, 6.3), vr: R(-0.2, 0.2), s: R(0.4, 0.85), spr: S.stars[i % S.stars.length], pop: 0 });
+    const PAL = [['#FFD23F', '#FFF4B0'], ['#FF4D6D', '#FFC2CF'], ['#3DD6FF', '#D4F6FF'], [getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#2EE68A', '#FFFFFF'], ['#B57BFF', '#EBDDFF'], ['#FF9A2E', '#FFE0B8']];
+    const shows = SHOW.map((f, i) => ({ ...f, i, launched: false }));
+    const explode = (x, y, f) => {
+      const [c1, c2] = PAL[f.i % PAL.length], n = Math.round(70 * f.big), base = R(4.2, 5.4) * (0.75 + f.big * 0.35);
+      for (let k = 0; k < n; k++) {
+        const a = k / n * Math.PI * 2 + R(-0.05, 0.05), sp = base * R(0.82, 1.08);
+        parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: R(1100, 1700), col: Math.random() < 0.25 ? c2 : c1, tr: [], w: R(1.6, 2.6), glit: Math.random() < 0.45 });
       }
-      for (let i = 0; i < 16; i++) { const a = R(0, Math.PI * 2), sp = R(2, 7); sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: R(300, 550), spr: S.dots[i % 3] }); }
-      for (let i = 0; i < 10; i++) { const a = R(0, Math.PI * 2), sp = R(1.5, 4.5); wisps.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.5, life: 0, max: R(350, 650), s: R(1, 1.6), rot: R(-0.6, 0.6) }); }
+      for (let k = 0; k < 24; k++) { const a = R(0, 6.3), sp = R(0.5, 2.8); parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: R(500, 900), col: c2, tr: [], w: 1.4, glit: true }); }
+      flashes.push({ x, y, life: 0, col: c1, r: 70 * f.big });
+      sfx(boom, f.big); sfx(sparkle, 1.6, Math.round(45 * f.big));
+      try { navigator.vibrate?.(f.big > 0.9 ? 30 : 12); } catch (e) { /* ignore */ }
     };
     const spawnWisp = (x, y, H) => wisps.push({ x: x + R(-H * 0.1, H * 0.1), y: y - H * R(0.7, 0.95), vx: R(-0.6, 0.6), vy: R(-2.2, -1.2), life: 0, max: R(350, 600), s: H / 70 * R(0.8, 1.3), rot: R(-0.5, 0.5) });
     let last = start, wispT = 0;
@@ -201,27 +203,53 @@
         drawFlame(ctx, cxTop, yTop + 4, H, t, 1, t < CLIMB ? 1 : Math.max(0, 1 - (t - CLIMB) / 260));
         if (t < CLIMB && wispT > 90) { spawnWisp(cxTop, yTop, H); wispT = 0; }
       }
-      for (const b of bursts) if (!b.done && t >= b.at) { b.done = true; burst(rect.left + rect.width / 2 + b.dx, rect.top + b.dy, b.n); try { navigator.vibrate?.(b.dx ? 12 : 30); } catch (e) { /* ignore */ } }
+      // lancement des fusées depuis le sommet de la carte
+      for (const f of shows) if (!f.launched && t >= CLIMB + f.at) {
+        f.launched = true;
+        const x0 = cxTop, y0 = yTop, tx = Math.max(40, Math.min(innerWidth - 40, innerWidth / 2 + f.dx * innerWidth)), ty = Math.max(70, Math.min(y0 - 90, innerHeight * f.dy));
+        rockets.push({ x: x0, y: y0, x0, y0, tx, ty, t0: t, f, tr: [] }); sfx(whistle, f.fly / 1000);
+      }
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i], k = Math.min(1, (t - r.t0) / r.f.fly), e = 1 - Math.pow(1 - k, 2.2);
+        r.x = r.x0 + (r.tx - r.x0) * e + Math.sin(k * 9) * 3 * (1 - k); r.y = r.y0 + (r.ty - r.y0) * e;
+        r.tr.push([r.x, r.y]); if (r.tr.length > 14) r.tr.shift();
+        if (Math.random() < 0.7) parts.push({ x: r.x, y: r.y, vx: R(-0.5, 0.5), vy: R(0.4, 1.4), life: 0, max: R(250, 450), col: '#FFB347', tr: [], w: 1.2, glit: true, ember: true });
+        if (k >= 1) { rockets.splice(i, 1); explode(r.x, r.y, r.f); }
+      }
       // morceaux de flamme qui s'envolent
       for (let i = wisps.length - 1; i >= 0; i--) {
         const w = wisps[i]; w.life += dt * 16.7; if (w.life > w.max) { wisps.splice(i, 1); continue; }
         w.x += w.vx * dt; w.y += w.vy * dt; w.vx += Math.sin(w.life * 0.02) * 0.05; const k = w.life / w.max;
         drawWisp(ctx, w.x, w.y, w.s * (1 - k * 0.7), w.rot, 1 - k * k);
       }
-      // étincelles de l'explosion
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const f = sparks[i]; f.life += dt * 16.7; if (f.life > f.max) { sparks.splice(i, 1); continue; }
-        f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 0.12 * dt; const sz = 14 * (1 - f.life / f.max * 0.6);
-        ctx.drawImage(f.spr, f.x - sz / 2, f.y - sz / 2, sz, sz);
+      ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+      // éclairs lumineux des explosions
+      for (let i = flashes.length - 1; i >= 0; i--) {
+        const f = flashes[i]; f.life += dt * 16.7; if (f.life > 260) { flashes.splice(i, 1); continue; }
+        const k = f.life / 260, g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * (0.6 + k));
+        g.addColorStop(0, `rgba(255,255,240,${0.55 * (1 - k)})`); g.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.6 + k), 0, 7); ctx.fill();
       }
-      // étoiles qui retombent (effet « pop » à l'apparition)
-      for (let i = stars.length - 1; i >= 0; i--) {
-        const s = stars[i]; s.vy += 0.2 * dt; s.vx *= Math.pow(0.985, dt); s.vy *= Math.pow(0.992, dt); s.x += s.vx * dt; s.y += s.vy * dt; s.rot += s.vr * dt; s.pop = Math.min(1, s.pop + 0.12 * dt);
-        if (s.y > innerHeight + 30) { stars.splice(i, 1); continue; }
-        const sz = 52 * s.s * (s.pop < 1 ? 0.4 + s.pop * 0.8 : 1);
-        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); ctx.drawImage(s.spr, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+      // fusées : tête brillante + traînée
+      for (const r of rockets) {
+        ctx.beginPath(); r.tr.forEach(([x, y], j) => j ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+        ctx.strokeStyle = 'rgba(255,190,90,.55)'; ctx.lineWidth = 3; ctx.stroke(); ctx.strokeStyle = 'rgba(255,245,200,.9)'; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.fillStyle = '#FFF6D0'; ctx.beginPath(); ctx.arc(r.x, r.y, 2.6, 0, 7); ctx.fill();
       }
-      if (t > CLIMB + 800 && !wisps.length && !stars.length && !sparks.length) { cv.remove(); window.removeEventListener('resize', size); return; }
+      // particules des gerbes : traînées qui retombent, scintillement en fin de vie
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const q = parts[i]; q.life += dt * 16.7;
+        if (q.life > q.max || q.y > innerHeight + 20) { parts.splice(i, 1); continue; }
+        q.tr.push([q.x, q.y]); if (q.tr.length > 7) q.tr.shift();
+        q.vx *= Math.pow(0.965, dt); q.vy = q.vy * Math.pow(0.965, dt) + 0.075 * dt; q.x += q.vx * dt; q.y += q.vy * dt;
+        const k = q.life / q.max; let a = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+        if (q.glit && k > 0.45) a *= Math.random() < 0.5 ? 0.25 : 1;
+        if (a <= 0.02) continue;
+        ctx.globalAlpha = a; ctx.strokeStyle = q.col;
+        if (q.tr.length > 1) { ctx.beginPath(); q.tr.forEach(([x, y], j) => j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.lineTo(q.x, q.y); ctx.lineWidth = q.w; ctx.stroke(); }
+        ctx.fillStyle = k < 0.15 ? '#FFFFFF' : q.col; ctx.beginPath(); ctx.arc(q.x, q.y, q.w * 0.9, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      if (t > CLIMB + 900 && shows.every(f => f.launched) && !rockets.length && !wisps.length && !parts.length && !flashes.length) { cv.remove(); window.removeEventListener('resize', size); return; }
       if (t > 9000) { cv.remove(); window.removeEventListener('resize', size); return; }
       requestAnimationFrame(frame);
     };
