@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.3.0';
+  const APP_VERSION = '2.4.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -45,18 +45,18 @@
     sparkle: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3zM18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z"/></svg>',
     camera: '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.6"/></svg>',
     gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>',
-    flame: '<svg viewBox="0 0 24 24"><path fill="#2EE68A" d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.3 1.8 3.5 4.3 3.5 6.6C18.5 19.3 15.6 22 12 22s-6.5-2.7-6.5-6.4C5.5 10.5 11 8.5 12 2z"/></svg>',
-    fork: '<svg viewBox="0 0 24 24" fill="none" stroke="#2EE68A" stroke-width="2" stroke-linecap="round"><path d="M6 3v7a2 2 0 002 2v9M10 3v7a2 2 0 01-2 2M8 3v6M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>',
+    flame: '<svg viewBox="0 0 24 24"><path style="fill:var(--accent)" d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3 2.3 1.8 3.5 4.3 3.5 6.6C18.5 19.3 15.6 22 12 22s-6.5-2.7-6.5-6.4C5.5 10.5 11 8.5 12 2z"/></svg>',
+    fork: '<svg viewBox="0 0 24 24" fill="none" style="stroke:var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M6 3v7a2 2 0 002 2v9M10 3v7a2 2 0 01-2 2M8 3v6M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>',
     trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
     cal: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/></svg>',
-    bars: '<svg viewBox="0 0 24 24" style="stroke:none"><rect x="3" y="12" width="4.5" height="9" rx="1.5" fill="#2EE68A"/><rect x="9.75" y="7" width="4.5" height="14" rx="1.5" fill="#2EE68A"/><rect x="16.5" y="3" width="4.5" height="18" rx="1.5" fill="#2EE68A"/></svg>',
+    bars: '<svg viewBox="0 0 24 24" style="stroke:none"><rect x="3" y="12" width="4.5" height="9" rx="1.5" style="fill:var(--accent)"/><rect x="9.75" y="7" width="4.5" height="14" rx="1.5" style="fill:var(--accent)"/><rect x="16.5" y="3" width="4.5" height="18" rx="1.5" style="fill:var(--accent)"/></svg>',
     watch: '<svg viewBox="0 0 24 24" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="3.5"/><path d="M9 6l.6-3h4.8L15 6M9 18l.6 3h4.8l.6-3M12 9.5V12l1.5 1"/></svg>',
-    muscle: '<svg viewBox="0 0 24 24"><path fill="#2EE68A" d="M3.5 16.5c0-4.6 1.8-10 5.6-11.6 1.4-.6 2.8.4 2.4 1.9l-.9 3.1c2.4-1.3 5.8-1.2 7.9.9 2.7 2.6 2.3 6.4-.8 8.3-3.6 2.2-10.5 2.4-14.2-.9z"/></svg>',
+    muscle: '<svg viewBox="0 0 24 24"><path style="fill:var(--accent)" d="M3.5 16.5c0-4.6 1.8-10 5.6-11.6 1.4-.6 2.8.4 2.4 1.9l-.9 3.1c2.4-1.3 5.8-1.2 7.9.9 2.7 2.6 2.3 6.4-.8 8.3-3.6 2.2-10.5 2.4-14.2-.9z"/></svg>',
     drop: c => `<svg viewBox="0 0 24 24"><path fill="${c}" d="M12 2.5C9 7 6 10.2 6 14a6 6 0 0012 0c0-3.8-3-7-6-11.5z"/></svg>`,
     body: '<svg viewBox="0 0 48 48"><circle cx="24" cy="12" r="6"/><path d="M10 44c0-11 3-20 14-20s14 9 14 20M17 30c2 2 4.5 3 7 3s5-1 7-3M24 33v8M18 38h12"/></svg>',
   };
 
-  const LOGO = '<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgK" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6CFFBC"/><stop offset="1" stop-color="#14B866"/></linearGradient></defs><circle cx="20" cy="20" r="14.5" fill="none" stroke="rgba(46,230,138,.22)" stroke-width="5.5"/><path d="M20 5.5 A14.5 14.5 0 1 1 5.5 20" fill="none" stroke="url(#lgK)" stroke-width="5.5" stroke-linecap="round"/><circle cx="20" cy="20" r="4.6" fill="#DCFBEA"/></svg>';
+  const LOGO = '<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lgK" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent-hi)"/><stop offset="1" style="stop-color:var(--accent-lo)"/></linearGradient></defs><circle cx="20" cy="20" r="14.5" fill="none" style="stroke:rgba(var(--accent-rgb),.22)" stroke-width="5.5"/><path d="M20 5.5 A14.5 14.5 0 1 1 5.5 20" fill="none" stroke="url(#lgK)" stroke-width="5.5" stroke-linecap="round"/><circle cx="20" cy="20" r="4.6" fill="#DCFBEA"/></svg>';
   const brandHTML = () => `<div class="brand">${LOGO}<span>Ka<b>lo</b></span></div>`;
   const MEALS = [['breakfast', 'Petit-déjeuner'], ['lunch', 'Déjeuner'], ['dinner', 'Dîner'], ['snack', 'Collations']];
   const mealName = id => (MEALS.find(m => m[0] === id) || [, id])[1];
@@ -74,6 +74,19 @@
   function toast(msg, ms = 2200) {
     const t = $('#toast'); t.textContent = msg; t.classList.add('show');
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms);
+  }
+
+  /* ---------- Couleur de l'app ---------- */
+  const THEMES = [['Vert', '#2EE68A'], ['Cyan', '#22D3EE'], ['Bleu', '#3D9BFF'], ['Violet', '#A76BFF'], ['Rose', '#FF5FA8'], ['Rouge', '#FF4D5E'], ['Orange', '#FF9A2E'], ['Jaune', '#FFD23F']];
+  function applyTheme(hex) {
+    if (!/^#[0-9a-f]{6}$/i.test(hex || '')) hex = '#2EE68A';
+    const rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+    const mix = (t, to) => '#' + rgb.map((v, i) => Math.round(v + (to[i] - v) * t).toString(16).padStart(2, '0')).join('');
+    const lum = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+    const st = document.documentElement.style;
+    st.setProperty('--accent', hex); st.setProperty('--accent-rgb', rgb.join(','));
+    st.setProperty('--accent-hi', mix(0.35, [255, 255, 255])); st.setProperty('--accent-lo', mix(0.22, [0, 0, 0]));
+    st.setProperty('--on-accent', lum > 0.55 ? '#06110B' : '#FFFFFF');
   }
 
   /* ---------- Stockage (IndexedDB, repli localStorage) ---------- */
@@ -131,12 +144,12 @@
   };
 
   /* ---------- État ---------- */
-  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [], ai: { provider: 'gemini', keys: {} } };
+  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [], ai: { provider: 'gemini', keys: {} }, theme: '#2EE68A' };
   const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto', mini: 30 };
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} };
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -392,10 +405,10 @@
     const R = 62, C = 2 * Math.PI * R, over = eaten + planned > goal;
     const a = Math.min(1, eaten / goal), b = Math.min(1 - a, planned / goal);
     const main = over ? '#FF9F43' : 'url(#ringGrad)';
-    return `<svg viewBox="0 0 150 150" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6CFFBC"/><stop offset="1" stop-color="#14B866"/></linearGradient></defs>
+    return `<svg viewBox="0 0 150 150" aria-hidden="true"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent-hi)"/><stop offset="1" style="stop-color:var(--accent-lo)"/></linearGradient></defs>
       <circle cx="75" cy="75" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="13"/>
-      ${b > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" stroke="${over ? '#FF9F43' : '#2EE68A'}" stroke-opacity=".3" stroke-width="13" stroke-linecap="round" stroke-dasharray="${((a + b) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)"/>` : ''}
-      ${a > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" stroke="${main}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${(a * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)" style="filter:drop-shadow(0 0 5px ${over ? 'rgba(255,159,67,.6)' : 'rgba(46,230,138,.6)'})"/>` : ''}
+      ${b > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" style="stroke:${over ? '#FF9F43' : 'var(--accent)'}" stroke-opacity=".3" stroke-width="13" stroke-linecap="round" stroke-dasharray="${((a + b) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)"/>` : ''}
+      ${a > 0.002 ? `<circle cx="75" cy="75" r="${R}" fill="none" stroke="${main}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${(a * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)" style="filter:drop-shadow(0 0 5px ${over ? 'rgba(255,159,67,.6)' : 'rgba(var(--accent-rgb),.6)'})"/>` : ''}
     </svg>`;
   }
   const QUOTES = ['On reste focus 💪', 'Chaque repas compte 🔥', 'Un jour après l\'autre 💚', 'La régularité paie ⚡'];
@@ -530,18 +543,18 @@
     const padv = Math.max(1, (hi - lo) * 0.12); lo -= padv; hi += padv;
     const step = niceStep(hi - lo); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
     const y = v => M.t + ph - (v - lo) / (hi - lo) * ph;
-    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du poids"><defs><linearGradient id="miniFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2EE68A" stop-opacity=".32"/><stop offset="1" stop-color="#2EE68A" stop-opacity="0"/></linearGradient></defs>`;
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du poids"><defs><linearGradient id="miniFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent)" stop-opacity=".32"/><stop offset="1" style="stop-color:var(--accent)" stop-opacity="0"/></linearGradient></defs>`;
     for (let v = lo; v <= hi + 1e-9; v += step) s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--grid)"/><text x="${M.l - 6}" y="${y(v) + 4}" text-anchor="end">${r0(v)}</text>`;
     if (tgt) s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(tgt)}" y2="${y(tgt)}" stroke-dasharray="6 5" stroke-width="1.5" style="stroke:var(--ink-2)"/>`;
     [start, addDays(start, Math.floor(N / 2)), end].forEach((dd, i) => { s += `<text x="${x(dd.getTime() + 432e5)}" y="${H - 5}" text-anchor="${i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}">${F.dm.format(dd)}</text>`; });
     const line = pts.map((q, i) => (i ? 'L' : 'M') + x(q.t).toFixed(1) + ',' + y(q.v).toFixed(1)).join('');
     if (pts.length > 1) {
       s += `<path d="${line}L${x(pts[pts.length - 1].t).toFixed(1)},${M.t + ph}L${x(pts[0].t).toFixed(1)},${M.t + ph}Z" fill="url(#miniFill)"/>`;
-      s += `<path d="${line}" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke:var(--accent);filter:drop-shadow(0 0 4px rgba(46,230,138,.5))"/>`;
+      s += `<path d="${line}" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke:var(--accent);filter:drop-shadow(0 0 4px rgba(var(--accent-rgb),.5))"/>`;
     }
     pts.slice(0, -1).forEach(q => { s += `<circle cx="${x(q.t)}" cy="${y(q.v)}" r="3.5" style="fill:var(--accent)"/>`; });
     const L = pts[pts.length - 1], lx = x(L.t), ly = y(L.v);
-    s += `<circle cx="${lx}" cy="${ly}" r="10" fill="#2EE68A" fill-opacity=".2"/><circle cx="${lx}" cy="${ly}" r="6" style="fill:var(--accent)"/>`;
+    s += `<circle cx="${lx}" cy="${ly}" r="10" style="fill:var(--accent)" fill-opacity=".2"/><circle cx="${lx}" cy="${ly}" r="6" style="fill:var(--accent)"/>`;
     const lab = `${r1(L.v)} kg`, bw = lab.length * 7.6 + 16, bx = Math.min(W - M.r - bw, Math.max(M.l, lx - bw / 2)), by = Math.max(2, ly - 36);
     s += `<rect x="${bx}" y="${by}" width="${bw}" height="24" rx="8" fill="#141C18" stroke="rgba(255,255,255,.14)"/><text x="${bx + bw / 2}" y="${by + 16.5}" text-anchor="middle" style="fill:var(--ink);font-weight:700;font-size:13px">${lab}</text>`;
     s += `<rect x="${M.l}" y="${M.t - 10}" width="${pw}" height="${ph + 10}" fill="transparent"/></svg><div class="chart-tip"></div>`;
@@ -667,6 +680,7 @@
   let installPrompt = null;
   const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function setTheme(hex) { S.theme = hex; applyTheme(hex); Store.put('theme', hex); render(); }
   function aiPrompt() {
     const p = S.profile;
     return `Voici une photo de moi. Génère une image photoréaliste de moi-même à ${p.target ? r1(p.target) : 'mon poids idéal'} kg pour ${p.height} cm : garde exactement mon visage, ma couleur de peau, mes cheveux et mon âge. Silhouette plus sèche et athlétique, ventre plat, épaules et bras dessinés, posture confiante. Portrait vertical cadré du haut des cuisses à la tête, fond noir, éclairage de studio contrasté avec un léger reflet vert néon, rendu photo professionnelle très réaliste.`;
@@ -727,6 +741,12 @@
         <p class="note">Poids actuel ${r1(w)} kg${p.goalMode !== 'manual' ? ` · objectif = dépense de référence − ${r0(Math.min((p.pace || 0) * 1100, 1000))} kcal (rythme ${r1(p.pace || 0)} kg/sem.)` : ` · suggestion auto ${r0(g.autoKcal)} kcal / ${r0(g.autoProtein)} g`}${c.floored ? ' · plancher de sécurité appliqué' : ''}${c.reached ? ' · poids objectif atteint : mode maintien' : ''}.</p>
       </section>
       <form class="card stack" id="pform" novalidate><h3>Mon profil</h3>${profileFields({ ...p, noWeight: true })}<button type="button" class="btn block" data-action="save-profile">Enregistrer</button></form>
+      <section class="card">
+        <div class="card-title" style="margin-bottom:12px"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 005-5c0-4.1-4-7.6-9-7.6z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7" r="1.2"/></svg>Couleur de l'app</div>
+        <div class="swatches">${THEMES.map(([n, h]) => `<button class="swatch ${S.theme.toLowerCase() === h.toLowerCase() ? 'on' : ''}" data-action="theme" data-v="${h}"><i style="background:${h};--sw-glow:${h}80"></i>${n}</button>`).join('')}</div>
+        <label class="custom-color"><span>Couleur personnalisée</span><input type="color" data-input="theme" value="${S.theme}"></label>
+        <p class="note" style="margin:8px 0 0">S'applique à toute l'app. Les couleurs de sens restent fixes : vert = objectif atteint / déficit, orange = dépassement, bleu = repas validé.</p>
+      </section>
       <section class="card stack" id="ai-settings"><div class="card-title">${ICON.sparkle}Photo IA</div>${aiSettingsHTML()}<button class="btn block" data-action="ai-save">Enregistrer la clé</button></section>
       <section class="card stack"><h3>Mes données</h3>
         <p class="note" style="margin:0">Tes données sont stockées uniquement sur cet appareil. Fais une sauvegarde de temps en temps (et avant de changer de téléphone).</p>
@@ -1493,7 +1513,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
@@ -1512,7 +1532,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       const keepAI = S.ai;
       await Store.clear();
       await Store.put('ai', keepAI);
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps);
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme);
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await loadState(); render(); toast('Sauvegarde restaurée');
     } catch (e) { toast('Fichier de sauvegarde invalide'); }
@@ -1538,6 +1558,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     'photo-del': () => { if (!confirm('Retirer ta photo objectif ?')) return; S.photo = ''; Store.del('photo'); render(); },
     'copy-prompt': () => { navigator.clipboard?.writeText(aiPrompt()).then(() => toast('Texte copié ✓'), () => toast('Copie impossible : sélectionne le texte')); },
     'supps-manage': () => openSupps(),
+    theme: b => setTheme(b.dataset.v),
     'ai-save': () => { saveAIKey($('#ai-settings')); toast(aiKey() ? 'Clé enregistrée ✓' : 'Clé effacée'); render(); },
     'supp-toggle': b => {
       const d = getDay(UI.date); d.supps = d.supps || {};
@@ -1622,10 +1643,12 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       else { UI.date = today(); openDetail(f, { meal: guessMeal(), date: UI.date }); }
     }
   });
+  document.addEventListener('input', e => { const t = e.target.closest('[data-input="theme"]'); if (t) applyTheme(t.value); });
   document.addEventListener('change', e => {
     const t = e.target.closest('[data-input]'); if (!t) return;
     if (t.dataset.input === 'date' && t.value) { UI.date = t.value; render(); }
     if (t.dataset.input === 'import' && t.files[0]) importData(t.files[0]);
+    if (t.dataset.input === 'theme') setTheme(t.value);
     if (t.dataset.input === 'photo' && t.files[0]) { handlePhoto(t.files[0]); t.value = ''; }
   });
 

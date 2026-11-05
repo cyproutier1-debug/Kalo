@@ -68,6 +68,11 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Barres protéines et glucides** : couleur selon la progression : rouge au départ, orange à mi-chemin, vert quand l'objectif est atteint.
 - Bouton **+** central : ajoute un aliment au repas en cours (scan, recherche, ajout rapide).
 
+## Couleur de l'app
+
+- Profil → **Couleur de l'app** : 8 couleurs prêtes (vert, cyan, bleu, violet, rose, rouge, orange, jaune) ou couleur personnalisée. Appliquée partout instantanément, conservée et incluse dans l'export.
+- Couleurs de sens fixes : vert = objectif atteint / déficit, orange = dépassement, bleu = repas validé. L'icône de l'écran d'accueil ne change pas (limite iOS / Android).
+
 ## Fonctionnement des objectifs
 
 - Métabolisme de base : formule Mifflin-St Jeor, multiplié par le niveau d'activité, ce qui donne la dépense estimée.
