@@ -68,6 +68,10 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Barres protéines et glucides** : couleur selon la progression : rouge au départ, orange à mi-chemin, vert quand l'objectif est atteint.
 - Bouton **+** central : ajoute un aliment au repas en cours (scan, recherche, ajout rapide).
 
+## Polices
+
+Unbounded 900 (grands titres), Oxanium 800 (chiffres), Sora 700/600 (titres de cartes, noms d'aliments), Inter 500/400 (textes secondaires). Fichiers inclus dans `fonts/` (SIL Open Font License), donc disponibles hors connexion.
+
 ## Couleur de l'app
 
 - Profil → **Couleur de l'app** : 8 couleurs prêtes (vert, cyan, bleu, violet, rose, rouge, orange, jaune) ou couleur personnalisée. Appliquée partout instantanément, conservée et incluse dans l'export.

@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.4.0';
+  const APP_VERSION = '2.5.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -713,7 +713,7 @@
       <section class="card stack">
         <div class="card-title">📷 Ma photo objectif</div>
         ${S.photo ? `<div class="photo-preview" style="background-image:url('${S.photo}')"></div>` : '<p class="note" style="margin:0">Ajoute une image de toi à ton poids objectif, générée par IA : elle s\'affichera en haut de l\'accueil pour te motiver chaque jour.</p>'}
-        <div class="grid2"><button class="btn ${S.photo ? 'outline' : ''}" data-action="photo-pick">${S.photo ? 'Changer' : 'Ajouter ma photo'}</button>${S.photo ? '<button class="btn danger" data-action="photo-del">Retirer</button>' : ''}</div>
+        <div class="grid2"><button class="btn ${S.photo ? 'outline' : ''}" data-action="photo-pick" ${S.photo ? '' : 'style="grid-column:1/-1"'}>${S.photo ? 'Changer' : 'Ajouter ma photo'}</button>${S.photo ? '<button class="btn danger" data-action="photo-del">Retirer</button>' : ''}</div>
         <details><summary class="btn plain" style="padding-left:0">Créer ma photo avec l'IA (ChatGPT, Gemini…)</summary>
           <ol class="note" style="padding-left:18px;margin:8px 0">
             <li>Ouvre l'app ChatGPT ou Gemini.</li>
