@@ -460,3 +460,87 @@ h1 { font-size: 25px; }
 
 /* Petites informations — Inter 400 */
 .note, .bilan-row em, .empty, .proj-row span, .chart-wrap svg text, .muted.small { font-family: var(--f-text); font-weight: 400; }
+
+
+/* ===== v2.6 : fond dégradé bleu nuit + typographie de la maquette ===== */
+html { background: #02040A; }
+body { background: transparent; }
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(75% 40% at 100% -5%, rgba(var(--accent-rgb), .20), transparent 62%),
+    radial-gradient(65% 45% at -15% 38%, rgba(37, 99, 235, .26), transparent 68%),
+    radial-gradient(55% 40% at 115% 62%, rgba(14, 116, 220, .20), transparent 70%),
+    radial-gradient(70% 45% at 10% 105%, rgba(29, 78, 216, .28), transparent 70%),
+    radial-gradient(40% 30% at 85% 100%, rgba(var(--accent-rgb), .08), transparent 70%),
+    linear-gradient(180deg, #05070F 0%, #02040A 45%, #040816 100%); }
+.sheet { background: #02040A; }
+.sheet::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(70% 40% at -10% 30%, rgba(37, 99, 235, .22), transparent 68%), radial-gradient(70% 40% at 110% 90%, rgba(29, 78, 216, .2), transparent 70%), radial-gradient(60% 30% at 100% 0%, rgba(var(--accent-rgb), .12), transparent 65%); }
+.sheet { isolation: isolate; }
+.sheet-head, .sheet-foot { background: rgba(8, 11, 20, .82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.hero::before { display: none; }
+
+/* Cartes : verre sombre teinté bleu */
+.card { background: linear-gradient(180deg, rgba(22, 27, 40, .66), rgba(9, 11, 18, .72)); border-color: rgba(148, 170, 255, .09); border-radius: 26px; }
+.stat { background: linear-gradient(180deg, rgba(22, 27, 40, .66), rgba(9, 11, 18, .72)); border-color: rgba(148, 170, 255, .09); }
+#tabbar { background: rgba(6, 8, 14, .88); }
+
+/* Titres façon maquette : larges et inclinés */
+h1, .day-title label, .section-title h2, .proj-head, .meal-head h2 { font-style: italic; }
+.section-title h2 { font-size: 24px; letter-spacing: -.01em; }
+.section-title { margin: 28px 2px 14px; }
+.meal-head h2 { font-family: var(--f-title); font-weight: 900; font-size: 19px; letter-spacing: -.01em; line-height: 1.15; }
+.card-title { font-size: 21px; }
+.card-title svg { width: 28px; height: 28px; }
+
+/* Chiffres : Oxanium incliné et plus gros */
+.ring-center b, .bilan-row .v span, .entry .val, .meal-head .kcal, .macro .row b, .stat b, .pstats b, .prof-mini .k, .nutri-grid b, .vline b, .proj-row b { font-style: italic; }
+.ring-center b { font-size: 40px; }
+.bilan-row { margin-top: 18px; }
+.bilan-row .v { font-size: clamp(22px, 7.4vw, 31px); gap: 6px; }
+.bilan-row .v svg { width: 22px; height: 22px; }
+.bilan-row .l { font-size: 14px; margin-top: 4px; }
+
+/* Repas : kcal bien visibles */
+.meal { border-radius: 26px; }
+.meal-head { padding: 18px 16px 16px; gap: 14px; align-items: center; }
+.meal-check { width: 46px; height: 46px; }
+.meal-check .ico-check { width: 26px; height: 26px; }
+.meal-head .kcal { text-align: right; line-height: 1; white-space: nowrap; }
+.meal-head .kcal .kv { font-size: 17px; font-weight: 800; }
+.meal-head .kcal .kv b { font-size: 31px; font-weight: 800; letter-spacing: -.01em; }
+.meal-head .kcal small { font-family: var(--f-num); font-style: italic; font-weight: 800; font-size: 13.5px; letter-spacing: .04em; margin-top: 6px; }
+.meal-macros { font-size: 14px; font-weight: 600; gap: 12px; margin-top: 6px; }
+.meal-macros span::before { width: 9px; height: 9px; }
+.meal.done { border-color: rgba(91, 140, 255, .62); box-shadow: 0 0 0 1px rgba(91, 140, 255, .08), 0 10px 34px rgba(37, 99, 235, .18); }
+.meal.done .meal-head { background: linear-gradient(180deg, rgba(59, 110, 246, .24), rgba(59, 110, 246, .07)); }
+.meal-check.on { box-shadow: 0 0 18px rgba(91, 140, 255, .55); }
+.entry { padding: 15px 18px; }
+.entry .name { font-family: var(--f-card); font-weight: 700; font-size: 17px; }
+.entry .sub { font-size: 14px; margin-top: 2px; }
+.entry .val { font-size: 21px; line-height: 1.1; }
+.entry .val small { font-size: 14px; font-style: normal; margin-top: 3px; }
+.meal-foot button { font-family: var(--f-card); font-size: 15px; padding: 14px; }
+
+/* Compléments : pastilles plus grandes */
+.supp { padding: 11px 20px 11px 11px; gap: 12px; border-radius: 999px; }
+.supp .dot { width: 34px; height: 34px; }
+.supp .dot .ico-check { width: 22px; height: 22px; }
+.supp .txt b { font-family: var(--f-card); font-weight: 700; font-size: 16px; }
+.supp .txt small { font-size: 13.5px; margin-top: 1px; }
+.supp.on { box-shadow: 0 0 18px rgba(var(--accent-rgb), .22); }
+
+/* Barre d'onglets */
+.tab { font-size: 12.5px; }
+.tab svg { width: 27px; height: 27px; }
+.tab-plus { width: 66px; height: 66px; }
+/* Ajustement en-tête repas (une seule ligne, comme la maquette) */
+.meal-head { gap: 12px; padding: 16px 14px 15px; }
+.meal-check { width: 42px; height: 42px; }
+.meal-head h2 { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 2px; }
+.meal.done .meal-head h2 { color: var(--ink); }
+.meal-macros { font-size: 13px; gap: 9px; flex-wrap: nowrap; white-space: nowrap; }
+.meal-macros span::before { width: 8px; height: 8px; margin-right: 4px; }
+.meal-head .kcal .kv b { font-size: 29px; }
+.meal-head .kcal .kv { font-size: 15px; }
+body::before { filter: saturate(1.15); }
