@@ -30,7 +30,7 @@ window.KaloMuscuInit = K => {
     M.workouts = Object.keys(all).filter(k => k.startsWith('wo:')).map(k => all[k]).sort((a, b) => a.start - b.start);
     M.routines = all.routines || []; M.custom = all.exos || []; M.active = all.activeWo || null;
     M.settings = { rest: 90, ...(all.muscuSettings || {}) };
-    M.programs = all.programs || []; M.activeProg = all.activeProg || null;
+    M.programs = all.programs || []; M.activeProg = all.activeProg || null; upgradePrograms();
   }
 
   /* ---------- Calculs ---------- */
@@ -453,18 +453,24 @@ window.KaloMuscuInit = K => {
     ],
   }];
   PRESETS.push({
-    id: 'preset-fessiers', name: 'Fessiers / Quads / Ischios + haut du corps',
-    desc: 'Bas du corps 3 fois par semaine (lundi fessiers, jeudi quadriceps, samedi ischios) + séances Épaules / Triceps, Dos / Biceps et circuit Abdos à placer les jours que tu veux (fixe leurs jours avec « Modifier »).',
-    rules: ['Charges notées dans le programme = charges de départ : Kalo propose d\'augmenter quand tu atteins le haut de la fourchette sur toutes les séries.', 'Hip thrust du lundi : lourd.', 'Abdos : circuit à faire 3 fois (enchaîne les 5 exercices, puis recommence).'],
+    id: 'preset-fessiers', v: 2, name: 'Fessiers / Quads / Ischios + haut du corps',
+    desc: 'Lundi fessiers, mardi épaules / triceps, jeudi quadriceps, vendredi dos / biceps, samedi ischios. Circuit abdos (×3) à la fin de chaque séance du bas du corps.',
+    rules: ['Charges notées dans le programme = charges de départ : Kalo propose d\'augmenter quand tu atteins le haut de la fourchette sur toutes les séries.', 'Hip thrust du lundi : lourd.', 'Abdos à la fin de chaque séance du bas du corps : circuit à faire 3 fois (enchaîne les 5 exercices, puis recommence).'],
     days: [
-      { dow: 1, name: 'Fessiers', items: [it('ext-lombaires', 2, 15, 15, 75, { note: 'poids du corps' }), it('sdt-roumain', 3, 8, 10, 150), it('hip-thrust', 3, 6, 8, 150, { note: 'lourd' }), it('step-up', 2, 8, 10, 105), it('kickback-fessier', 2, 15, 20, 105), it('abducteurs', 3, 15, 20, 105)] },
-      { dow: 4, name: 'Quadriceps', items: [it('squat', 3, 6, 8, 150), it('presse', 3, 8, 10, 120), it('leg-ext', 3, 10, 12, 90), it('bulgare', 2, 10, 10, 105, { note: '10 pas par jambe' }), it('hip-thrust', 3, 8, 8, 120), it('adducteurs', 3, 20, 20, 75)] },
-      { dow: 6, name: 'Ischios', items: [it('leg-curl-assis', 3, 8, 10, 105), it('sdt-roumain-halt', 3, 10, 10, 120), it('hip-thrust', 3, 8, 10, 120), it('ext-lombaires', 2, 15, 20, 75, { note: 'lesté' }), it('kickback-fessier', 2, 12, 15, 75), it('adducteurs', 3, 20, 20, 75)] },
-      { dow: null, name: 'Épaules / Triceps', items: [it('dm-barre', 3, 6, 8, 120, { kg: 14 }), it('elev-lat-poulie', 3, 12, 15, 60), it('ecarte-inverse', 3, 12, 15, 60, { note: 'arrière d\'épaule' }), it('elev-front-corde', 2, 12, 15, 60), it('elev-lat-halt', 3, 12, 15, 60), it('ext-barre-poulie', 3, 12, 15, 60), it('ext-tete-poulie', 2, 10, 12, 60, { note: 'à la corde' })] },
-      { dow: null, name: 'Dos / Biceps', items: [it('tirage-vert', 3, 8, 10, 105, { kg: 45 }), it('rowing-barre', 3, 6, 8, 150, { kg: 51.3, alt: 'rowing-smith', note: 'ou à la Smith' }), it('tirage-horiz-unilat', 3, 8, 10, 120, { kg: 45 }), it('pull-over', 2, 12, 15, 75, { kg: 18 }), it('face-pull', 2, 12, 15, 75), it('ext-lombaires', 3, 10, 20, 75, { note: 'jusqu\'à l\'échec' }), it('curl-barre', 3, 8, 10, 90), it('curl-marteau', 2, 10, 15, 75)] },
-      { dow: null, name: 'Abdos (circuit ×3)', warmup: false, note: 'Circuit à faire 3 fois : enchaîne les 5 exercices sans pause, puis recommence. Valide une série de chaque exercice à chaque tour.', items: [it('abdos-bras-jambes', 3, 10, 10, 0), it('releve-jambes-sol', 3, 10, 10, 0), it('battements', 3, 10, 10, 0, { note: '10 de chaque côté' }), it('russian-twist', 3, 10, 10, 0, { note: '10 de chaque côté' }), it('gainage', 3, 60, 60, 60)] },
+      { dow: 1, name: 'Fessiers', note: 'Abdos en fin de séance : circuit à faire 3 fois (enchaîne les 5 exercices d\'abdos, puis recommence). Valide une série de chaque exercice à chaque tour.', items: [it('ext-lombaires', 2, 15, 15, 75, { note: 'poids du corps' }), it('sdt-roumain', 3, 8, 10, 150), it('hip-thrust', 3, 6, 8, 150, { note: 'lourd' }), it('step-up', 2, 8, 10, 105), it('kickback-fessier', 2, 15, 20, 105), it('abducteurs', 3, 15, 20, 105), it('abdos-bras-jambes', 3, 10, 10, 0), it('releve-jambes-sol', 3, 10, 10, 0, { note: 'abdos' }), it('battements', 3, 10, 10, 0, { note: 'abdos, 10 de chaque côté' }), it('russian-twist', 3, 10, 10, 0, { note: 'abdos, 10 de chaque côté' }), it('gainage', 3, 60, 60, 60, { note: 'abdos' })] },
+      { dow: 4, name: 'Quadriceps', note: 'Abdos en fin de séance : circuit à faire 3 fois (enchaîne les 5 exercices d\'abdos, puis recommence). Valide une série de chaque exercice à chaque tour.', items: [it('squat', 3, 6, 8, 150), it('presse', 3, 8, 10, 120), it('leg-ext', 3, 10, 12, 90), it('bulgare', 2, 10, 10, 105, { note: '10 pas par jambe' }), it('hip-thrust', 3, 8, 8, 120), it('adducteurs', 3, 20, 20, 75), it('abdos-bras-jambes', 3, 10, 10, 0), it('releve-jambes-sol', 3, 10, 10, 0, { note: 'abdos' }), it('battements', 3, 10, 10, 0, { note: 'abdos, 10 de chaque côté' }), it('russian-twist', 3, 10, 10, 0, { note: 'abdos, 10 de chaque côté' }), it('gainage', 3, 60, 60, 60, { note: 'abdos' })] },
+      { dow: 6, name: 'Ischios', note: 'Abdos en fin de séance : circuit à faire 3 fois (enchaîne les 5 exercices d\'abdos, puis recommence). Valide une série de chaque exercice à chaque tour.', items: [it('leg-curl-assis', 3, 8, 10, 105), it('sdt-roumain-halt', 3, 10, 10, 120), it('hip-thrust', 3, 8, 10, 120), it('ext-lombaires', 2, 15, 20, 75, { note: 'lesté' }), it('kickback-fessier', 2, 12, 15, 75), it('adducteurs', 3, 20, 20, 75), it('abdos-bras-jambes', 3, 10, 10, 0), it('releve-jambes-sol', 3, 10, 10, 0, { note: 'abdos' }), it('battements', 3, 10, 10, 0, { note: 'abdos, 10 de chaque côté' }), it('russian-twist', 3, 10, 10, 0, { note: 'abdos, 10 de chaque côté' }), it('gainage', 3, 60, 60, 60, { note: 'abdos' })] },
+      { dow: 2, name: 'Épaules / Triceps', items: [it('dm-barre', 3, 6, 8, 120, { kg: 14 }), it('elev-lat-poulie', 3, 12, 15, 60), it('ecarte-inverse', 3, 12, 15, 60, { note: 'arrière d\'épaule' }), it('elev-front-corde', 2, 12, 15, 60), it('elev-lat-halt', 3, 12, 15, 60), it('ext-barre-poulie', 3, 12, 15, 60), it('ext-tete-poulie', 2, 10, 12, 60, { note: 'à la corde' })] },
+      { dow: 5, name: 'Dos / Biceps', items: [it('tirage-vert', 3, 8, 10, 105, { kg: 45 }), it('rowing-barre', 3, 6, 8, 150, { kg: 51.3, alt: 'rowing-smith', note: 'ou à la Smith' }), it('tirage-horiz-unilat', 3, 8, 10, 120, { kg: 45 }), it('pull-over', 2, 12, 15, 75, { kg: 18 }), it('face-pull', 2, 12, 15, 75), it('ext-lombaires', 3, 10, 20, 75, { note: 'jusqu\'à l\'échec' }), it('curl-barre', 3, 8, 10, 90), it('curl-marteau', 2, 10, 15, 75)] },
     ],
   });
+  PRESETS.forEach(p => p.days.sort((a, b) => (a.dow == null ? 9 : (a.dow + 6) % 7) - (b.dow == null ? 9 : (b.dow + 6) % 7)));
+  // Copies de programmes proposés non modifiées : mises à jour avec la nouvelle version du modèle
+  function upgradePrograms() {
+    let changed = false;
+    M.programs = M.programs.map(p => { const src = PRESETS.find(x => x.id === p.from); if (!src || p.edited || (p.v || 1) >= (src.v || 1)) return p; changed = true; return { ...JSON.parse(JSON.stringify(src)), id: p.id, from: src.id }; });
+    if (changed) savePrograms();
+  }
   const prog = () => M.programs.find(p => p.id === M.activeProg) || null;
   const dayLabel = d => d.dow == null ? 'Quand tu veux' : DOW[d.dow];
   const dowOrder = d => d.dow == null ? 9 : (d.dow + 6) % 7;
@@ -476,24 +482,30 @@ window.KaloMuscuInit = K => {
     for (let k = 1; k < 8; k++) { const dw = (today + k) % 7, di = p.days.findIndex(d => d.dow === dw); if (di >= 0) return { di, k }; }
     return null;
   }
+  let selDow = null; // jour affiché dans la carte programme (null = aujourd'hui)
+  const dayDetail = (p, di) => { const d = p.days[di]; return `<div class="prog-lines">${d.items.map(x => { const e = exo(x.exId); return `<div class="prog-line" data-action="exo-info" data-id="${x.exId}">${thumb(x.exId, 'mini')}<span class="grow">${esc(e.name)}${x.note ? ` <em class="muted">(${esc(x.note)})</em>` : ''}</span><b class="num">${x.sets}×${x.min === x.max ? x.min : x.min + '-' + x.max}${e.type === 'time' ? ' s' : ''}</b></div>`; }).join('')}</div>${d.note ? `<p class="note" style="margin:8px 0 0">${esc(d.note)}</p>` : ''}`; };
   function programCard() {
     const p = prog();
     if (!p) return `<div class="section-title"><h2>Mon programme</h2></div>
       <button class="card mu-start prog-empty" data-action="prog-list"><div><div class="card-title">📋 Choisir un programme</div><div class="sub">Programme tout prêt ou le tien : la séance du jour s'affiche ici, avec tes objectifs de séries, de répétitions et de repos.</div></div><span class="mu-go">${ICON.right}</span></button>`;
-    const today = new Date().getDay(), di = p.days.findIndex(d => d.dow === today), nx = nextDay(p);
-    const strip = [1, 2, 3, 4, 5, 6, 0].map(dw => { const i = p.days.findIndex(d => d.dow === dw); const done = i >= 0 && doneThisWeek(p, i); return `<span class="pd ${i >= 0 ? 'train' : 'rest'} ${dw === today ? 'today' : ''} ${done ? 'done' : ''}"><b>${DOW_S[dw]}</b><i>${done ? '✓' : i >= 0 ? '' : '·'}</i></span>`; }).join('');
+    const today = new Date().getDay(), sel = selDow ?? today, di = p.days.findIndex(d => d.dow === sel), isToday = sel === today;
+    const strip = [1, 2, 3, 4, 5, 6, 0].map(dw => { const i = p.days.findIndex(d => d.dow === dw); const done = i >= 0 && doneThisWeek(p, i);
+      return `<button class="pd ${i >= 0 ? 'train' : 'rest'} ${dw === today ? 'today' : ''} ${dw === sel ? 'sel' : ''} ${done ? 'done' : ''}" data-action="prog-day" data-dow="${dw}" aria-label="${DOW[dw]}"><b>${DOW_S[dw]}</b><i>${done ? '✓' : i >= 0 ? '' : '·'}</i></button>`; }).join('');
     const d = di >= 0 ? p.days[di] : null, done = d && doneThisWeek(p, di);
     const free = p.days.map((x, i) => ({ x, i })).filter(o => o.x.dow == null);
-    const freeHTML = free.length ? `<div class="prog-free"><div class="small muted">${d ? 'Autres séances' : 'Séances à placer quand tu veux'}</div><div class="prog-free-row">${free.map(o => `<button class="chip ${doneThisWeek(p, o.i) ? 'chip-done' : ''}" data-action="prog-start" data-d="${o.i}">${doneThisWeek(p, o.i) ? '✓ ' : ''}${esc(o.x.name)}</button>`).join('')}</div></div>` : '';
+    const freeHTML = free.length ? `<div class="prog-free"><div class="small muted">Séances à placer quand tu veux</div><div class="prog-free-row">${free.map(o => `<button class="chip ${doneThisWeek(p, o.i) ? 'chip-done' : ''}" data-action="prog-start" data-d="${o.i}">${doneThisWeek(p, o.i) ? '✓ ' : ''}${esc(o.x.name)}</button>`).join('')}</div></div>` : '';
+    let nx = null; if (!d) for (let k = 1; k < 8; k++) { const dw = (sel + k) % 7, i = p.days.findIndex(x => x.dow === dw); if (i >= 0) { nx = { di: i }; break; } }
     return `<div class="section-title"><h2>Mon programme</h2><button class="btn plain" data-action="prog-list">Changer</button></div>
       <section class="card prog-card glow">
         <div class="row between"><button class="prog-name" data-action="prog-view">${esc(p.name)} ${ICON.right}</button></div>
         <div class="prog-strip">${strip}</div>
-        ${d ? `<div class="prog-today"><div class="small muted">Aujourd'hui · ${DOW[today]}</div><div class="card-title" style="font-size:20px">${esc(d.name)}</div><div class="sub">${d.items.length} exercices · ${daySets(d)} séries${done ? ' · déjà faite ✓' : ''}</div>
-            <div class="prog-ex">${d.items.map(x => `<span>${thumb(x.exId, 'mini')}</span>`).join('')}</div>
-            <button class="btn block" data-action="prog-start" data-d="${di}" style="margin-top:12px">${done ? 'Refaire la séance' : 'Commencer la séance'}</button></div>`
-          : `<div class="prog-today"><div class="card-title" style="font-size:19px">${free.length ? '📅 Pas de séance fixe aujourd\'hui' : '😴 Jour de repos'}</div><div class="sub">${nx ? `Prochaine séance : ${DOW[p.days[nx.di].dow]} · ${esc(p.days[nx.di].name)}` : ''}</div>
-            ${free.length ? '' : `<p class="note" style="margin:8px 0 0">La récupération fait partie du programme : c'est là que le muscle se construit.</p>`}${nx ? `<button class="btn outline block small" data-action="prog-start" data-d="${nx.di}" style="margin-top:10px">Faire quand même ${esc(p.days[nx.di].name)}</button>` : ''}</div>`}
+        ${d ? `<div class="prog-today"><div class="row between"><div class="small muted">${isToday ? "Aujourd'hui · " : ''}${DOW[sel]}${done ? ' · faite cette semaine ✓' : ''}</div>${isToday ? '' : '<button class="btn plain small" data-action="prog-day" data-dow="today">Revenir à aujourd\'hui</button>'}</div>
+            <div class="card-title" style="font-size:20px">${esc(d.name)}</div><div class="sub">${d.items.length} exercices · ${daySets(d)} séries</div>
+            ${dayDetail(p, di)}
+            <button class="btn block ${isToday ? '' : 'outline'}" data-action="prog-start" data-d="${di}" style="margin-top:12px">${done ? 'Refaire la séance' : isToday ? 'Commencer la séance' : `Commencer ${esc(d.name)} maintenant`}</button></div>`
+          : `<div class="prog-today"><div class="row between"><div class="small muted">${isToday ? "Aujourd'hui · " : ''}${DOW[sel]}</div>${isToday ? '' : '<button class="btn plain small" data-action="prog-day" data-dow="today">Revenir à aujourd\'hui</button>'}</div>
+            <div class="card-title" style="font-size:19px">😴 Jour de repos</div><div class="sub">${nx ? `Séance suivante : ${DOW[p.days[nx.di].dow]} · ${esc(p.days[nx.di].name)}` : ''}</div>
+            ${free.length ? '' : `<p class="note" style="margin:8px 0 0">La récupération fait partie du programme : c'est là que le muscle se construit.</p>`}${nx && isToday ? `<button class="btn outline block small" data-action="prog-start" data-d="${nx.di}" style="margin-top:10px">Faire quand même ${esc(p.days[nx.di].name)}</button>` : ''}</div>`}
         ${freeHTML}
       </section>`;
   }
@@ -573,7 +585,7 @@ window.KaloMuscuInit = K => {
       const fixed = p.days.filter(d => d.dow != null); if (new Set(fixed.map(d => d.dow)).size < fixed.length) { toast('Deux séances tombent le même jour'); return; }
       p.days.forEach(d => d.items.forEach(x => { if (x.max < x.min) [x.min, x.max] = [x.max, x.min]; }));
       p.days.sort((a, b) => dowOrder(a) - dowOrder(b));
-      p.name = p.name.trim(); if (i == null) { M.programs.push(p); M.activeProg = p.id; } else M.programs[i] = p;
+      p.name = p.name.trim(); p.edited = true; if (i == null) { M.programs.push(p); M.activeProg = p.id; } else M.programs[i] = p;
       savePrograms(); closeSheet(1, () => { onSaved?.(); toast(i == null ? 'Programme créé et activé ✓' : 'Programme enregistré ✓'); });
     };
     draw(); openSheet(sh.el);
@@ -592,6 +604,8 @@ window.KaloMuscuInit = K => {
     'prog-list': () => openProgList(),
     'prog-view': () => openProgView(),
     'prog-start': b => startProgDay(+b.dataset.d),
+    'prog-day': b => { const v = b.dataset.dow; selDow = v === 'today' ? null : +v; if (selDow === new Date().getDay()) selDow = null; render(); },
+    'exo-info': b => openExercise(b.dataset.id),
     'body-sex': b => { M.settings.body = b.dataset.v; Store.put('muscuSettings', M.settings); render(); },
   };
   const exportData = () => ({ workouts: M.workouts, routines: M.routines, custom: M.custom, settings: M.settings, programs: M.programs, activeProg: M.activeProg });

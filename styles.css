@@ -850,3 +850,9 @@ body::before { inset: -12%; animation: bgDrift 38s ease-in-out infinite alternat
 .prog-free-row .chip { color: var(--ink); }
 .chip-done { border-color: rgba(var(--accent-rgb), .5) !important; color: var(--accent) !important; }
 .wo-note { margin-top: 8px; padding: 8px 12px; border-radius: 12px; font-size: 13.5px; color: var(--ink-2); background: rgba(var(--accent-rgb), .08); border: 1px solid rgba(var(--accent-rgb), .25); }
+button.pd { font: inherit; color: inherit; cursor: pointer; }
+.pd.sel { border-color: var(--accent); background: rgba(var(--accent-rgb), .16); box-shadow: 0 0 12px rgba(var(--accent-rgb), .25); }
+.pd.sel b { color: var(--accent); }
+.pd.today:not(.sel) { border-color: rgba(var(--accent-rgb), .3); background: rgba(255,255,255,.04); }
+.prog-lines { margin-top: 6px; }
+.prog-lines .prog-line:first-of-type { margin-top: 4px; }
