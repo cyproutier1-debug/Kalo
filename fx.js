@@ -66,32 +66,43 @@
   const CLIMB = 1100; // durée de la montée des flammes (ms)
   const INK = '#2A0C02';
   // Forme de flamme : base arrondie, 3 langues de feu, pointe principale décalée par « w »
-  function flamePath(x, w, h, k) {
-    x.beginPath();
-    x.moveTo(0, h * 0.5);
-    x.bezierCurveTo(-w * 0.62, h * 0.5, -w * 0.66, h * 0.05, -w * 0.38, -h * 0.12);
-    x.bezierCurveTo(-w * 0.36, -h * 0.02, -w * 0.3, h * 0.04, -w * 0.22, h * 0.02);
-    x.bezierCurveTo(-w * 0.3, -h * 0.2, -w * 0.12, -h * 0.34, w * k, -h * 0.5);
-    x.bezierCurveTo(w * 0.04, -h * 0.3, w * 0.22, -h * 0.24, w * 0.2, -h * 0.06);
-    x.bezierCurveTo(w * 0.28, -h * 0.12, w * 0.34, -h * 0.2, w * 0.36, -h * 0.28);
-    x.bezierCurveTo(w * 0.66, -h * 0.02, w * 0.62, h * 0.5, 0, h * 0.5);
-    x.closePath();
+  // Grande flamme dessinée à chaque image : aplats rouge / orange / jaune, halo, langues qui ondulent
+  function flameEdge(H, W, t, seed, side) {
+    const pts = [], N = 22;
+    for (let i = 0; i <= N; i++) {
+      const v = i / N, base = Math.sqrt(v) * Math.pow(1 - v, 1.15) * 2.75 * W;
+      const lick = 1 + 0.22 * Math.sin(t * 0.011 + v * 9 + seed + side * 1.7) + 0.12 * Math.sin(t * 0.023 + v * 17 + seed * 2);
+      const tongue = v > 0.35 ? 0.35 * Math.max(0, Math.sin(v * 14 - t * 0.012 + seed + side)) * (1 - v) * W : 0;
+      const cx = Math.sin(t * 0.004 + seed) * H * 0.07 * Math.pow(v, 1.4) + Math.sin(t * 0.009 + v * 5 + seed) * H * 0.045 * v;
+      pts.push([cx + side * (base * lick + tongue), -v * H]);
+    }
+    return pts;
   }
-  function cartoonFlame(k) {
-    const W = 84, H = 116, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-    x.translate(W / 2, H / 2 + 4); x.lineJoin = 'round';
-    flamePath(x, 66, 100, k); x.fillStyle = '#FF3D1F'; x.fill(); x.lineWidth = 5; x.strokeStyle = INK; x.stroke();
-    x.save(); x.translate(0, 13); flamePath(x, 46, 70, -k * 0.8); x.fillStyle = '#FF9416'; x.fill(); x.lineWidth = 2.5; x.strokeStyle = 'rgba(42,12,2,.55)'; x.stroke(); x.restore();
-    x.save(); x.translate(0, 25); flamePath(x, 26, 40, k * 0.6); x.fillStyle = '#FFE23D'; x.fill(); x.restore();
-    x.fillStyle = 'rgba(255,255,255,.75)'; x.beginPath(); x.ellipse(-12, 14, 3, 6, 0.3, 0, 7); x.fill();
-    return c;
+  function flameShape(ctx, x, y, H, W, t, seed) {
+    const L = flameEdge(H, W, t, seed, -1), Rr = flameEdge(H, W, t, seed, 1).reverse(), P = [...L, ...Rr];
+    ctx.beginPath(); ctx.moveTo(x + P[0][0], y + P[0][1]);
+    for (let i = 1; i < P.length - 1; i++) { const mx = (P[i][0] + P[i + 1][0]) / 2, my = (P[i][1] + P[i + 1][1]) / 2; ctx.quadraticCurveTo(x + P[i][0], y + P[i][1], x + mx, y + my); }
+    ctx.closePath();
   }
-  function puff() {
-    const s = 44, c = document.createElement('canvas'); c.width = c.height = s; const x = c.getContext('2d');
-    x.translate(s / 2, s / 2); x.beginPath();
-    [[0, -6, 11], [-9, 3, 9], [9, 3, 9], [0, 7, 9]].forEach(([a, b, r]) => { x.moveTo(a + r, b); x.arc(a, b, r, 0, 7); });
-    x.fillStyle = '#9AA3B2'; x.lineWidth = 3; x.strokeStyle = '#1C2230'; x.stroke(); x.fill();
-    x.fillStyle = 'rgba(255,255,255,.35)'; x.beginPath(); x.arc(-4, -9, 4, 0, 7); x.fill(); return c;
+  function drawFlame(ctx, x, y, H, t, seed, alpha = 1) {
+    if (H < 2) return;
+    const W = H * 0.25;
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.shadowColor = 'rgba(255,96,24,.85)'; ctx.shadowBlur = H * 0.32;
+    flameShape(ctx, x, y + H * 0.04, H, W, t, seed); ctx.fillStyle = '#E2361A'; ctx.fill();
+    ctx.shadowBlur = 0;
+    flameShape(ctx, x, y + H * 0.02, H * 0.84, W * 0.8, t * 1.1 + 300, seed + 1.3); ctx.fillStyle = '#FF6A1E'; ctx.fill();
+    flameShape(ctx, x, y, H * 0.62, W * 0.7, t * 1.2 + 700, seed + 2.6); ctx.fillStyle = '#FFC93A'; ctx.fill();
+    flameShape(ctx, x, y - H * 0.02, H * 0.38, W * 0.55, t * 1.3 + 1100, seed + 3.9); ctx.fillStyle = '#FFF2A6'; ctx.fill();
+    ctx.restore();
+  }
+  // Morceau de flamme détaché (goutte de feu qui s'envole)
+  function drawWisp(ctx, x, y, s, rot, alpha) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s);
+    ctx.shadowColor = 'rgba(255,96,24,.8)'; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.moveTo(0, 6); ctx.bezierCurveTo(-6, 5, -6, -2, -1, -9); ctx.bezierCurveTo(0, -4, 6, -1, 5, 3); ctx.bezierCurveTo(4, 6, 2, 6, 0, 6); ctx.fillStyle = '#E63A1C'; ctx.fill();
+    ctx.shadowBlur = 0; ctx.beginPath(); ctx.moveTo(0, 4); ctx.bezierCurveTo(-3, 3, -3, -1, -0.5, -4); ctx.bezierCurveTo(0, -1, 3, 0, 2.5, 2); ctx.fillStyle = '#FFC93A'; ctx.fill();
+    ctx.restore();
   }
   let SPR = null;
   function sprites() {
@@ -106,8 +117,6 @@
     const dot = col => { const c = document.createElement('canvas'); c.width = c.height = 20; const x = c.getContext('2d'); x.beginPath(); x.arc(10, 10, 7, 0, 7); x.fillStyle = col; x.fill(); x.lineWidth = 2.4; x.strokeStyle = INK; x.stroke(); return c; };
     const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#2EE68A';
     SPR = {
-      flames: [0.1, -0.12, 0.2, -0.2].map(cartoonFlame),
-      puff: puff(),
       stars: ['#FFD23F', '#FFFFFF', '#FF9A2E', accent, '#FFE98A', '#7FE9FF'].map(star),
       dots: ['#FFD23F', '#FF9A2E', '#FFFFFF'].map(dot),
     };
@@ -149,9 +158,9 @@
     if (!rect) { cv.remove(); return; }
     const zoom = on => { const e = getEl(); if (!e) return; e.classList.toggle('fx-zoom', on); };
     zoom(true); setTimeout(() => zoom(false), CLIMB + 450);
-    // Flammes accrochées au contour (u = position le long du demi-contour), qui naissent au passage de la tête
-    const tongues = [], puffs = [], stars = [], sparks = [], start = performance.now();
-    const STEP = 15; let placed = 0;
+    // Une grande flamme par côté, qui monte le long du bord et fusionne au sommet
+    const wisps = [], stars = [], sparks = [], start = performance.now();
+    const MERGE = 200, BIG = 130, SMALL = 84;
     const bursts = [{ at: CLIMB, dx: 0, dy: 0, n: 60 }, { at: CLIMB + 280, dx: -90, dy: 40, n: 28 }, { at: CLIMB + 550, dx: 90, dy: 30, n: 28 }];
     const burst = (x, y, n) => {
       for (let i = 0; i < n; i++) {
@@ -159,46 +168,45 @@
         stars.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - R(1.5, 4), rot: R(0, 6.3), vr: R(-0.2, 0.2), s: R(0.4, 0.85), spr: S.stars[i % S.stars.length], pop: 0 });
       }
       for (let i = 0; i < 16; i++) { const a = R(0, Math.PI * 2), sp = R(2, 7); sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: R(300, 550), spr: S.dots[i % 3] }); }
-      for (let i = 0; i < 5; i++) puffs.push({ x: x + R(-14, 14), y: y + R(-8, 8), vx: R(-1, 1), vy: R(-1.2, -0.3), life: 0, max: R(500, 800), s: R(0.8, 1.3) });
+      for (let i = 0; i < 10; i++) { const a = R(0, Math.PI * 2), sp = R(1.5, 4.5); wisps.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.5, life: 0, max: R(350, 650), s: R(1, 1.6), rot: R(-0.6, 0.6) }); }
     };
-    let last = start;
+    const spawnWisp = (x, y, H) => wisps.push({ x: x + R(-H * 0.1, H * 0.1), y: y - H * R(0.7, 0.95), vx: R(-0.6, 0.6), vy: R(-2.2, -1.2), life: 0, max: R(350, 600), s: H / 70 * R(0.8, 1.3), rot: R(-0.5, 0.5) });
+    let last = start, wispT = 0;
     const frame = now => {
       const t = now - start, dt = Math.min(40, now - last) / 16.7; last = now;
       const cur = getEl(); if (cur && cur !== el) el = cur; if (el?.isConnected) rect = el.getBoundingClientRect();
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
-      const path = halfPath(rect, 26), p = ease(Math.min(1, t / CLIMB)), tick = Math.floor(t / 85);
-      const burnOut = t < CLIMB + 250 ? 1 : Math.max(0, 1 - (t - CLIMB - 250) / 450);
-      // bande brûlée le long du bord (trait épais avec contour)
+      const path = halfPath(rect, 26), p = ease(Math.min(1, t / CLIMB));
+      const burnOut = t < CLIMB + 150 ? 1 : Math.max(0, 1 - (t - CLIMB - 150) / 450);
+      // traînée lumineuse laissée par la flamme
       if (burnOut > 0) for (const side of [-1, 1]) {
         ctx.beginPath();
         for (let k = 0; k <= 48; k++) { const [x, y] = path(p * k / 48, side); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
         ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = burnOut;
-        ctx.strokeStyle = INK; ctx.lineWidth = 9; ctx.stroke();
-        ctx.strokeStyle = '#FF8A1E'; ctx.lineWidth = 4.5; ctx.stroke();
-        ctx.strokeStyle = '#FFE23D'; ctx.lineWidth = 1.6; ctx.stroke();
-        ctx.globalAlpha = 1;
+        ctx.shadowColor = 'rgba(255,96,24,.9)'; ctx.shadowBlur = 12; ctx.strokeStyle = '#FF5A1E'; ctx.lineWidth = 4; ctx.stroke();
+        ctx.shadowBlur = 0; ctx.strokeStyle = '#FFE07A'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.globalAlpha = 1;
       }
-      // nouvelles langues de feu au fil de la progression
-      const target = Math.floor(p * path.L / STEP);
-      while (placed <= target && placed * STEP <= path.L) { const u = Math.min(1, placed * STEP / path.L); for (const side of [-1, 1]) tongues.push({ u, side, born: t, ph: R(0, 9), v: Math.floor(R(0, 4)), sz: R(0.75, 1.05) }); placed++; }
-      // fumée cartoon à la tête
-      if (t < CLIMB && Math.random() < 0.35) for (const side of [-1, 1]) { const [hx, hy] = path(p, side); puffs.push({ x: hx, y: hy - 18, vx: R(-0.5, 0.5), vy: R(-1.6, -0.8), life: 0, max: R(500, 800), s: R(0.45, 0.8) }); }
+      const cxTop = rect.left + rect.width / 2, yTop = rect.top;
+      wispT += dt * 16.7;
+      if (t < CLIMB - MERGE) {
+        for (const side of [-1, 1]) {
+          const [hx, hy] = path(p, side), H = SMALL * Math.min(1, t / 160);
+          drawFlame(ctx, hx, hy + 4, H, t, side > 0 ? 0 : 2.1);
+          if (wispT > 140) spawnWisp(hx, hy, H);
+        }
+        if (wispT > 140) wispT = 0;
+      } else if (t < CLIMB + 260) {
+        // fusion au sommet : une seule grosse flamme qui grandit, puis disparaît dans l'explosion
+        const k = Math.min(1, (t - (CLIMB - MERGE)) / MERGE), H = t < CLIMB ? SMALL + (BIG - SMALL) * k : BIG * Math.max(0, 1 - (t - CLIMB) / 260);
+        drawFlame(ctx, cxTop, yTop + 4, H, t, 1, t < CLIMB ? 1 : Math.max(0, 1 - (t - CLIMB) / 260));
+        if (t < CLIMB && wispT > 90) { spawnWisp(cxTop, yTop, H); wispT = 0; }
+      }
       for (const b of bursts) if (!b.done && t >= b.at) { b.done = true; burst(rect.left + rect.width / 2 + b.dx, rect.top + b.dy, b.n); try { navigator.vibrate?.(b.dx ? 12 : 30); } catch (e) { /* ignore */ } }
-      // fumée
-      for (let i = puffs.length - 1; i >= 0; i--) {
-        const f = puffs[i]; f.life += dt * 16.7; if (f.life > f.max) { puffs.splice(i, 1); continue; }
-        f.x += f.vx * dt; f.y += f.vy * dt; const k = f.life / f.max, sz = 44 * f.s * (0.6 + k * 0.8);
-        ctx.globalAlpha = Math.min(1, (1 - k) * 1.6); ctx.drawImage(S.puff, f.x - sz / 2, f.y - sz / 2, sz, sz);
-      }
-      ctx.globalAlpha = 1;
-      // langues de feu : image par image (changement de dessin toutes les 85 ms), toujours pointées vers le haut
-      for (const g of tongues) {
-        const age = t - g.born, grow = Math.min(1, age / 120), isHead = t < CLIMB && g.u >= p - 0.04;
-        const s = g.sz * grow * burnOut * (isHead ? 1.45 : 1) * (0.9 + 0.12 * Math.sin(t / 70 + g.ph));
-        if (s <= 0.02) continue;
-        const [x, y] = path(g.u, g.side), spr = S.flames[(g.v + tick) % 4], w = 30 * s, h = 41 * s;
-        ctx.save(); ctx.translate(x, y); if ((tick + g.v) % 2) ctx.scale(-1, 1);
-        ctx.drawImage(spr, -w / 2, -h * 0.82, w, h); ctx.restore();
+      // morceaux de flamme qui s'envolent
+      for (let i = wisps.length - 1; i >= 0; i--) {
+        const w = wisps[i]; w.life += dt * 16.7; if (w.life > w.max) { wisps.splice(i, 1); continue; }
+        w.x += w.vx * dt; w.y += w.vy * dt; w.vx += Math.sin(w.life * 0.02) * 0.05; const k = w.life / w.max;
+        drawWisp(ctx, w.x, w.y, w.s * (1 - k * 0.7), w.rot, 1 - k * k);
       }
       // étincelles de l'explosion
       for (let i = sparks.length - 1; i >= 0; i--) {
@@ -213,7 +221,7 @@
         const sz = 52 * s.s * (s.pop < 1 ? 0.4 + s.pop * 0.8 : 1);
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); ctx.drawImage(s.spr, -sz / 2, -sz / 2, sz, sz); ctx.restore();
       }
-      if (t > CLIMB + 800 && !puffs.length && !stars.length && !sparks.length) { cv.remove(); window.removeEventListener('resize', size); return; }
+      if (t > CLIMB + 800 && !wisps.length && !stars.length && !sparks.length) { cv.remove(); window.removeEventListener('resize', size); return; }
       if (t > 9000) { cv.remove(); window.removeEventListener('resize', size); return; }
       requestAnimationFrame(frame);
     };
