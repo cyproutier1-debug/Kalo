@@ -72,7 +72,7 @@
   }
 
   /* ---------- Visuel (style dessin animé : formes pleines, contour sombre épais) ---------- */
-  const CLIMB = 1100; // durée de la montée des flammes (ms)
+  const CLIMB = 1300; // durée de la montée des flammes (ms)
     // Forme de flamme : base arrondie, 3 langues de feu, pointe principale décalée par « w »
   // Grande flamme dessinée à chaque image : aplats rouge / orange / jaune, halo, langues qui ondulent
   function flameEdge(H, W, t, seed, side) {
@@ -92,13 +92,15 @@
     for (let i = 1; i < P.length - 1; i++) { const mx = (P[i][0] + P[i + 1][0]) / 2, my = (P[i][1] + P[i + 1][1]) / 2; ctx.quadraticCurveTo(x + P[i][0], y + P[i][1], x + mx, y + my); }
     ctx.closePath();
   }
+  let GLOW = null;
+  const glow = () => GLOW || (GLOW = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,150,40,.55)'); g.addColorStop(0.45, 'rgba(255,90,20,.28)'); g.addColorStop(1, 'rgba(255,60,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return c; })());
   function drawFlame(ctx, x, y, H, t, seed, alpha = 1) {
     if (H < 2) return;
     const W = H * 0.25;
     ctx.save(); ctx.globalAlpha = alpha;
-    ctx.shadowColor = 'rgba(255,96,24,.85)'; ctx.shadowBlur = H * 0.32;
+    const gs = H * 1.5; ctx.drawImage(glow(), x - gs / 2, y - H * 0.45 - gs / 2, gs, gs);
     flameShape(ctx, x, y + H * 0.04, H, W, t, seed); ctx.fillStyle = '#E2361A'; ctx.fill();
-    ctx.shadowBlur = 0;
     flameShape(ctx, x, y + H * 0.02, H * 0.84, W * 0.8, t * 1.1 + 300, seed + 1.3); ctx.fillStyle = '#FF6A1E'; ctx.fill();
     flameShape(ctx, x, y, H * 0.62, W * 0.7, t * 1.2 + 700, seed + 2.6); ctx.fillStyle = '#FFC93A'; ctx.fill();
     flameShape(ctx, x, y - H * 0.02, H * 0.38, W * 0.55, t * 1.3 + 1100, seed + 3.9); ctx.fillStyle = '#FFF2A6'; ctx.fill();
@@ -107,9 +109,9 @@
   // Morceau de flamme détaché (goutte de feu qui s'envole)
   function drawWisp(ctx, x, y, s, rot, alpha) {
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s);
-    ctx.shadowColor = 'rgba(255,96,24,.8)'; ctx.shadowBlur = 8;
+    ctx.drawImage(glow(), -12, -14, 24, 24);
     ctx.beginPath(); ctx.moveTo(0, 6); ctx.bezierCurveTo(-6, 5, -6, -2, -1, -9); ctx.bezierCurveTo(0, -4, 6, -1, 5, 3); ctx.bezierCurveTo(4, 6, 2, 6, 0, 6); ctx.fillStyle = '#E63A1C'; ctx.fill();
-    ctx.shadowBlur = 0; ctx.beginPath(); ctx.moveTo(0, 4); ctx.bezierCurveTo(-3, 3, -3, -1, -0.5, -4); ctx.bezierCurveTo(0, -1, 3, 0, 2.5, 2); ctx.fillStyle = '#FFC93A'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, 4); ctx.bezierCurveTo(-3, 3, -3, -1, -0.5, -4); ctx.bezierCurveTo(0, -1, 3, 0, 2.5, 2); ctx.fillStyle = '#FFC93A'; ctx.fill();
     ctx.restore();
   }
   // Point sur la moitié du contour (du milieu du bas au milieu du haut), côté gauche (-1) ou droit (+1)
@@ -134,7 +136,8 @@
     { at: 750, fly: 600, dx: -0.12, dy: 0.12, big: 0.7 },
     { at: 950, fly: 580, dx: 0.15, dy: 0.32, big: 0.75 },
   ];
-  const ease = x => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
+  const ease = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; // ease-in-out (cubique)
+  const easeOut = x => 1 - Math.pow(1 - x, 3);
 
   function celebrate(getEl, opts = {}) {
     const sound = opts.sound !== false, anim = opts.anim !== false;
@@ -179,27 +182,29 @@
       const cur = getEl(); if (cur && cur !== el) el = cur; if (el?.isConnected) rect = el.getBoundingClientRect();
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
       const path = halfPath(rect, 26), p = ease(Math.min(1, t / CLIMB));
-      const burnOut = t < CLIMB + 150 ? 1 : Math.max(0, 1 - (t - CLIMB - 150) / 450);
+      const burnOut = t < CLIMB + 150 ? 1 : 1 - easeOut(Math.min(1, (t - CLIMB - 150) / 550));
       // traînée lumineuse laissée par la flamme
       if (burnOut > 0) for (const side of [-1, 1]) {
         ctx.beginPath();
-        for (let k = 0; k <= 48; k++) { const [x, y] = path(p * k / 48, side); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = burnOut;
-        ctx.shadowColor = 'rgba(255,96,24,.9)'; ctx.shadowBlur = 12; ctx.strokeStyle = '#FF5A1E'; ctx.lineWidth = 4; ctx.stroke();
-        ctx.shadowBlur = 0; ctx.strokeStyle = '#FFE07A'; ctx.lineWidth = 1.6; ctx.stroke(); ctx.globalAlpha = 1;
+        const n = Math.max(2, Math.ceil(p * path.L / 3));
+        for (let k = 0; k <= n; k++) { const [x, y] = path(p * k / n, side); k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        const a = burnOut * easeOut(Math.min(1, t / 250));
+        [[12, 'rgba(255,90,20,.12)'], [7, 'rgba(255,100,25,.28)'], [3.6, 'rgba(255,90,30,.95)'], [1.5, 'rgba(255,230,140,1)']].forEach(([w, c]) => { ctx.globalAlpha = a; ctx.strokeStyle = c; ctx.lineWidth = w; ctx.stroke(); });
+        ctx.globalAlpha = 1;
       }
       const cxTop = rect.left + rect.width / 2, yTop = rect.top;
       wispT += dt * 16.7;
       if (t < CLIMB - MERGE) {
         for (const side of [-1, 1]) {
-          const [hx, hy] = path(p, side), H = SMALL * Math.min(1, t / 160);
+          const [hx, hy] = path(p, side), H = SMALL * easeOut(Math.min(1, t / 220));
           drawFlame(ctx, hx, hy + 4, H, t, side > 0 ? 0 : 2.1);
           if (wispT > 140) spawnWisp(hx, hy, H);
         }
         if (wispT > 140) wispT = 0;
       } else if (t < CLIMB + 260) {
         // fusion au sommet : une seule grosse flamme qui grandit, puis disparaît dans l'explosion
-        const k = Math.min(1, (t - (CLIMB - MERGE)) / MERGE), H = t < CLIMB ? SMALL + (BIG - SMALL) * k : BIG * Math.max(0, 1 - (t - CLIMB) / 260);
+        const k = ease(Math.min(1, (t - (CLIMB - MERGE)) / MERGE)), H = t < CLIMB ? SMALL + (BIG - SMALL) * k : BIG * (1 - easeOut(Math.min(1, (t - CLIMB) / 260)));
         drawFlame(ctx, cxTop, yTop + 4, H, t, 1, t < CLIMB ? 1 : Math.max(0, 1 - (t - CLIMB) / 260));
         if (t < CLIMB && wispT > 90) { spawnWisp(cxTop, yTop, H); wispT = 0; }
       }
