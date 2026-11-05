@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '2.9.0';
+  const APP_VERSION = '2.10.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -72,6 +72,7 @@
   ];
   const PACES = [[0, 'Maintenir mon poids'], [0.25, 'Perdre 0,25 kg / semaine'], [0.5, 'Perdre 0,5 kg / semaine (recommandé)'], [0.75, 'Perdre 0,75 kg / semaine'], [1, 'Perdre 1 kg / semaine']];
 
+  const celebrate = getEl => { try { window.KaloFX?.celebrate(getEl, S.fx); } catch (e) { /* ignore */ } };
   function toast(msg, ms = 2200) {
     const t = $('#toast'); t.textContent = msg; t.classList.add('show');
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), ms);
@@ -145,12 +146,12 @@
   };
 
   /* ---------- État ---------- */
-  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [], ai: { provider: 'gemini', keys: {} }, theme: '#2EE68A' };
+  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [], ai: { provider: 'gemini', keys: {} }, theme: '#2EE68A', fx: { anim: true, sound: true } };
   const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto', mini: 30 };
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme); Mu.onLoad(all);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme); S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -440,7 +441,7 @@
       const mp = es.reduce((s, e) => s + (e.p || 0), 0), mc = es.reduce((s, e) => s + (e.c || 0), 0), mf = es.reduce((s, e) => s + (e.f || 0), 0);
       const done = mealDone(k, id);
       const canCopy = !locked && !done && !es.length && prev && prev.entries.some(e => e.meal === id);
-      return `<section class="card meal ${done ? 'done' : ''}"><div class="meal-head">
+      return `<section class="card meal ${done ? 'done' : ''}" data-meal-card="${id}"><div class="meal-head">
           <button class="meal-check ${done ? 'on' : ''}" data-action="meal-done" data-meal="${id}" ${locked ? 'disabled' : ''} aria-pressed="${done}" aria-label="${done ? 'Décocher' : 'Valider'} ${name}">${ICON.check}</button>
           <div class="grow"><h2>${name}</h2>${es.length ? `<div class="meal-macros num"><span class="mp">P ${r0(mp)} g</span><span class="mc">G ${r0(mc)} g</span><span class="mf">L ${r0(mf)} g</span></div>` : ''}</div>
           <span class="kcal num">${es.length ? `<span class="kv"><b>${r0(kc)}</b> kcal</span><small>${done ? 'mangé' : 'prévu'}</small>` : ''}</span></div>
@@ -678,7 +679,13 @@
       if (!e.target.closest('[data-a="ok"]')) return;
       const day = getDay(k); day.validated = Date.now(); day.mealsDone = Object.fromEntries(MEALS.map(([m]) => [m, day.mealsDone?.[m] || Date.now()])); saveDay(k);
       try { navigator.vibrate?.(30); } catch (err) { /* ignore */ }
-      closeSheet(1, () => { window.scrollTo(0, 0); toast(bal >= 0 ? `Journée validée · déficit ${r0(bal)} kcal` : 'Journée validée'); });
+      if (S.fx.sound) window.KaloFX?.prime();
+      closeSheet(1, () => {
+        const card = () => $('#view .card.validated');
+        card()?.scrollIntoView({ block: 'center' });
+        setTimeout(() => celebrate(card), 250);
+        toast(bal >= 0 ? `Journée validée · déficit ${r0(bal)} kcal` : 'Journée validée');
+      });
     };
     openSheet(sh.el);
   }
@@ -772,6 +779,12 @@
         <label class="custom-color"><span>Couleur personnalisée</span><input type="color" data-input="theme" value="${S.theme}"></label>
         <p class="note" style="margin:8px 0 0">S'applique à toute l'app. Les couleurs de sens restent fixes : vert = objectif atteint / déficit, orange = dépassement, bleu = repas validé.</p>
       </section>
+      <section class="card stack"><div class="card-title">🎆 Animation de validation</div>
+        <p class="note" style="margin:0">Flammes autour du repas puis feu d'artifice d'étoiles quand tu valides un repas ou ta journée.</p>
+        <div class="fx-row"><span>Animation</span><div class="seg"><button data-action="fx" data-k="anim" data-v="1" class="${S.fx.anim ? 'on' : ''}">Oui</button><button data-action="fx" data-k="anim" data-v="0" class="${S.fx.anim ? '' : 'on'}">Non</button></div></div>
+        <div class="fx-row"><span>Sons</span><div class="seg"><button data-action="fx" data-k="sound" data-v="1" class="${S.fx.sound ? 'on' : ''}">Oui</button><button data-action="fx" data-k="sound" data-v="0" class="${S.fx.sound ? '' : 'on'}">Non</button></div></div>
+        <button class="btn outline block" data-action="fx-test">Tester l'animation</button>
+        <p class="note" style="margin:0">Sur iPhone, les sons sont coupés quand le bouton silencieux est activé.</p></section>
       <section class="card stack" id="ai-settings"><div class="card-title">${ICON.sparkle}Photo IA</div>${aiSettingsHTML()}<button class="btn block" data-action="ai-save">Enregistrer la clé</button></section>
       <section class="card stack"><h3>Mes données</h3>
         <p class="note" style="margin:0">Tes données sont stockées uniquement sur cet appareil. Fais une sauvegarde de temps en temps (et avant de changer de téléphone).</p>
@@ -1538,7 +1551,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme, muscu: Mu.exportData() };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme, fx: S.fx, muscu: Mu.exportData() };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
@@ -1557,7 +1570,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       const keepAI = S.ai;
       await Store.clear();
       await Store.put('ai', keepAI);
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme);
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx);
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await Mu.importData(d.muscu);
       await loadState(); render(); toast('Sauvegarde restaurée');
@@ -1597,12 +1610,14 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       if (d.supps[id]) { try { navigator.vibrate?.(15); } catch (e) { /* ignore */ } if (S.supps.every(x => d.supps[x.id])) toast('Tous tes compléments sont pris 💊'); }
     },
     'mini-range': b => { UI.mini = +b.dataset.v; render(); },
+    fx: b => { S.fx[b.dataset.k] = b.dataset.v === '1'; Store.put('fx', S.fx); render(); },
+    'fx-test': b => celebrate(() => b.closest('.card')),
     'meal-done': b => {
       const k = UI.date, m = b.dataset.meal; if (isLocked(k)) return;
       const d = getDay(k); d.mealsDone = d.mealsDone || {};
       if (d.mealsDone[m]) delete d.mealsDone[m]; else d.mealsDone[m] = Date.now();
       saveDay(k); render();
-      if (d.mealsDone[m]) { try { navigator.vibrate?.(20); } catch (e) { /* ignore */ } toast(`${mealName(m)} validé ✓`); }
+      if (d.mealsDone[m]) { try { navigator.vibrate?.(20); } catch (e) { /* ignore */ } celebrate(() => $(`[data-meal-card="${m}"]`)); toast(`${mealName(m)} validé ✓`); }
     },
     validate: () => openValidate(UI.date),
     reopen: () => { const d = S.days[UI.date]; if (!d) return; delete d.validated; saveDay(UI.date); render(); toast('Journée rouverte'); },

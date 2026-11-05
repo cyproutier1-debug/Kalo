@@ -8,7 +8,7 @@ L'app doit être servie en **https** (sinon pas de caméra ni d'installation). G
 
 1. Crée un compte sur https://github.com (gratuit).
 2. Clique **New repository** → nom : `kalo` → **Public** → **Create repository**.
-3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, exercises.js, body.js, muscu.js, sw.js, manifest.webmanifest, et les dossiers `icons`, `vendor`, `fonts` et `exo-img`) → **Commit changes**.
+3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, fx.js, exercises.js, body.js, muscu.js, sw.js, manifest.webmanifest, et les dossiers `icons`, `vendor`, `fonts` et `exo-img`) → **Commit changes**.
    - `index.html` doit être à la racine du dépôt, pas dans un sous-dossier.
 4. **Settings** → **Pages** → Source : **Deploy from a branch** → Branch : `main` / `(root)` → **Save**.
 5. Attends 1 à 2 minutes : l'adresse s'affiche en haut de la page Pages, du type `https://TON-PSEUDO.github.io/kalo/`.
@@ -44,6 +44,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 - **Bilan** = dépense − consommé. Un nombre négatif est un déficit (perte), un positif un excédent.
 - **Valider la journée** (bouton en bas du journal) : affiche le récap (objectifs atteints, déficit, projection sur 4 semaines) coche tous les repas et verrouille la journée. « Rouvrir » permet de la modifier.
 - Dans Progrès, le bilan estimé utilise ta dépense réelle quand tu l'as saisie.
+- **Animation de validation** (repas ou journée) : flammes qui montent le long des bords de la carte du bas jusqu'en haut, léger zoom de la carte, puis explosion d'étoiles qui retombent, avec sons de mèche, de flammes et de feu d'artifice (sons synthétisés dans `fx.js`, aucun fichier audio). Profil → *Animation de validation* pour couper l'animation ou les sons. Sur iPhone, le mode silencieux coupe les sons.
 
 ## Projection jusqu'à l'objectif (onglet Progrès)
 
