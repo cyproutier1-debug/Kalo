@@ -9,9 +9,10 @@ window.KaloMuscuInit = K => {
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const exos = () => [...BASE, ...M.custom];
   const exo = id => exos().find(e => e.id === id) || { id, name: 'Exercice supprimé', muscle: 'autre', sec: [], equip: 'autre', type: 'w' };
-  const IMG = window.KALO_EXO_IMG || {};
-  const thumb = (id, cls = '') => IMG[id] ? `<img class="exo-thumb ${cls}" src="exo-img/${IMG[id]}/2.webp" alt="" loading="lazy">` : `<span class="exo-thumb ${cls} none">${ICON.dumbbell}</span>`;
-  const anim = id => IMG[id] ? `<div class="exo-anim">${[1, 2, 3].map(i => `<img class="f${i}" src="exo-img/${IMG[id]}/${i}.webp" alt="">`).join('')}</div>` : `<div class="exo-anim none">${ICON.dumbbell}</div>`;
+  const A = window.KaloAnim;
+  const thumb = (id, cls = '') => A ? `<img class="exo-thumb anim ${cls}" src="${A.thumb(id)}" alt="">` : `<span class="exo-thumb ${cls} none">${ICON.dumbbell}</span>`;
+  const anim = id => A ? `<div class="exo-anim"><canvas class="exo-canvas" data-anim="${esc(id)}"></canvas></div><div class="exo-key"><span><i class="k1"></i>Muscle principal</span><span><i class="k2"></i>Muscles secondaires</span></div>` : `<div class="exo-anim none">${ICON.dumbbell}</div>`;
+  const startAnims = root => { if (A) $$('canvas[data-anim]', root).forEach(c => A.play(c, c.dataset.anim)); };
   const videoUrl = e => 'https://www.youtube.com/results?search_query=' + encodeURIComponent(e.name + ' exécution technique musculation');
   const FIELDS = { w: ['kg', 'Reps'], bw: ['+kg', 'Reps'], time: [null, 'Sec'], cardio: ['Min', 'Km'] };
   const fmtDur = ms => { const s = Math.max(0, Math.round(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}` : `${m}:${String(ss).padStart(2, '0')}`; };
@@ -399,12 +400,11 @@ window.KaloMuscuInit = K => {
     const best = all.reduce((b, s) => e1rm(s.kg, s.reps) > e1rm(b?.kg, b?.reps) ? s : b, null);
     const maxKg = all.length ? Math.max(...all.map(s => s.kg || 0)) : 0, maxReps = all.length ? Math.max(...all.map(s => s.reps || 0)) : 0;
     const bestVolSet = all.reduce((b, s) => (s.kg || 0) * (s.reps || 0) > (b ? b.kg * b.reps : 0) ? s : b, null);
-    const mfill = k => k === e.muscle ? 'var(--accent)' : (e.sec || []).includes(k) ? 'rgba(var(--accent-rgb),.42)' : 'rgba(148,163,184,.22)';
+    const mfill = k => k === e.muscle ? '#FF3446' : (e.sec || []).includes(k) ? '#FF8A3D' : 'rgba(148,163,184,.22)';
     const front = window.KaloBody ? window.KaloBody('front', mfill, bodySex()) : '', back = window.KaloBody ? window.KaloBody('back', mfill, bodySex()) : '';
-    const approx = (window.KALO_EXO_IMG_APPROX || []).includes(id);
-    sh.setBody(`<section class="card exo-hero">${anim(id)}</section>${approx ? `<p class="note" style="margin:-6px 0 12px">Illustration de la variante la plus proche : à la salle, l'équipement est : <b>${esc(EQ[e.equip] || '')}</b>. La vidéo montre la version exacte.</p>` : ''}
+    sh.setBody(`<section class="card exo-hero">${anim(id)}</section>
       <a class="btn outline block exo-video" href="${videoUrl(e)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" style="fill:currentColor;stroke:none"/></svg>Voir une vidéo du mouvement</a>
-      <section class="card"><div class="row between" style="margin-bottom:8px"><div class="card-title" style="font-size:18px">Muscles travaillés</div><div class="exo-legend"><i style="background:var(--accent)"></i>Principal <i style="background:rgba(var(--accent-rgb),.42)"></i>Secondaire</div></div>
+      <section class="card"><div class="row between" style="margin-bottom:8px"><div class="card-title" style="font-size:18px">Muscles travaillés</div><div class="exo-legend"><i style="background:#FF3446"></i>Principal <i style="background:#FF8A3D"></i>Secondaire</div></div>
         <div class="body-map exo-map">${front}${back}</div>
         <div class="vline"><span class="muted">Principal</span><b>${esc(MUS[e.muscle] || '–')}</b></div>
         ${e.sec?.length ? `<div class="vline"><span class="muted">Secondaires</span><b style="text-align:right">${e.sec.map(s => esc(MUS[s] || s)).join(', ')}</b></div>` : ''}
@@ -414,7 +414,8 @@ window.KaloMuscuInit = K => {
       ${e.type === 'w' && h.length ? '<section class="card"><div class="card-title" style="font-size:17px;margin-bottom:6px">Progression du 1RM estimé</div><div class="chart-wrap" id="ex-chart"></div><p class="note" style="margin:6px 0 0">1RM estimé = charge × (1 + reps / 30), formule d\'Epley. Utile pour comparer des séries faites avec des répétitions différentes.</p></section>' : ''}
       <h3>Historique</h3>${h.length ? h.slice().reverse().slice(0, 15).map(x => `<section class="card wo-done-ex"><div class="sub" style="margin-bottom:6px">${cap(F.short.format(new Date(x.w.start)))} · ${esc(x.w.name)}</div>${x.sets.map((s, i) => `<div class="vline small"><span class="muted">Série ${i + 1}</span><b class="num">${esc(setTxt(s, e.type))}</b></div>`).join('')}</section>`).join('') : '<p class="note">Pas encore fait.</p>'}
       ${id.startsWith('c-') ? '<button class="btn danger block" data-a="delex">Supprimer cet exercice personnalisé</button>' : ''}
-      ${IMG[id] ? '<p class="note">Illustration : <a href="https://github.com/bryllim/workout-guide" target="_blank" rel="noopener">Workout Guide</a> (Bryl Lim), d\'après <a href="https://github.com/everkinetic/data" target="_blank" rel="noopener">Everkinetic</a>, licence <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr" target="_blank" rel="noopener">CC BY-SA 4.0</a>. La vidéo ouvre une recherche YouTube.</p>' : ''}`);
+      <p class="note">Animation Kalo : schéma du mouvement, l'appareil de ta salle peut différer. La vidéo montre la version exacte.</p>`);
+    requestAnimationFrame(() => startAnims(sh.body));
     sh.body.addEventListener('click', ev => { if (ev.target.closest('[data-a="delex"]') && confirm('Supprimer cet exercice ? Il restera visible dans l\'historique.')) { M.custom = M.custom.filter(x => x.id !== id); saveCustom(); closeSheet(1); } });
     openSheet(sh.el);
     const wrap = $('#ex-chart', sh.body); if (!wrap) return;
