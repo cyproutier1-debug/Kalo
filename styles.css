@@ -1030,3 +1030,13 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .g-k { background: rgba(255, 255, 255, .05); color: var(--ink-2); margin-left: auto; }
 .seg.plan-meal { display: flex; margin-bottom: 14px; }
 .seg.plan-meal button { flex: 1; font-size: 12.5px; padding: 8px 4px; }
+/* v3.7.1 — idées pour monter le score de qualité */
+.card.quality { cursor: default; }
+.quality.open .coach-more svg { transform: rotate(180deg); }
+.quality.open .coach-more { color: #2EE68A; border-color: rgba(46, 230, 138, .35); }
+.quality.open .coach-drop { grid-template-rows: 1fr; }
+.quality .coach-drop-in > *:first-child { margin-top: 12px; }
+.q-food { grid-template-columns: 1fr auto; }
+.q-food span { color: #7CF0B2 !important; }
+.q-food .q-gain { grid-row: 1 / span 2; grid-column: 2; font-style: normal; font: 800 14px var(--f-num, inherit); color: #06140C; background: #2EE68A; border-radius: 999px; padding: 6px 10px; box-shadow: 0 0 12px rgba(46, 230, 138, .35); }
+.q-info-btn { width: 20px; height: 20px; margin-left: 8px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .25); background: transparent; color: var(--ink-3); font: 700 12px/18px var(--f-text); padding: 0; vertical-align: 2px; }

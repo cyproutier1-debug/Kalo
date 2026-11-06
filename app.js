@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.7.0';
+  const APP_VERSION = '3.7.1';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1660,7 +1660,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
   const Mu = window.KaloMuscuInit({ $, $$, esc, r0, r1, num, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, closeAll, niceStep, bindTip, currentWeight });
 
   /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
-  const Nu = window.KaloNutriInit({ $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN });
+  const Nu = window.KaloNutriInit({ $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN, openDetail });
   GEN.forEach(Nu.enrichGen);
   const Bo = window.KaloBoostInit({ Nu, $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
     goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData });
@@ -1755,7 +1755,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     },
     install: async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice.catch(() => {}); installPrompt = null; render(); },
   };
-  Object.assign(actions, Mu.actions, Bo.actions, { 'quality-info': () => Nu.qualityInfo(), 'plan-day': () => Nu.openPlanner(UI.date) });
+  Object.assign(actions, Mu.actions, Bo.actions, Nu.actions, { 'quality-info': () => Nu.qualityInfo(), 'plan-day': () => Nu.openPlanner(UI.date) });
 
   document.addEventListener('click', e => {
     if (e.target.matches?.('input[type=date]')) { try { e.target.showPicker?.(); } catch (err) { /* ignore */ } }

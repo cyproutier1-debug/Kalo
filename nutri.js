@@ -2,6 +2,7 @@
    Repères : fibres ≥ 30 g/j (Anses), sel ≤ 6 g/j, 5 portions de 80 g de fruits & légumes, 2 produits laitiers/j (PNNS 2019).
    Valeurs génériques : moyennes proches de la table Ciqual (Anses, Licence Ouverte), arrondies. */
 window.KaloNutriInit = function (K) {
+  const { openDetail } = K;
   const { $, esc, r0, r1, uid, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate, today } = K;
   const T = { fib: 30, salt: 6, veg: 400, vegPortion: 80, dairy: 2 };
 
@@ -109,6 +110,26 @@ window.KaloNutriInit = function (K) {
   const cup = on => `<svg viewBox="0 0 24 24" class="pip ${on}"><path d="M7 4h10l-1.4 15.2a2 2 0 0 1-2 1.8h-3.2a2 2 0 0 1-2-1.8z"/><path d="M7.4 9h9.2"/></svg>`;
   const pips = (n, max, icon) => Array.from({ length: max }, (_, i) => icon(n >= i + 1 ? 'on' : n > i + 0.25 ? 'half' : '')).join('');
   function saltColor(v) { return v <= T.salt * 0.8 ? '#2EE68A' : v <= T.salt ? '#FFB020' : '#FF4D4F'; }
+  const scoreOf = q => Math.round(Math.min(1, q.fib / T.fib) * 30 + Math.min(1, q.vegP / 5) * 35 + Math.min(1, q.dairyP / T.dairy) * 15 + (q.salt <= T.salt ? 20 : Math.max(0, 20 - (q.salt - T.salt) * 8)));
+  /* Idées d'aliments pour monter le score : chaque aliment est testé sur la journée, classé par points gagnés et adapté aux calories restantes */
+  let lastQSug = [];
+  function qualitySuggestions(k, q) {
+    const remK = goals().kcal - dayTotals(k).kcal, base = scoreOf(q), meal = guessMeal();
+    const out = [];
+    for (const c of CANDS) {
+      const it = itemOf(c); if (!it) continue;
+      if (isSnackMeal(meal) && !SNACK.has(it.name)) continue;
+      const cap = Math.max(90, remK + 40); if (it.kcal > cap) continue;
+      const nq = { ...q, fib: q.fib + it.fib, salt: q.salt + it.salt, vegP: (q.vegG + it.veg) / T.vegPortion, dairyP: q.dairyP + it.dairy };
+      const gain = scoreOf(nq) - base; if (gain < 2) continue;
+      const why = [it.veg >= 40 ? `+${r1(it.veg / T.vegPortion).replace('.', ',')} F&L` : '', it.fib >= 1.5 ? `+${r0(it.fib)} g fibres` : '', it.dairy >= 0.5 ? `+${r1(it.dairy).replace('.', ',')} laitier` : '', it.p >= 8 ? `+${r0(it.p)} g prot.` : ''].filter(Boolean).slice(0, 2).join(' · ');
+      out.push({ it, gain, why, rank: gain / Math.max(40, it.kcal) * 100 + (it.p >= 10 ? 1.5 : 0) });
+    }
+    out.sort((a, b) => b.rank - a.rank);
+    const pick = [], roles = {};
+    for (const o of out) { if (pick.length >= 5) break; if ((roles[o.it.role] = (roles[o.it.role] || 0) + 1) > 2) continue; pick.push(o); } // variété : 2 max par famille
+    return pick.sort((a, b) => b.gain - a.gain);
+  }
   function qualityCard(k) {
     const q = dayQuality(k);
     if (q.missing.length) setTimeout(() => backfill(q.missing), 400);
@@ -116,9 +137,14 @@ window.KaloNutriInit = function (K) {
     const fibPct = Math.min(100, q.fib / T.fib * 100), saltPct = Math.min(100, q.salt / (T.salt * 1.5) * 100);
     const partial = q.kcal > 0 && q.cover < 0.85;
     const canPlan = !isLocked(k) && k === today() && !empty && goals().kcal - dayTotals(k).kcal > 120;
-    const score = empty ? null : Math.round(Math.min(1, q.fib / T.fib) * 30 + Math.min(1, q.vegP / 5) * 35 + Math.min(1, q.dairyP / T.dairy) * 15 + (q.salt <= T.salt ? 20 : Math.max(0, 20 - (q.salt - T.salt) * 8)));
-    return `<section class="card quality" data-action="quality-info">
-      <div class="row between"><div class="card-title"><svg viewBox="0 0 24 24" class="ico"><path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15zm0 0c3-4 6-7 10-10"/></svg>Qualité du jour</div>${score != null ? `<span class="q-score" style="--qc:${progColor(score / 100)}"><b class="num">${score}</b>/100</span>` : ''}</div>
+    const score = empty ? null : scoreOf(q);
+    const live = !isLocked(k) && k === today();
+    const sug = live && score != null && score < 100 ? qualitySuggestions(k, q) : [];
+    lastQSug = sug;
+    const saltTip = live && q.salt > T.salt * 0.85 ? `<p class="coach-tip small">🧂 Sel ${q.salt > T.salt ? 'dépassé' : 'presque au max'} : au prochain repas, évite charcuterie, fromage, pain et plats préparés ; les végétaux riches en potassium compensent.</p>` : '';
+    const open = !!UI.qualOpen, n = sug.length + (saltTip ? 1 : 0), best = sug.reduce((m, x) => Math.max(m, x.gain), 0);
+    return `<section class="card quality ${open ? 'open' : ''}">
+      <div class="row between"><div class="card-title"><svg viewBox="0 0 24 24" class="ico"><path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15zm0 0c3-4 6-7 10-10"/></svg>Qualité du jour<button class="q-info-btn" data-action="quality-info" aria-label="Comment est calculé ce score">i</button></div>${score != null ? `<span class="q-score" style="--qc:${progColor(score / 100)}"><b class="num">${score}</b>/100</span>` : ''}</div>
       <div class="q-grid">
         <div class="q-item"><div class="q-row"><span>Fibres</span><b class="num">${r0(q.fib)} / ${T.fib} g</b></div><div class="bar"><div style="width:${fibPct}%;background:${progColor(q.fib / T.fib)};box-shadow:0 0 10px ${progColor(q.fib / T.fib)};border-radius:8px"></div></div></div>
         <div class="q-item"><div class="q-row"><span>Sel</span><b class="num" style="color:${q.salt > T.salt ? '#FF6B6B' : 'inherit'}">${r1(q.salt)} / ${T.salt} g max</b></div><div class="bar salt"><i class="lim" style="left:${100 / 1.5}%"></i><div style="width:${saltPct}%;background:${saltColor(q.salt)};border-radius:8px"></div></div></div>
@@ -126,6 +152,11 @@ window.KaloNutriInit = function (K) {
         <div class="q-item"><div class="q-row"><span>Laitiers (calcium)</span><b class="num">${r1(q.dairyP).replace('.', ',')} / ${T.dairy}</b></div><div class="pips dairy">${pips(q.dairyP, T.dairy, cup)}</div></div>
       </div>
       ${partial ? `<p class="q-note">Données partielles : ${r0((1 - q.cover) * 100)} % des calories viennent d'aliments sans fibres renseignées (ajout rapide, étiquette incomplète).</p>` : ''}
+      ${n ? `<button class="coach-more" data-action="quality-toggle" aria-expanded="${open}"><span>${sug.length ? `${sug.length} idée${sug.length > 1 ? 's' : ''} · jusqu'à +${best} pts` : 'Conseil sel'}</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="coach-drop"><div class="coach-drop-in">
+        ${saltTip}
+        ${sug.length ? `<div class="coach-sug">${sug.map((x, i) => `<button class="coach-food q-food" data-action="quality-sug" data-i="${i}"><b>${esc(x.it.lab)}${x.it.lab.toLowerCase().includes(x.it.name.split(/[ (]/)[0].toLowerCase().slice(0, 5)) ? '' : ' · ' + esc(x.it.name.replace(/ \(.*\)$/, '').toLowerCase())}</b><span class="num">${x.why} · ${r0(x.it.kcal)} kcal</span><em class="q-gain num">+${x.gain}</em></button>`).join('')}</div>` : ''}
+      </div></div>` : ''}
       ${canPlan ? `<button class="btn block q-plan" data-action="plan-day">✨ Compléter ma journée intelligemment</button>` : ''}
     </section>`;
   }
@@ -271,5 +302,9 @@ window.KaloNutriInit = function (K) {
     return '';
   }
 
-  return { enrichGen, offQuality, dayQuality, qualityCard, qualityInfo, openPlanner, coachLine, T, Q };
+  const actions = {
+    'quality-toggle': b => { UI.qualOpen = !UI.qualOpen; const c = b.closest('.quality'); c?.classList.toggle('open', UI.qualOpen); b.setAttribute('aria-expanded', UI.qualOpen); },
+    'quality-sug': b => { const x = lastQSug[+b.dataset.i]; if (x) openDetail(x.it.f, { meal: guessMeal(), date: UI.date, grams: x.it.g }); },
+  };
+  return { actions, enrichGen, offQuality, dayQuality, qualityCard, qualityInfo, openPlanner, coachLine, T, Q };
 };
