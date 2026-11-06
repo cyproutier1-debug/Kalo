@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.6.6';
+  const APP_VERSION = '3.6.7';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -595,7 +595,7 @@
     bindTip(wrap, null, ev => {
       const px = ev.clientX - wrap.querySelector('svg').getBoundingClientRect().left;
       let best = pts[0]; for (const q of pts) if (Math.abs(x(q.t) - px) < Math.abs(x(best.t) - px)) best = q;
-      return { x: x(best.t), text: `${cap(F.short.format(dparse(best.date)))} · ${r1(best.v)} kg` };
+      return { x: x(best.t), y: y(best.v), text: `${cap(F.short.format(dparse(best.date)))} · ${r1(best.v)} kg` };
     });
   }
 
@@ -987,7 +987,7 @@
     bindTip(wrap, null, ev => {
       const rect = wrap.querySelector('svg').getBoundingClientRect(); const px = ev.clientX - rect.left;
       let best = pts[0]; for (const p of pts) if (Math.abs(x(p.t) - px) < Math.abs(x(best.t) - px)) best = p;
-      return { x: x(best.t), text: `${cap(F.short.format(dparse(best.date)))} · ${r1(best.v)} kg` };
+      return { x: x(best.t), y: y(best.v), text: `${cap(F.short.format(dparse(best.date)))} · ${r1(best.v)} kg` };
     });
   }
 
@@ -1090,14 +1090,16 @@
     if (!P.capped) { const fx = x(P.end.getTime()), fy = y(P.tgt); s += `<circle cx="${fx}" cy="${fy}" r="6" style="fill:var(--accent)"/><text x="${Math.min(fx, W - M.r - 4)}" y="${fy + 18}" text-anchor="end" style="fill:var(--accent);font-weight:700">${r1(P.tgt)} kg</text>`; }
     s += `<rect x="${M.l}" y="${M.t - 10}" width="${pw}" height="${ph + 10}" fill="transparent"/></svg><div class="chart-tip"></div>`;
     wrap.innerHTML = s;
-    const all = [...hist.map(h => ({ t: h.t, text: `${cap(F.short.format(new Date(h.t)))} · ${r1(h.v)} kg (pesée)` })), ...P.months.map(m => ({ t: m.d.getTime(), text: `Fin ${F.month.format(m.d)} · ≈ ${r1(m.kg)} kg` })), ...(P.capped ? [] : [{ t: P.end.getTime(), text: `🎯 ${cap(F.dmy.format(P.end))} · ${r1(P.tgt)} kg` }])];
+    const all = [...hist.map(h => ({ t: h.t, v: h.v, text: `${cap(F.short.format(new Date(h.t)))} · ${r1(h.v)} kg (pesée)` })), ...P.months.map(m => ({ t: m.d.getTime(), v: m.kg, text: `Fin ${F.month.format(m.d)} · ≈ ${r1(m.kg)} kg` })), ...(P.capped ? [] : [{ t: P.end.getTime(), v: P.tgt, text: `🎯 ${cap(F.dmy.format(P.end))} · ${r1(P.tgt)} kg` }])];
     bindTip(wrap, null, ev => {
       const px = ev.clientX - wrap.querySelector('svg').getBoundingClientRect().left;
       let best = all[0]; for (const a of all) if (Math.abs(x(a.t) - px) < Math.abs(x(best.t) - px)) best = a;
-      return { x: x(best.t), text: best.text };
+      return { x: x(best.t), y: y(best.v), text: best.text };
     });
   }
 
+  /* Main pointeuse originale (dessin maison) : index levé vers le point */
+  const HAND_SVG = '<svg viewBox="0 0 24 30" width="22" height="28" aria-hidden="true"><path d="M9.2 1.6c1.3 0 2.3 1 2.3 2.3v8.3l.2-.1c.4-1 1.3-1.6 2.3-1.6 1.2 0 2.1.8 2.3 1.9.4-.5 1.1-.8 1.8-.8 1.2 0 2.2.9 2.3 2.1.3-.2.7-.3 1.1-.3 1.3 0 2.3 1 2.3 2.3v5.6c0 4.6-3.6 8.2-8.2 8.2h-1.6c-2.6 0-4.9-1.2-6.4-3.3L1.4 20.6c-.8-1-.6-2.4.4-3.2.9-.7 2.2-.6 3 .2l2.1 2.1V3.9c0-1.3 1-2.3 2.3-2.3z" fill="#fff" stroke="#0B0F0D" stroke-width="1.6" stroke-linejoin="round"/><path d="M11.5 12.2v4.3M16.1 13.2v3.3M20.2 14.6v2.6" stroke="#0B0F0D" stroke-width="1.3" stroke-linecap="round"/></svg>';
   function bindTip(wrap, byIndex, byEvent) {
     const tip = wrap.querySelector('.chart-tip'), svg = wrap.querySelector('svg');
     const show = ev => {
@@ -1107,6 +1109,18 @@
       tip.textContent = info.text; tip.classList.add('show');
       const w = tip.offsetWidth, W = wrap.clientWidth;
       tip.style.left = Math.min(W - w / 2, Math.max(w / 2, info.x)) + 'px';
+      if (info.y != null) {
+        let ring = wrap.querySelector('.chart-ring'), hand = wrap.querySelector('.chart-hand');
+        if (!ring) { ring = document.createElement('i'); ring.className = 'chart-ring'; wrap.appendChild(ring); }
+        if (!hand) { hand = document.createElement('div'); hand.className = 'chart-hand'; hand.innerHTML = HAND_SVG; wrap.appendChild(hand); }
+        const key = info.x + ':' + info.y;
+        if (hand.dataset.k !== key) {
+          hand.dataset.k = key;
+          ring.style.left = hand.style.left = info.x + 'px';
+          ring.style.top = info.y + 'px'; hand.style.top = (info.y + 7) + 'px';
+          [ring, hand].forEach(el => { el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); });
+        }
+      }
     };
     svg.addEventListener('pointerdown', show); svg.addEventListener('pointermove', show);
     svg.addEventListener('pointerleave', ev => { if (ev.pointerType === 'mouse') tip.classList.remove('show'); });

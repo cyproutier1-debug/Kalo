@@ -2,6 +2,8 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.6.7** : main pointeuse + anneau sous le point de poids sélectionné (Journal, Progrès, projection) ; service worker restauré.
+
 ## 1. Mettre l'app en ligne (gratuit, une seule fois, ~10 min)
 
 L'app doit être servie en **https** (sinon pas de caméra ni d'installation). GitHub Pages est gratuit et fait ça très bien.

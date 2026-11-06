@@ -966,3 +966,13 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .duo .water { border-color: rgba(125, 211, 252, .3); }
 @media (prefers-reduced-motion: reduce) { .water-bg .wave { animation: none !important; } .water-bg .water-fill { transition: none !important; } }
 .badge.edit-food { border: 1px solid rgba(var(--accent-rgb), .45); color: var(--accent); background: rgba(var(--accent-rgb), .08); cursor: pointer; font: inherit; font-size: inherit; }
+
+/* v3.6.7 — curseur main sous le point de poids sélectionné */
+.chart-ring { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .35), 0 0 12px rgba(var(--accent-rgb), .6); pointer-events: none; opacity: 0; transform: scale(.4); z-index: 2; }
+.chart-ring.show { animation: ringIn .28s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.chart-hand { position: absolute; width: 22px; height: 28px; margin-left: -9.2px; pointer-events: none; opacity: 0; z-index: 3; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); }
+.chart-hand.show { animation: handIn .32s cubic-bezier(.2, 1.3, .4, 1) forwards, handTap 1.4s ease-in-out .4s infinite; }
+@keyframes ringIn { to { opacity: 1; transform: scale(1); } }
+@keyframes handIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes handTap { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .chart-hand.show { animation: handIn .01s forwards; } }
