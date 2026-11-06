@@ -8,16 +8,16 @@ window.KaloBoostInit = K => {
   /* ---------- Hydratation ---------- */
   const waterGoal = () => Math.max(1500, Math.round(35 * (currentWeight() || 75) / 250) * 250);
   function waterCard(k) {
-    const ml = S.days[k]?.water || 0, goal = waterGoal(), pct = Math.min(1, ml / goal), glasses = Math.round(goal / 250), full = Math.floor(ml / 250);
+    const ml = S.days[k]?.water || 0, goal = waterGoal(), pct = Math.min(1, ml / goal);
     const lvl = (1 - pct) * 100;
+    // bouteille en fond de carte : l'eau monte jusqu'au niveau atteint, pourcentage au centre
     return `<section class="card water ${pct >= 1 ? 'done' : ''}">
-      <div class="card-title">💧 Hydratation</div>
-      <div class="water-top">
-        <div class="water-bottle" aria-hidden="true"><div class="water-fill" style="top:${lvl.toFixed(1)}%"><svg viewBox="0 0 120 12" preserveAspectRatio="none"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z"/></svg></div><b class="num">${Math.round(pct * 100)}%</b></div>
-        <div class="water-info"><span class="num water-val">${r1(ml / 1000)} <small>/ ${r1(goal / 1000)} L</small></span>
-          <div class="glasses">${Array.from({ length: Math.min(16, glasses) }, (_, i) => `<i class="${i < full ? 'on' : ''}"></i>`).join('')}</div></div>
+      <div class="water-bg" aria-hidden="true"><div class="water-fill" style="top:${lvl.toFixed(1)}%"><svg viewBox="0 0 120 12" preserveAspectRatio="none"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z"/></svg></div></div>
+      <div class="water-fg">
+        <div class="card-title">Hydratation</div>
+        <div class="water-center"><b class="num water-pct">${Math.round(pct * 100)}%</b><span class="num water-val">${r1(ml / 1000)} / ${r1(goal / 1000)} L</span></div>
+        <div class="water-btns"><button class="chip" data-action="water" data-v="-250" ${ml ? '' : 'disabled'} aria-label="Retirer un verre">−</button><button class="chip" data-action="water" data-v="250" aria-label="Ajouter un verre de 25 cl">+25 cl</button><button class="chip" data-action="water" data-v="500" aria-label="Ajouter 50 cl">+50 cl</button></div>
       </div>
-      <div class="water-btns"><button class="chip" data-action="water" data-v="-250" ${ml ? '' : 'disabled'} aria-label="Retirer un verre">−</button><button class="chip" data-action="water" data-v="250" aria-label="Ajouter un verre de 25 cl">+25 cl</button><button class="chip" data-action="water" data-v="500" aria-label="Ajouter 50 cl">+50 cl</button></div>
     </section>`;
   }
   function addWater(k, v) {

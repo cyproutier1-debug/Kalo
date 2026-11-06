@@ -49,7 +49,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 ## Version 3 : coach, eau, favoris, séries, trophées
 
 - **Coach du jour** (Journal, aujourd'hui) : une phrase (protéines et calories restantes). Le bouton en dessous déroule les rappels (hydratation, compléments) et 3 idées tirées de **tes** aliments (les plus riches en protéines par calorie qui rentrent dans ce qu'il te reste). Touche une idée : la fiche s'ouvre avec la quantité habituelle.
-- **Compléments et hydratation** côte à côte sur une même ligne : compléments en colonne (touche pour cocher, crayon pour modifier la liste), bouteille d'eau avec − / +25 cl / +50 cl.
+- **Compléments et hydratation** côte à côte sur une même ligne : compléments en colonne (touche pour cocher, crayon pour modifier la liste), l'hydratation est une grande bouteille en fond de carte qui se remplit d'eau, avec le pourcentage au centre et les boutons − / +25 cl / +50 cl.
 - **Hydratation** : objectif 35 ml par kg de poids (arrondi à 25 cl), boutons + 1 verre (25 cl), + 50 cl, −. Bouteille animée, fête quand l'objectif est atteint.
 - **Repas favoris** : dans un repas, « ⭐ Favori » enregistre tous ses aliments ; dans Ajouter, la section *Repas favoris* les ajoute en un geste (× pour supprimer un favori).
 - **Séries** (Progrès) : jours saisis d'affilée, jours protéines atteintes, jours sous l'objectif calories. La série en cours s'affiche aussi sous la date du Journal à partir de 2 jours.
