@@ -1054,3 +1054,10 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .ph-nudge { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
 .ph-nudge .btn { min-width: 46px; }
 .ph-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, rgba(5, 7, 12, .8), rgba(5, 7, 12, 0) 55%), linear-gradient(to top, rgba(5, 7, 12, .85), rgba(5, 7, 12, 0) 35%); }
+/* v3.7.3 — compléter les fibres manquantes */
+.q-note.q-fix { display: block; width: 100%; text-align: left; background: rgba(255, 176, 32, .08); border: 1px solid rgba(255, 176, 32, .3); border-radius: 12px; padding: 9px 12px; color: var(--ink-2); font-size: 12.5px; }
+.q-note.q-fix b { color: #FFB020; white-space: nowrap; }
+.fix-row .name { font: 600 15px var(--f-card); }
+.fix-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.fix-quick .chip { font-size: 12px; padding: 6px 10px; }
+.fix-quick .chip.on { background: rgba(var(--accent-rgb), .2); border-color: rgba(var(--accent-rgb), .6); color: var(--accent); }

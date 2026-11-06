@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.7.2';
+  const APP_VERSION = '3.7.3';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -151,7 +151,7 @@
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.photoPos = all.photoPos || null; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.photoPos = all.photoPos || null; S.nutriFix = all.nutriFix || {}; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -1667,7 +1667,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', photoPos: S.photoPos || null, supps: S.supps, theme: S.theme, fx: S.fx, favs: S.favs, badges: S.badges, muscu: Mu.exportData() };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', photoPos: S.photoPos || null, nutriFix: S.nutriFix || {}, supps: S.supps, theme: S.theme, fx: S.fx, favs: S.favs, badges: S.badges, muscu: Mu.exportData() };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
@@ -1686,7 +1686,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       const keepAI = S.ai;
       await Store.clear();
       await Store.put('ai', keepAI);
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.photoPos) await Store.put('photoPos', d.photoPos); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx); if (d.favs) await Store.put('favs', d.favs); if (d.badges) { await Store.put('badges', d.badges); await Store.put('badgesInit', true); }
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.photoPos) await Store.put('photoPos', d.photoPos); if (d.nutriFix) await Store.put('nutriFix', d.nutriFix); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx); if (d.favs) await Store.put('favs', d.favs); if (d.badges) { await Store.put('badges', d.badges); await Store.put('badgesInit', true); }
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await Mu.importData(d.muscu);
       await loadState(); render(); toast('Sauvegarde restaurée');

@@ -43,6 +43,13 @@ window.KaloNutriInit = function (K) {
     f.per100 = { ...f.per100, fib: q[0], salt: q[1], veg: q[2], dairy: q[3] };
     return f;
   }
+  /* Aliments sans fibres par nature (produits animaux, boissons, matières grasses, sucres purs) : 0 g sûr même si l'étiquette ne le dit pas.
+     Les fibres ne sont PAS obligatoires sur l'étiquette nutritionnelle européenne : beaucoup de produits ne les indiquent pas. */
+  const ZERO_NAME = /(?<!\p{L})(whey|isolate?|cas[ée]ine|prot[ée]ine en poudre|poulet|dinde|b[œo]euf|veau|steak|porc|jambon|bacon|lardons?|saucisse|merguez|chorizo|saumon|thon|cabillaud|colin|lieu|crevettes?|poissons?|sardines?|maquereau|truite|(?:œ|oe|o)ufs?|blanc d.?(?:œ|oe|o)euf|lait|skyr|yaourt|yogourt|fromage|emmental|comt[ée]|mozzarella|feta|parmesan|camembert|ch[èe]vre|cr[èe]me fra[iî]che|huile|beurre|soda|cola|limonade|eau|caf[ée]|th[ée]|bi[èe]re|vin|sucre|miel|sirop)(?!\p{L})/iu;
+  const NOT_ZERO = /(?<!\p{L})(riz|p[âa]tes|pain|tacos|burger|sandwich|wrap|pizza|salade|l[ée]gumes?|frites|pan[ée]|panure|nuggets?|tenders?|cordon|quiche|tarte|gratin|curry|couscous|chili|bowl|plat|lasagne|hachis|cr[êe]pe|galette|g[âa]teau|biscuit|c[ée]r[ée]ales|muesli|granola|barre|fruits?|compote|smoothie|soupe|velout[ée]|chips|fruits? rouges|muffin|brioche|viennoiserie)(?!\p{L})/iu;
+  const zeroByName = n => ZERO_NAME.test(n || '') && !NOT_ZERO.test(n || '');
+  const ZERO_TAGS = /en:(meats|poultries|fishes|seafood|eggs|milks|cheeses|yogurts|fromages-blancs|skyrs|fermented-milk-products|dairies|fats|vegetable-oils|butters|beverages|waters|sodas|coffees|teas|alcoholic-beverages|sugars|honeys|syrups|protein-powders|whey-proteins|dietary-supplements)\b/;
+  const ZERO_BLOCK = /en:(plant-based|cereal|breads|meals|prepared|sandwiches|pizzas|biscuits|cakes|snacks|fruit|vegetable|legume|chocolate|smoothies|juices|nectars)/;
   /* Open Food Facts : fibres, sel, % fruits/légumes/légumineuses estimé depuis les ingrédients, type de produit laitier */
   function offQuality(p, n) {
     const tags = (p.categories_tags || []).join(' ');
@@ -57,20 +64,35 @@ window.KaloNutriInit = function (K) {
       else if (/en:(yogurts|skyrs|fromages-blancs|fermented-milk-products|petits-suisses|fresh-cheeses|cottage-cheeses|quarks)\b/.test(tags)) dairy = 125;
       else if (/en:milks\b/.test(tags)) dairy = 150;
     }
-    return { fib, salt, veg, dairy };
+    let fibEst = false, fibV = fib;
+    if (fibV == null && ZERO_TAGS.test(tags) && !ZERO_BLOCK.test(tags)) { fibV = 0; fibEst = true; }
+    return { fib: fibV, fibEst, salt, veg, dairy, qv: 2 };
   }
 
+  /* Corrections manuelles : par produit (code-barres), par aliment perso (id) ou par entrée (IA, ajout rapide) */
+  const fixKey = e => e.src === 'off' && e.code ? 'off:' + e.code : e.src === 'custom' && e.fid ? 'custom:' + e.fid : 'e:' + e.id;
+  const fixOf = e => (S.nutriFix || {})[fixKey(e)];
   /* ---------- Bilan qualité d'une journée ---------- */
   const hasQ = p => p && p.fib != null;
   function dayQuality(k) {
-    const r = { fib: 0, salt: 0, vegG: 0, dairyP: 0, kcal: 0, kcalKnown: 0, saltKnown: 0, missing: [] };
+    const r = { fib: 0, salt: 0, vegG: 0, dairyP: 0, kcal: 0, kcalKnown: 0, saltKnown: 0, missing: [], miss: [] };
     for (const e of S.days[k]?.entries || []) {
       const kc = e.kcal || 0; r.kcal += kc;
       let p = e.per100;
       if (e.src === 'gen' && !hasQ(p)) { const q = Q[e.name]; if (q) p = { ...p, fib: q[0], salt: q[1], veg: q[2], dairy: q[3] }; }
-      if (!p || e.grams == null) continue;
+      const fx = fixOf(e);
+      if (e.src === 'quick' || e.grams == null) { // ajout rapide : pas de poids, seulement un total de fibres saisi à la main
+        if (fx && fx.fibTot != null) { r.fib += fx.fibTot; r.kcalKnown += kc; } else r.miss.push(e);
+        continue;
+      }
+      if (!p) continue;
       const g = e.grams, k100 = g / 100;
-      if (p.fib != null) { r.fib += p.fib * k100; r.kcalKnown += kc; } else if (e.src === 'off' && e.code && !('fib' in p)) r.missing.push(e.code);
+      let fib = p.fib;
+      if (fib == null && fx && fx.fib != null) fib = fx.fib;
+      if (fib == null && zeroByName(e.name)) fib = 0;
+      if (fib != null) { r.fib += fib * k100; r.kcalKnown += kc; }
+      else { r.miss.push(e); if (e.code && (e.src === 'off' || e.src === 'custom') && p.qv !== 2) r.missing.push(e.code); }
+      if (p.salt == null && fx && fx.salt != null) { r.salt += fx.salt * k100; r.saltKnown += kc; }
       if (p.salt != null) { r.salt += p.salt * k100; r.saltKnown += kc; }
       if (p.veg) r.vegG += g * p.veg / 100;
       if (p.dairy) r.dairyP += g / p.dairy;
@@ -83,6 +105,8 @@ window.KaloNutriInit = function (K) {
   /* Rattrapage : les produits OFF déjà saisis avant la v3.7 n'ont pas fibres/sel → on va les chercher une fois */
   const asked = new Set();
   let backfillT = 0;
+  // ne remplace jamais une valeur déjà saisie (aliment perso) ; complète seulement ce qui manque
+  const mergeQ = (p, q) => ({ ...p, fib: p.fib ?? q.fib, fibEst: p.fib != null ? p.fibEst : q.fibEst, salt: p.salt ?? q.salt, veg: p.veg ?? q.veg, dairy: p.dairy || q.dairy, qv: 2 });
   async function backfill(codes) {
     const todo = [...new Set(codes)].filter(c => !asked.has(c)).slice(0, 8);
     if (!todo.length || !navigator.onLine) return;
@@ -95,14 +119,14 @@ window.KaloNutriInit = function (K) {
         const q = offQuality(j.product, j.product.nutriments || {});
         for (const [dk, d] of Object.entries(S.days)) {
           let ch = false;
-          for (const e of d.entries || []) if (e.src === 'off' && e.code === code && e.per100 && !('fib' in e.per100)) { e.per100 = { ...e.per100, ...q }; ch = true; }
+          for (const e of d.entries || []) if ((e.src === 'off' || e.src === 'custom') && e.code === code && e.per100 && e.per100.qv !== 2) { e.per100 = mergeQ(e.per100, q); ch = true; }
           if (ch) { saveDay(dk); changed = true; }
         }
-        for (const list of [S.recents, S.favs?.flatMap(f => f.items) || []]) for (const x of list) if (x.src === 'off' && x.code === code && x.per100 && !('fib' in x.per100)) x.per100 = { ...x.per100, ...q };
-        if (S.off?.[code]?.per100) S.off[code].per100 = { ...S.off[code].per100, ...q };
+        for (const list of [S.recents, S.foods, S.favs?.flatMap(f => f.items) || []]) for (const x of list) if ((x.src === 'off' || x.src === 'custom') && x.code === code && x.per100 && x.per100.qv !== 2) x.per100 = mergeQ(x.per100, q);
+        if (S.off?.[code]?.per100) S.off[code].per100 = mergeQ(S.off[code].per100, q);
       } catch (err) { /* hors ligne ou OFF indisponible : on réessaiera à la prochaine session */ }
     }));
-    if (changed) { Store.put('recents', S.recents); clearTimeout(backfillT); backfillT = setTimeout(render, 50); }
+    if (changed) { Store.put('recents', S.recents); Store.put('foods', S.foods); clearTimeout(backfillT); backfillT = setTimeout(render, 50); }
   }
 
   /* ---------- Carte « Qualité du jour » ---------- */
@@ -151,7 +175,7 @@ window.KaloNutriInit = function (K) {
         <div class="q-item"><div class="q-row"><span>Fruits & légumes</span><b class="num">${r1(Math.min(9, q.vegP)).replace('.', ',')} / 5</b></div><div class="pips veg">${pips(q.vegP, 5, leaf)}</div></div>
         <div class="q-item"><div class="q-row"><span>Laitiers (calcium)</span><b class="num">${r1(q.dairyP).replace('.', ',')} / ${T.dairy}</b></div><div class="pips dairy">${pips(q.dairyP, T.dairy, cup)}</div></div>
       </div>
-      ${partial ? `<p class="q-note">Données partielles : ${r0((1 - q.cover) * 100)} % des calories viennent d'aliments sans fibres renseignées (ajout rapide, étiquette incomplète).</p>` : ''}
+      ${partial ? `<button class="q-note q-fix" data-action="quality-fix">Fibres inconnues pour ${r0((1 - q.cover) * 100)} % des calories (${q.miss.length} aliment${q.miss.length > 1 ? 's' : ''}) · <b>Compléter →</b></button>` : ''}
       ${n ? `<button class="coach-more" data-action="quality-toggle" aria-expanded="${open}"><span>${sug.length ? `${sug.length} idée${sug.length > 1 ? 's' : ''} · jusqu'à +${best} pts` : 'Conseil sel'}</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
       <div class="coach-drop"><div class="coach-drop-in">
         ${saltTip}
@@ -292,6 +316,38 @@ window.KaloNutriInit = function (K) {
     openSheet(sh.el);
   }
 
+  /* Écran « Compléter les fibres » : liste des aliments du jour sans fibres, saisie pour 100 g (ou total pour un ajout rapide) */
+  function openFixer(k) {
+    const q = dayQuality(k), seen = new Map();
+    for (const e of q.miss) { const key = fixKey(e); const x = seen.get(key) || { key, e, kcal: 0 }; x.kcal += e.kcal || 0; seen.set(key, x); }
+    const items = [...seen.values()].sort((a, b) => b.kcal - a.kcal);
+    const sh = makeSheet('Compléter les fibres');
+    const row = (x, i) => { const quick = x.e.src === 'quick' || x.e.grams == null; const fx = (S.nutriFix || {})[x.key] || {};
+      return `<section class="card fix-row" data-i="${i}"><div class="row between"><div class="grow"><div class="name">${esc(x.e.name)}</div><div class="muted small">${r0(x.kcal)} kcal aujourd'hui · ${x.e.src === 'off' ? 'Open Food Facts' : x.e.src === 'custom' ? 'Mon aliment' : x.e.src === 'ai' ? 'Photo IA' : 'Ajout rapide'}</div></div></div>
+        <div class="grid2" style="margin-top:10px"><label class="field"><span>${quick ? 'Fibres au total (g)' : 'Fibres pour 100 g'}</span><input type="number" inputmode="decimal" step="any" min="0" data-f="fib" value="${quick ? (fx.fibTot ?? '') : (fx.fib ?? '')}" placeholder="ex. ${quick ? '4' : '2,5'}"></label>
+        ${quick ? '' : `<label class="field"><span>Sel pour 100 g</span><input type="number" inputmode="decimal" step="any" min="0" data-f="salt" value="${fx.salt ?? ''}"></label>`}</div>
+        <div class="fix-quick"><button class="chip" data-z="0">0 g · aucune</button>${quick ? '' : '<button class="chip" data-z="1">≈ 1 g · peu</button><button class="chip" data-z="3">≈ 3 g · moyen</button><button class="chip" data-z="6">≈ 6 g · riche</button>'}</div></section>`; };
+    sh.setBody(items.length ? `<p class="muted small" style="margin:0 0 12px">Les fibres sont facultatives sur les étiquettes : beaucoup de produits ne les indiquent pas. Regarde l'emballage (ligne « Fibres alimentaires ») ou choisis une estimation. La valeur sert pour tous les jours où tu manges cet aliment.</p>${items.map(row).join('')}
+      <p class="muted small">Repères : viande, poisson, œufs, laitiers, whey, huile, boissons = 0 g · pain blanc, pâtes, riz ≈ 1-3 g · plat avec légumes ≈ 2-3 g · pain complet, légumineuses, flocons d'avoine ≈ 6-10 g.</p>` : '<div class="empty small">Tout est complété ✓</div>');
+    sh.setFoot('<button class="btn plain" data-a="cancel">Annuler</button><button class="btn grow" data-a="save">Enregistrer</button>');
+    sh.body.addEventListener('click', e => { const z = e.target.closest('[data-z]'); if (!z) return; const r = z.closest('.fix-row'); r.querySelector('[data-f="fib"]').value = z.dataset.z; r.querySelectorAll('[data-z]').forEach(b => b.classList.toggle('on', b === z)); });
+    sh.foot.onclick = e => { const a = e.target.closest('[data-a]')?.dataset.a;
+      if (a === 'cancel') { closeSheet(1); return; }
+      if (a !== 'save') return;
+      const fix = { ...(S.nutriFix || {}) }; let n = 0;
+      sh.body.querySelectorAll('.fix-row').forEach(r => { const x = items[+r.dataset.i], quick = x.e.src === 'quick' || x.e.grams == null;
+        const v = r.querySelector('[data-f="fib"]').value.trim().replace(',', '.'), sv = r.querySelector('[data-f="salt"]')?.value.trim().replace(',', '.');
+        if (v === '' && !sv) return;
+        const cur = { ...(fix[x.key] || {}) };
+        if (v !== '' && isFinite(+v)) { if (quick) cur.fibTot = Math.max(0, +v); else cur.fib = Math.max(0, +v); n++; }
+        if (sv && isFinite(+sv)) cur.salt = Math.max(0, +sv);
+        fix[x.key] = cur;
+        if (x.e.src === 'custom' && x.e.fid && !quick) { const f = S.foods.find(f => f.id === x.e.fid); if (f && f.per100) { if (cur.fib != null && f.per100.fib == null) f.per100.fib = cur.fib; if (cur.salt != null && f.per100.salt == null) f.per100.salt = cur.salt; } }
+      });
+      S.nutriFix = fix; Store.put('nutriFix', fix); Store.put('foods', S.foods);
+      closeSheet(1, () => { render(); toast(n ? `Fibres complétées pour ${n} aliment${n > 1 ? 's' : ''}` : 'Rien de modifié'); }); };
+    openSheet(sh.el);
+  }
   /* Phrase de coach basée sur la qualité (utilisée par le Coach du jour) */
   function coachLine(k) {
     const q = dayQuality(k), h = new Date().getHours();
@@ -304,6 +360,7 @@ window.KaloNutriInit = function (K) {
 
   const actions = {
     'quality-toggle': b => { UI.qualOpen = !UI.qualOpen; const c = b.closest('.quality'); c?.classList.toggle('open', UI.qualOpen); b.setAttribute('aria-expanded', UI.qualOpen); },
+    'quality-fix': () => openFixer(UI.date),
     'quality-sug': b => { const x = lastQSug[+b.dataset.i]; if (x) openDetail(x.it.f, { meal: guessMeal(), date: UI.date, grams: x.it.g }); },
   };
   return { actions, enrichGen, offQuality, dayQuality, qualityCard, qualityInfo, openPlanner, coachLine, T, Q };
