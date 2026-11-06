@@ -78,7 +78,7 @@ window.KaloSocialInit = function (K) {
     const m = String(e?.message || e);
     if (/anonymous.*(disabled|not enabled)|signups not allowed|signup.*disabled/i.test(m)) return 'Serveur : connexion anonyme désactivée (Supabase → Authentication → Sign In / Providers → « Allow anonymous sign-ins »)';
     if (/PGRST20[25]|does not exist|schema cache|relation/i.test(m)) return 'Serveur : tables absentes (Supabase → SQL Editor → exécuter schema.sql)';
-    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Pas de connexion au serveur : vérifie ta connexion internet';
+    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Serveur injoignable (' + m + ') : touche « Tester la connexion au serveur » pour le détail';
     if (/invalid api key|apikey|No API key/i.test(m)) return 'Serveur : clé publique invalide';
     return 'Activation impossible : ' + m;
   }
@@ -170,7 +170,8 @@ window.KaloSocialInit = function (K) {
         <div class="so-share"><div><b>Ce que tes amis verront</b><ul><li>Pseudo et photo de profil</li><li>Calories et protéines en % de ton objectif</li><li>Score qualité, séries de jours</li><li>Séances : nom, durée, volume, muscles, records</li><li>Évolution du poids en % (jamais en kg)</li></ul></div>
         <div><b>Jamais partagé</b><ul><li>Ton poids en kg, ta taille, ton âge</li><li>Le détail de tes repas</li><li>Ta photo objectif</li></ul></div></div>
         <label class="so-consent"><input type="checkbox" data-f="so-ok"><span>J'accepte que ces résumés soient envoyés sur le serveur de Kalo et visibles par les amis que j'ajoute. Je peux mettre en pause ou tout supprimer à tout moment.</span></label>
-        <button class="btn block" data-action="so-join">Activer le social</button></section>`;
+        <button class="btn block" data-action="so-join">Activer le social</button>
+        <button class="btn plain small" data-action="so-diag">🩺 Tester la connexion au serveur</button></section>`;
     }
     if (!so.loadedAt && !loading) setTimeout(loadFriends, 0);
     const fr = so.friends || [];
@@ -240,7 +241,29 @@ window.KaloSocialInit = function (K) {
     try { await navigator.clipboard.writeText(`${text}\n${link}`); toast('Lien copié'); } catch (e) { toast(so.code); }
   }
 
+  /* Diagnostic : teste le serveur étape par étape et affiche les messages bruts */
+  async function diagnose() {
+    const sh = makeSheet('Test du serveur'), out = [];
+    const line = (ok, t, d) => out.push(`<div class="so-diag ${ok === null ? '' : ok ? 'ok' : 'ko'}"><b>${ok === null ? '…' : ok ? '✓' : '✗'} ${esc(t)}</b>${d ? `<div class="muted small">${esc(d)}</div>` : ''}</div>`);
+    const draw = () => sh.setBody(`<section class="card stack"><div class="muted small">Serveur : ${esc(CFG.url || '(non configuré)')}</div>${out.join('')}</section>`);
+    sh.setFoot('<button class="btn grow" data-a="close">Fermer</button>'); sh.foot.onclick = () => closeSheet(1);
+    draw(); openSheet(sh.el);
+    const get = async path => { const r = await fetch(CFG.url + path, { headers: { apikey: CFG.key } }); const t = await r.text(); return { status: r.status, t }; };
+    try { const r = await get('/auth/v1/health'); line(r.status < 500, 'Serveur joignable', `HTTP ${r.status} · ${r.t.slice(0, 120)}`); }
+    catch (e) { line(false, 'Serveur injoignable', `${e.name}: ${e.message}. Ouvre ${CFG.url}/auth/v1/health dans Safari : si la page ne s'ouvre pas, l'adresse du projet est fausse ou un VPN / bloqueur / DNS filtrant bloque supabase.co.`); draw(); return; }
+    draw();
+    try { const r = await get('/auth/v1/settings'); let j = {}; try { j = JSON.parse(r.t); } catch (e) { /* ignore */ }
+      const anon = j.external?.anonymous_users;
+      line(r.status === 200 && anon !== false, 'Clé publique et connexion anonyme', r.status !== 200 ? `HTTP ${r.status} · ${r.t.slice(0, 160)}` : anon === false ? 'Connexion anonyme désactivée : Authentication → Sign In / Providers → « Allow anonymous sign-ins » → Save' : anon ? 'Connexion anonyme activée' : 'Clé acceptée');
+    } catch (e) { line(false, 'Réglages du serveur', e.message); }
+    draw();
+    try { const r = await fetch(CFG.url + '/rest/v1/profiles?select=id&limit=1', { headers: { apikey: CFG.key } }); const t = await r.text();
+      line(r.ok, 'Tables Kalo présentes', r.ok ? 'profiles, friendships, snapshots' : `HTTP ${r.status} · ${t.slice(0, 160)}${/PGRST205|does not exist|schema cache/.test(t) ? ' → exécute schema.sql dans le SQL Editor' : ''}`);
+    } catch (e) { line(false, 'Tables Kalo', e.message); }
+    draw();
+  }
   const actions = {
+    'so-diag': () => diagnose(),
     'so-join': async b => {
       const nm = ($('[data-f="so-name"]')?.value || '').trim().slice(0, 30);
       if (!nm) { toast('Choisis un pseudo'); return; }

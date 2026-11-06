@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.8.2** : Social → « 🩺 Tester la connexion au serveur » (joignabilité, clé, connexion anonyme, tables) avec messages bruts.
 - **v3.8.1** : social branché sur le projet Supabase de Kalo ; messages d'erreur explicites si le serveur est mal configuré.
 - **v3.8.0** : onglet **Social** au centre de la barre (amis par code, résumés nutrition/entraînement, classement 7 jours, fiche ami) ; l'ajout d'aliment passe sur un bouton + flottant dans le Journal. Serveur Supabase (`social.js`, `social-config.js`, `supabase/schema.sql`).
 - **v3.7.4** : photo de profil séparée de la photo objectif (Profil → touche ton avatar, recadrage rond, Retirer).

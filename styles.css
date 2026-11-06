@@ -1122,3 +1122,6 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .so-av.ini { font: 800 20px var(--f-card); }
 .so-row .grow { min-width: 0; }
 .so-row .grow .muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.so-diag { padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, .04); border-left: 3px solid rgba(255, 255, 255, .2); }
+.so-diag.ok { border-left-color: #2EE68A; } .so-diag.ko { border-left-color: #FF4D4F; }
+.so-diag .muted { margin-top: 4px; word-break: break-word; }
