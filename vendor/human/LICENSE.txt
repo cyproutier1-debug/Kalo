@@ -1,0 +1,5 @@
+Mannequin humain (maillage, squelette, poids et cibles de morphologie) : MakeHuman (makehumancommunity/makehuman).
+Ces ressources sont publiées sous licence Creative Commons CC0 1.0 Universal (domaine public) :
+https://creativecommons.org/publicdomain/zero/1.0/
+Fichiers human-m.* / human-f.* générés pour Kalo à partir de base.obj, default.mhskel, default_weights.mhw
+et des cibles macrodetails / torso / armslegs / stomach / hip / neck (morphologie athlétique), squelette réduit.
