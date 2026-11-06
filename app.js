@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.5.0';
+  const APP_VERSION = '3.5.1';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);

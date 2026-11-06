@@ -20,15 +20,25 @@
   /* ---------- Réglages 3D par gabarit ---------- */
   // ky : bras vus de face projetés vers l'avant (1 = plan frontal, 0.1 = plan horizontal, ex. écarté)
   const O3 = {
-    fly: { ky: 0.12 }, flyUp: { ky: 0.75 }, reverseFly: { ky: 0.15 }, twist: { ky: 0.45 }, woodchop: { ky: 0.8 }, uprightRow: { ky: 0.9 },
+    pullup: { legs: [14, -62, 95] }, pulldown1: { legs: [0, -100, 45] },
+    // russian twist : assis en V, buste incliné en arrière, rotation du buste ; hands = main droite [latéral, bas, avant] depuis l'épaule
+    twist: { lean: 40, yaw: p => (p.hx || 0) * 6.5, legs: [125, 40, 95], hipY: 12, hands: [-14, 14, 26] },
+    woodchop: { ky: 0.8, yaw: p => ((p.hand?.[0] ?? 105) - 105) * 0.6 },
+    fly: { ky: 0.12 }, flyUp: { ky: 0.75 }, reverseFly: { ky: 0.15 }, uprightRow: { ky: 0.9 },
     shrug: { ky: 0.97 },
     // vue de profil : grip = écart des mains (demi-largeur), pole = direction du coude [extérieur, haut, avant] (repère du buste), one = une seule charge tenue à deux mains
     bench: { grip: 31, pole: [1, 0.15, -0.6] }, incline: { grip: 31, pole: [1, 0.15, -0.6] }, decline: { grip: 31, pole: [1, 0.15, -0.6] },
-    squat: { grip: 40, pole: [0.5, -1, -0.45], hand: J => [J.sh[0] - 3, J.sh[1] - 3] }, goodMorning: { grip: 40, pole: [0.5, -1, -0.45], hand: J => [J.sh[0] - 3, J.sh[1] - 3] }, calf: { grip: 36, pole: [0.5, -1, -0.45], hand: J => [J.sh[0] - 3, J.sh[1] - 3] }, hack: { grip: 30, pole: [0.6, -1, 0] },
+    squat: { grip: 40, pole: [0.5, -1, -0.45], hand: J => [J.sh[0] - 3, J.sh[1] - 3] }, goodMorning: { grip: 40, pole: [0.5, -1, -0.45], hand: J => [J.sh[0] - 3, J.sh[1] - 3] }, calf: { grip: 25, hand: J => [J.sh[0] + 8, J.sh[1] - 1], noHold: 1, eq3: (c, R) => {
+      // deux appuis d'épaules + colonne de la machine derrière
+      const back = R.hip.z - 24, top = R.shC.y + 9;
+      for (const s of [1, -1]) { const S0 = R[s > 0 ? 'shR' : 'shL']; c.box(S0.x - s * 3, S0.y + 8, S0.z, 13, 6, 20, c.m.pad); c.cyl(v(S0.x - s * 3, top, back), v(S0.x - s * 3, top, S0.z + 4), 1.8, c.m.steel); c.cyl(v(S0.x + s * 6, S0.y + 3, S0.z + 9), v(S0.x + s * 6, S0.y + 3, S0.z + 2), 1.4, c.m.dark); }
+      c.box(0, top / 2, back, 10, top, 10, c.m.pad);
+    } }, hack: { grip: 30, pole: [0.6, -1, 0] },
     frontSquat: { grip: 22, pole: [0.25, -0.1, 1], hand: J => [J.sh[0] + 7, J.sh[1] - 1] }, goblet: { grip: 6, one: 1, pole: [1, -1, 0.3] }, pullover: { grip: 5, one: 1 }, overhead: { grip: 5, one: 1, pole: [0.6, 1, 0.3] },
-    skull: { grip: 14 }, row: { grip: 26 }, deadlift: { grip: 24 }, rdl: { grip: 24 }, wheel: { grip: 8, one: 1 }, rower: { grip: 12, one: 1 }, seatedRow: { grip: 9 }, pushdown: { grip: 10 },
+    skull: { grip: 14 }, row: { grip: 26 }, deadlift: { grip: 24 }, rdl: { grip: 24 }, wheel: { grip: 8, one: 1 }, rower: { grip: 12, one: 1 }, seatedRow: { grip: 9 }, pushdown: { grip: 15, pole: [0.9, -0.3, -0.7] },
+    backExt: { grip: 9, pole: [1, -0.6, 0.2], hand: J => { const dx = J.sh[0] - J.hip[0], dy = J.sh[1] - J.hip[1], l = Math.hypot(dx, dy); return [J.sh[0] - dx / l * 13 - dy / l * 9, J.sh[1] - dy / l * 13 + dx / l * 9]; } },
     facePull: { grip: 14, pole: [1, 0.3, 0] }, crunchCable: { grip: 6, one: 1 }, straightPull: { grip: 18 }, hipThrust: { grip: 30 }, wristCurl: { grip: 20 }, lateral: { ky: 0.96 }, lateral1: { ky: 0.96 }, rope: { ky: 0.7 },
-    dips: { eq3: (c, J) => { for (const s of [1, -1]) c.cyl(c.v(s * 24, GROUND - 86, -14), c.v(s * 24, GROUND - 86, 50), 2.2, c.m.steel); c.cyl(c.v(24, GROUND - 86, 40), c.v(24, 0, 40), 2.2, c.m.steel); c.cyl(c.v(-24, GROUND - 86, 40), c.v(-24, 0, 40), 2.2, c.m.steel); } },
+    dips: { noEq: 1, eq3: (c, J) => { for (const s of [1, -1]) c.cyl(c.v(s * 24, GROUND - 86, -14), c.v(s * 24, GROUND - 86, 50), 2.2, c.m.steel); c.cyl(c.v(24, GROUND - 86, 40), c.v(24, 0, 40), 2.2, c.m.steel); c.cyl(c.v(-24, GROUND - 86, 40), c.v(-24, 0, 40), 2.2, c.m.steel); } },
   };
 
   /* ---------- Mannequin ---------- */
@@ -141,16 +151,16 @@
     const side = tpl.view === 'side';
     const SM = (p, lat = 0) => v(lat, GROUND - p[1], p[0] - 100);
     const SD = (dx, dy) => v(0, -dy, dx);
-    const FM = (p, z = 0) => v(p[0] - 100, GROUND - 2 - p[1], z);
+    const FM = (p, z = 0) => v(p[0] - 100, GROUND + 3 - p[1], z);
     const ky = o3.ky ?? 1;
     const squash = (dx, dy, len) => { const y = dy * ky, z = Math.sqrt(Math.max(0, len * len - dx * dx - y * y)); return v(dx, -y, ky < 1 ? z : 0); };
 
     function ik3(S0, H, l1, l2, pole) {
-      const d = H.clone().sub(S0), n = d.length() || 1, len = Math.min(Math.max(n, Math.abs(l1 - l2) + 0.01), l1 + l2 - 0.01);
+      const d = H.clone().sub(S0), n = d.length() || 1, len = Math.min(Math.max(n, Math.abs(l1 - l2) + 0.01, Math.sqrt(l1 * l1 + l2 * l2 - 2 * l1 * l2 * Math.cos(Math.PI / 6))), l1 + l2 - 0.01);
       d.divideScalar(n);
       const ca = (l1 * l1 + len * len - l2 * l2) / (2 * l1 * len), a = Math.acos(Math.max(-1, Math.min(1, ca)));
       const perp = pole.clone().addScaledVector(d, -pole.dot(d)); if (perp.lengthSq() < 1e-6) perp.set(0, -1, 0).addScaledVector(d, d.y); perp.normalize();
-      return [S0.clone().addScaledVector(d, Math.cos(a) * l1).addScaledVector(perp, Math.sin(a) * l1), S0.clone().addScaledVector(d, len)];
+      return [S0.clone().addScaledVector(d, Math.cos(a) * l1).addScaledVector(perp, Math.sin(a) * l1), S0.clone().addScaledVector(d, len), perp];
     }
     function skeleton(time) {
       const pose = poseAt(tpl, time);
@@ -164,30 +174,58 @@
         R.shC = hip.clone().addScaledVector(u, 48);
         const sh = s => R.shC.clone().addScaledVector(r, s * B.SW);
         const grip = (o3.grip ?? B.SW + 5) - B.SW;
+        // pôle anatomique du coude : rotation de +90° de la direction épaule → main dans le plan sagittal
+        // (bras le long du corps → coude vers l'arrière ; bras devant → coude vers le bas ; bras en l'air → coude vers l'avant)
+        const apexArm = (s, d) => { const a = d.dot(u), b = d.dot(f), p = f.clone().multiplyScalar(a).addScaledVector(u, -b); if (p.lengthSq() < 0.04 * d.lengthSq()) p.copy(u).negate(); return p.normalize().addScaledVector(r, s * 0.35).addScaledVector(u, -0.12); };
+        // pôle anatomique du genou : toujours vers l'avant de la cuisse (rotation de −90°)
+        const apexLeg = (s, d) => { const a = d.dot(u), b = d.dot(f), p = f.clone().multiplyScalar(-a).addScaledVector(u, b); if (p.lengthSq() < 0.04 * d.lengthSq()) p.copy(f); return p.normalize().addScaledVector(r, s * 0.12); };
         const arm = (s, el, ha) => {
           if (o3.hand) ha = o3.hand(J);
           const S0 = sh(s), H = S0.clone().add(SD(ha[0] - J.sh[0], ha[1] - J.sh[1])).addScaledVector(r, s * grip);
-          const pole = o3.pole ? r.clone().multiplyScalar(s * o3.pole[0]).addScaledVector(u, o3.pole[1]).addScaledVector(f, o3.pole[2]) : SD(el[0] - J.sh[0], el[1] - J.sh[1]).addScaledVector(r, s * 3);
-          const [E, H2] = ik3(S0, H, L.ua, L.fa, pole); return [S0, E, H2];
+          const pole = o3.pole ? r.clone().multiplyScalar(s * o3.pole[0]).addScaledVector(u, o3.pole[1]).addScaledVector(f, o3.pole[2]) : apexArm(s, H.clone().sub(S0));
+          const [E, H2, apex] = ik3(S0, H, L.ua, L.fa, pole); return [S0, E, H2, apex];
         };
-        [R.shR, R.elR, R.haR] = arm(1, J.el, J.ha); [R.shL, R.elL, R.haL] = arm(-1, J.el2, J.ha2);
-        const leg = (s, kn, an, to) => { const H0 = hip.clone().addScaledVector(r, s * B.HW), K = H0.clone().add(SD(kn[0] - J.hip[0], kn[1] - J.hip[1])).addScaledVector(r, s * 1), An = H0.clone().add(SD(an[0] - J.hip[0], an[1] - J.hip[1])).addScaledVector(r, s * 2), To = An.clone().add(SD(to[0] - an[0], to[1] - an[1])).addScaledVector(r, s * 1.5); return [H0, K, An, To]; };
-        [R.hR, R.knR, R.anR, R.toR] = leg(1, J.kn, J.an, J.to); [R.hL, R.knL, R.anL, R.toL] = leg(-1, J.kn2, J.an2, J.to2);
+        let aR, aL, kR, kL;
+        [R.shR, R.elR, R.haR, aR] = arm(1, J.el, J.ha); [R.shL, R.elL, R.haL, aL] = arm(-1, J.el2, J.ha2);
+        const leg = (s, an, to) => {
+          const H0 = hip.clone().addScaledVector(r, s * B.HW), T0 = H0.clone().add(SD(an[0] - J.hip[0], an[1] - J.hip[1])).addScaledVector(r, s * 2);
+          const [K, An, apex] = ik3(H0, T0, L.th, L.sh, apexLeg(s, T0.clone().sub(H0)));
+          // pied : angle relatif au tibia repris du gabarit (déjà borné), dans le plan du genou
+          const kn2 = s > 0 ? J.kn : J.kn2, rel = (((Math.atan2(to[0] - an[0], to[1] - an[1]) - Math.atan2(an[0] - kn2[0], an[1] - kn2[1])) * 180 / Math.PI) % 360 + 540) % 360 - 180;
+          const S = An.clone().sub(K).normalize(), F = apex.clone().addScaledVector(S, -apex.dot(S)).normalize(), rr = Math.max(40, Math.min(128, rel)) * Math.PI / 180;
+          const To = An.clone().addScaledVector(S, Math.cos(rr) * L.foot).addScaledVector(F, Math.sin(rr) * L.foot);
+          return [H0, K, An, To, apex];
+        };
+        [R.hR, R.knR, R.anR, R.toR, kR] = leg(1, J.an, J.to); [R.hL, R.knL, R.anL, R.toL, kL] = leg(-1, J.an2, J.to2);
         R.head = SM(J.head);
-        // avant des segments (côté biceps / quadriceps) : normale 2D du segment
-        R.front = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; return v(0, dx / l, dy / l); };
-        R.fr = { uaR: R.front(J.sh, J.el), faR: R.front(J.el, J.ha), uaL: R.front(J.sh, J.el2), faL: R.front(J.el2, J.ha2), thR: R.front(J.hip, J.kn), shR: R.front(J.kn, J.an), thL: R.front(J.hip, J.kn2), shL: R.front(J.kn2, J.an2) };
+        // avant des segments : côté opposé à la pointe du coude (biceps), côté de la pointe du genou (quadriceps)
+        const perp = (a, b, apex, sg) => { const d = b.clone().sub(a).normalize(); return apex.clone().addScaledVector(d, -apex.dot(d)).normalize().multiplyScalar(sg); };
+        R.fr = { uaR: perp(R.shR, R.elR, aR, -1), faR: perp(R.elR, R.haR, aR, -1), uaL: perp(R.shL, R.elL, aL, -1), faL: perp(R.elL, R.haL, aL, -1), thR: perp(R.hR, R.knR, kR, 1), shR: perp(R.knR, R.anR, kR, 1), thL: perp(R.hL, R.knL, kL, 1), shL: perp(R.knL, R.anL, kL, 1) };
       } else {
         J = frontJoints(pose);
         const sy = pose.sy ? -pose.sy : 0;
-        const u = v(0, 1, 0), f = v(0, 0, 1), r = v(1, 0, 0), hip = FM(J.hip);
+        // buste : inclinaison arrière (lean) et rotation (yaw) facultatives
+        const ln = (o3.lean || 0) * Math.PI / 180, yw = (o3.yaw ? o3.yaw(pose) : 0) * Math.PI / 180, cy = Math.cos(yw), sny = Math.sin(yw);
+        const rotY = q => v(q.x * cy + q.z * sny, q.y, -q.x * sny + q.z * cy);
+        const u = rotY(v(0, Math.cos(ln), -Math.sin(ln))), f = rotY(v(0, Math.sin(ln), Math.cos(ln))), r = new V3().crossVectors(u, f), hip = FM(J.hip);
+        if (o3.hipY != null) hip.y = o3.hipY;
         Object.assign(R, { J, u, f, r, hip, sym: false, symL: false });
         R.shC = hip.clone().addScaledVector(u, 48);
-        const arm = (s, sh2, el2, ha2) => { const S0 = R.shC.clone().add(v(s * B.SW, sy, 0)), E = S0.clone().add(squash(el2[0] - sh2[0], el2[1] - sh2[1], L.ua)), H = E.clone().add(squash(ha2[0] - el2[0], ha2[1] - el2[1], L.fa)); return [S0, E, H]; };
+        const T3 = q => r.clone().multiplyScalar(q.x).addScaledVector(u, q.y).addScaledVector(f, q.z);
+        const arm = (s, sh2, el2, ha2) => {
+          const S0 = R.shC.clone().addScaledVector(r, s * B.SW).addScaledVector(u, sy);
+          if (o3.hands) { const [hx, hy, hz] = o3.hands, H = S0.clone().add(T3(v(s * hx, -hy, hz))); const [E, H2] = ik3(S0, H, L.ua, L.fa, r.clone().multiplyScalar(s * 0.6).addScaledVector(u, -1).addScaledVector(f, -0.2)); return [S0, E, H2]; }
+          const E = S0.clone().add(T3(squash(el2[0] - sh2[0], el2[1] - sh2[1], L.ua))), H = E.clone().add(T3(squash(ha2[0] - el2[0], ha2[1] - el2[1], L.fa))); return [S0, E, H];
+        };
         [R.shR, R.elR, R.haR] = arm(1, J.shR, J.elR, J.haR); [R.shL, R.elL, R.haL] = arm(-1, J.shL, J.elL, J.haL);
         const leg = (s, h2, k2, a2) => {
           const H0 = hip.clone().add(v(s * B.HW, 0, 0)), dx = k2[0] - h2[0], dy = k2[1] - h2[1];
           let K, An;
+          if (o3.legs) { // jambes fléchies vers l'arrière (suspension) : [cuisse, tibia, pied] en degrés, 0 = vers le bas, + = vers l'avant
+            const [ta, sa, fa] = o3.legs.map(x => x * Math.PI / 180);
+            K = H0.clone().add(v(s * 1.5, -Math.cos(ta) * L.th, Math.sin(ta) * L.th)); An = K.clone().add(v(s * 1, -Math.cos(sa) * L.sh, Math.sin(sa) * L.sh));
+            return [H0, K, An, An.clone().add(v(s * 2, -Math.cos(sa + fa) * L.foot, Math.sin(sa + fa) * L.foot))];
+          }
           if (pose.seat) {
             const drop = Math.max(0, dy), K0 = H0.clone().add(v(dx, -drop, Math.sqrt(Math.max(0, L.th * L.th - dx * dx - drop * drop))));
             K = K0; const sdx = a2[0] - k2[0], down = Math.min(L.sh - 0.5, Math.max(0, K.y - 2)); An = K.clone().add(v(sdx, -down, Math.sqrt(Math.max(0, L.sh * L.sh - sdx * sdx - down * down))));
@@ -195,10 +233,10 @@
             K = H0.clone().add(v(dx, -dy, Math.sqrt(Math.max(0, L.th * L.th - dx * dx - dy * dy))));
             const sdx = a2[0] - k2[0], sdy = a2[1] - k2[1]; An = K.clone().add(v(sdx, -sdy, Math.sqrt(Math.max(0, L.sh * L.sh - sdx * sdx - sdy * sdy)) * 0));
           }
-          return [H0, K, An, An.clone().add(v(s * 3, -1.2, 14.6))];
+          return [H0, K, An, An.clone().add(v(s * 3, -1.5, 14.6))];
         };
         [R.hR, R.knR, R.anR, R.toR] = leg(1, J.hR, J.knR, J.anR); [R.hL, R.knL, R.anL, R.toL] = leg(-1, J.hL, J.knL, J.anL);
-        R.head = FM(J.head).add(v(0, 0, 0));
+        R.head = R.shC.clone().addScaledVector(u, L.neck + L.head + 2);
         const fz = (a, b) => { const d = b.clone().sub(a).normalize(), z = v(0, 0, 1).addScaledVector(d, -d.z); return z.lengthSq() > 0.05 ? z.normalize() : v(0, 1, 0); };
         R.fr = { uaR: fz(R.shR, R.elR), faR: fz(R.elR, R.haR), uaL: fz(R.shL, R.elL), faL: fz(R.elL, R.haL), thR: fz(R.hR, R.knR), shR: fz(R.knR, R.anR), thL: fz(R.hL, R.knL), shL: fz(R.knL, R.anL) };
         // pieds : dessus du pied vers le haut
@@ -325,9 +363,10 @@
       c3.R = R; c3.sym = R.sym && !o3.one;
       const J = R.J;
       try {
-        if (o3.eq3) o3.eq3(c3, R, k, opt); else tpl.eq?.(c3, J, k, opt, pose);
+        if (!o3.noEq) tpl.eq?.(c3, J, k, opt, pose);
+        o3.eq3?.(c3, R, k, opt);
         tpl.front?.(c3, J, k, opt, pose);
-        tpl.hold?.(c3, J, k, opt, pose);
+        if (!o3.noHold) tpl.hold?.(c3, J, k, opt, pose);
       } catch (e) { /* matériel facultatif */ }
       for (const p of Object.values(pools)) for (let i = p.n; i < p.items.length; i++) p.items[i].visible = false;
     }
@@ -343,13 +382,13 @@
       equipment(R, i / 6, R.pose);
       for (const pl of Object.values(pools)) for (let j = 0; j < pl.n; j++) { const m = pl.items[j], sc = m.scale, e = pl.geo === gC ? Math.max(sc.x, sc.y / 2) : pl.geo === gB ? Math.max(sc.x, sc.y, sc.z) / 2 : sc.x; elo.min(m.position.clone().addScalar(-e)); ehi.max(m.position.clone().addScalar(e)); }
     }
-    lo.addScalar(-12); hi.addScalar(12); lo.y = Math.min(lo.y, -2);
+    lo.addScalar(-16); hi.addScalar(16); lo.y = Math.min(lo.y, -2);
     elo.min(lo); ehi.max(hi);
     const fit = (a, b) => Math.max((b.y - a.y) / 2 * 1.06, Math.hypot(b.x - a.x, b.z - a.z) / 2 * 0.82);
     const bRad = Math.max(55, fit(lo, hi)), eRad = fit(elo, ehi);
     const rad = Math.min(Math.max(eRad, bRad * 1.05), bRad * 1.4);
     const center = lo.clone().add(hi).multiplyScalar(0.5).lerp(elo.clone().add(ehi).multiplyScalar(0.5), 0.35);
-    const baseAz = tpl.view === 'side' ? (lying ? 72 : 60) : tpl.view === 'back' ? 156 : 24, baseEl = lying ? 22 : 12;
+    const baseAz = tpl.view === 'side' ? (lying ? 72 : 66) : tpl.view === 'back' ? 156 : 24, baseEl = lying ? 22 : 12;
     let dragAz = 0, dragEl = 0;
     const D2R = Math.PI / 180;
 
@@ -392,7 +431,7 @@
       draw((now - t0) / 1000);
       if (visible) raf = requestAnimationFrame(frame);
     }
-    if (o.time != null) { io?.disconnect(); draw(o.time); return { dispose, renderAt: t => draw(t) }; }
+    if (o.time != null) { io?.disconnect(); draw(o.time); return { dispose, renderAt: t => draw(t), skeleton, dur, tpl: name }; }
     if (still) draw(dur * 0.45); else raf = requestAnimationFrame(frame);
     // surveillance du retrait du canvas (fermeture de la fiche) pour libérer le contexte WebGL
     const watch = setInterval(() => { if (!canvas.isConnected) { clearInterval(watch); dispose(); } }, 1500);
