@@ -988,3 +988,45 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .cr-note.cr-cuit { background: rgba(56, 189, 248, .08); border: 1px solid rgba(56, 189, 248, .28); }
 .cr-conv:empty { display: none; }
 .cr-conv { margin-top: 2px; padding-left: 4px; }
+
+/* v3.7.0 — Qualité du jour + planificateur */
+.card.quality { cursor: pointer; }
+.card.quality .card-title .ico { width: 18px; height: 18px; fill: none; stroke: #2EE68A; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-right: 6px; vertical-align: -3px; }
+.q-score { font-size: 12px; color: var(--ink-3); padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .08); }
+.q-score b { font-size: 16px; color: var(--qc); margin-right: 1px; text-shadow: 0 0 10px var(--qc); }
+.q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; margin-top: 12px; }
+.q-item { min-width: 0; }
+.q-row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 13px; color: var(--ink-2); margin-bottom: 7px; }
+.q-row span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-row b { font-size: 12px; color: var(--ink); white-space: nowrap; }
+.bar.salt { position: relative; }
+.bar.salt .lim { position: absolute; top: -3px; bottom: -3px; width: 2px; background: rgba(255, 255, 255, .35); border-radius: 2px; z-index: 1; }
+.pips { display: flex; gap: 4px; }
+.pip { width: 22px; height: 22px; fill: rgba(255, 255, 255, .06); stroke: rgba(255, 255, 255, .22); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: all .3s; }
+.pips.veg .pip.on { fill: #2EE68A; stroke: #2EE68A; filter: drop-shadow(0 0 5px rgba(46, 230, 138, .6)); }
+.pips.veg .pip.half { fill: rgba(46, 230, 138, .35); stroke: #2EE68A; }
+.pips.dairy .pip.on { fill: #EAF2FF; stroke: #EAF2FF; filter: drop-shadow(0 0 5px rgba(234, 242, 255, .5)); }
+.pips.dairy .pip.half { fill: rgba(234, 242, 255, .35); stroke: #EAF2FF; }
+.q-note { font-size: 12px; color: var(--ink-3); margin: 12px 0 0; }
+.q-plan { margin-top: 14px; background: linear-gradient(135deg, rgba(46, 230, 138, .18), rgba(110, 139, 255, .18)); color: var(--ink); border: 1px solid rgba(46, 230, 138, .35); box-shadow: 0 0 18px rgba(46, 230, 138, .12); }
+.q-info p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.q-info b { color: var(--ink); }
+.q-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
+.q-chips:empty { display: none; }
+.q-chips span { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .09); color: var(--ink-2); }
+.q-chips .qc-fib { color: #9BE7B9; } .q-chips .qc-salt.hi { color: #FF8A8A; border-color: rgba(255, 77, 79, .4); } .q-chips .qc-na { color: var(--ink-3); font-style: italic; }
+.plan-head p { margin: 0 0 6px; line-height: 1.5; }
+.card.plan { position: relative; }
+.card.plan.best { border-color: rgba(46, 230, 138, .45); box-shadow: 0 0 24px rgba(46, 230, 138, .12); }
+.plan-badge { position: absolute; top: -9px; left: 16px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #2EE68A; color: #06140C; }
+.card.plan ul { list-style: none; margin: 4px 0 10px; padding: 0; }
+.card.plan li { display: flex; gap: 6px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); font-size: 14px; color: var(--ink-2); }
+.card.plan li b { color: var(--ink); white-space: nowrap; }
+.card.plan li span { margin-left: auto; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.plan-gains { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.plan-gains span { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; }
+.g-p { background: rgba(255, 210, 63, .14); color: #FFD23F; } .g-fib { background: rgba(46, 230, 138, .12); color: #7CF0B2; }
+.g-veg { background: rgba(46, 230, 138, .2); color: #2EE68A; } .g-dairy { background: rgba(234, 242, 255, .1); color: #EAF2FF; }
+.g-k { background: rgba(255, 255, 255, .05); color: var(--ink-2); margin-left: auto; }
+.seg.plan-meal { display: flex; margin-bottom: 14px; }
+.seg.plan-meal button { flex: 1; font-size: 12.5px; padding: 8px 4px; }

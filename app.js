@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.6.8';
+  const APP_VERSION = '3.7.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -268,7 +268,7 @@
   }
 
   /* ---------- Open Food Facts ---------- */
-  const OFF_FIELDS = 'code,product_name,product_name_fr,generic_name_fr,brands,quantity,serving_size,serving_quantity,nutriments,nutriscore_grade,image_front_small_url,image_front_thumb_url';
+  const OFF_FIELDS = 'code,product_name,product_name_fr,generic_name_fr,brands,quantity,serving_size,serving_quantity,nutriments,nutriscore_grade,categories_tags,image_front_small_url,image_front_thumb_url';
   function offToFood(p) {
     const n = p.nutriments || {};
     let kcal = num(n['energy-kcal_100g']);
@@ -278,7 +278,7 @@
     return {
       src: 'off', code: String(p.code || ''), name: name || 'Produit sans nom',
       brand: String(p.brands || '').split(',')[0].trim(), qtyLabel: p.quantity || '',
-      per100: kcal == null ? null : { kcal, p: num(n.proteins_100g) || 0, c: num(n.carbohydrates_100g) || 0, f: num(n.fat_100g) || 0 },
+      per100: kcal == null ? null : { kcal, p: num(n.proteins_100g) || 0, c: num(n.carbohydrates_100g) || 0, f: num(n.fat_100g) || 0, ...Nu.offQuality(p, n) },
       unit: sq && sq > 0 ? { label: p.serving_size ? `1 portion (${p.serving_size})` : '1 portion', g: sq } : null,
       img: p.image_front_small_url || p.image_front_thumb_url || '',
       ns: /^[a-e]$/.test(p.nutriscore_grade || '') ? p.nutriscore_grade : '',
@@ -508,6 +508,7 @@
       </section>
       ${Bo.backupCard()}
       ${Bo.coachCard(k)}
+      ${Nu.qualityCard(k)}
       <div class="duo">${suppsCard(k)}${Bo.waterCard(k)}</div>
       ${locked ? validatedCard(k, t, burn) : ''}
       <section class="card">
@@ -1154,14 +1155,14 @@
     return `Tu es un nutritionniste expert en estimation de portions. Analyse la photo du plat${desc ? ' et la description de l\'utilisateur' : ''}.
 Identifie chaque composant (y compris ceux qui ne se voient pas mais sont probables : huile ou beurre de cuisson, sauce, sucre). Estime le poids en grammes de chaque composant en te servant de l'assiette, des couverts et des mains comme repères. Pour un plat de restaurant, compte une matière grasse de cuisson généreuse.
 ${desc ? `Description de l'utilisateur (prioritaire sur ce que tu vois) : « ${desc} »\n` : ''}Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, de la forme :
-{"plat":"nom court du plat","elements":[{"nom":"composant","grammes":0,"kcal":0,"proteines":0,"glucides":0,"lipides":0}],"confiance":"faible|moyenne|élevée","remarque":"une phrase : ce qui ferait le plus varier l'estimation"}
-Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estimée (pas pour 100 g). Si la photo ne montre pas de nourriture, renvoie "elements":[].`;
+{"plat":"nom court du plat","elements":[{"nom":"composant","grammes":0,"kcal":0,"proteines":0,"glucides":0,"lipides":0,"fibres":0,"sel":0,"fruits_legumes_g":0}],"confiance":"faible|moyenne|élevée","remarque":"une phrase : ce qui ferait le plus varier l'estimation"}
+fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composant (0 pour viande, féculents, sauces). Les valeurs kcal, proteines, glucides, lipides, fibres, sel sont celles de la quantité estimée (pas pour 100 g). Si la photo ne montre pas de nourriture, renvoie "elements":[].`;
   }
   function parseAIJson(txt) {
     const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
     if (a < 0 || b < a) throw new Error('format');
     const j = JSON.parse(txt.slice(a, b + 1));
-    const items = (j.elements || []).map(e => ({ name: String(e.nom || 'Élément'), grams: Math.max(1, num(e.grammes) || 100), kcal: Math.max(0, num(e.kcal) || 0), p: Math.max(0, num(e.proteines) || 0), c: Math.max(0, num(e.glucides) || 0), f: Math.max(0, num(e.lipides) || 0), on: true }));
+    const items = (j.elements || []).map(e => ({ name: String(e.nom || 'Élément'), grams: Math.max(1, num(e.grammes) || 100), kcal: Math.max(0, num(e.kcal) || 0), p: Math.max(0, num(e.proteines) || 0), c: Math.max(0, num(e.glucides) || 0), f: Math.max(0, num(e.lipides) || 0), fib: num(e.fibres), salt: num(e.sel), vg: Math.max(0, num(e.fruits_legumes_g) || 0), on: true }));
     return { dish: String(j.plat || 'Plat'), items, confidence: String(j.confiance || ''), note: String(j.remarque || '') };
   }
   async function geminiModel(key) {
@@ -1281,7 +1282,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       const ta = $('[data-f="desc"]', sh.body); ta.addEventListener('input', () => { st.desc = ta.value; });
       $$('.ai-g', sh.body).forEach(inp => inp.addEventListener('change', () => {
         const i = st.res.items[+inp.dataset.i], g = num(inp.value); if (!(g > 0)) return;
-        const ratio = g / (i.grams * st.mult); i.grams *= ratio; i.kcal *= ratio; i.p *= ratio; i.c *= ratio; i.f *= ratio; draw();
+        const ratio = g / (i.grams * st.mult); i.grams *= ratio; i.kcal *= ratio; i.p *= ratio; i.c *= ratio; i.f *= ratio; if (i.fib != null) i.fib *= ratio; if (i.salt != null) i.salt *= ratio; i.vg *= ratio; draw();
       }));
       const ms = $('[data-f="meal"]', sh.body); if (ms) ms.addEventListener('change', () => { st.meal = ms.value; });
     };
@@ -1308,7 +1309,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       const d = getDay(ctx.date), meal = st.meal;
       for (const i of st.res.items.filter(x => x.on)) {
         const g = i.grams * st.mult, k = st.mult;
-        d.entries.push({ id: uid(), meal, src: 'ai', name: i.name, brand: st.res.dish + ' · IA', per100: { kcal: i.kcal / i.grams * 100, p: i.p / i.grams * 100, c: i.c / i.grams * 100, f: i.f / i.grams * 100 }, unit: null, grams: g, count: null, kcal: i.kcal * k, p: i.p * k, c: i.c * k, f: i.f * k, t: Date.now() });
+        d.entries.push({ id: uid(), meal, src: 'ai', name: i.name, brand: st.res.dish + ' · IA', per100: { kcal: i.kcal / i.grams * 100, p: i.p / i.grams * 100, c: i.c / i.grams * 100, f: i.f / i.grams * 100, fib: i.fib != null ? i.fib / i.grams * 100 : null, salt: i.salt != null ? i.salt / i.grams * 100 : null, veg: Math.min(100, (i.vg || 0) / i.grams * 100), dairy: 0 }, unit: null, grams: g, count: null, kcal: i.kcal * k, p: i.p * k, c: i.c * k, f: i.f * k, t: Date.now() });
       }
       saveDay(ctx.date); UI.date = ctx.date; UI.tab = 'journal';
       const t = totals(); closeAll(() => toast(`Ajouté · ${r0(t.kcal)} kcal · ${r0(t.p)} g prot.`));
@@ -1397,7 +1398,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
         <div class="grow"><div class="title">${esc(food.name)}</div><div class="muted small">${esc([food.brand, food.qtyLabel].filter(Boolean).join(' · '))}</div>
         <div style="margin-top:6px">${food.ns ? `<span class="badge ns ns-${food.ns}">Nutri-Score ${food.ns.toUpperCase()}</span> ` : ''}<span class="badge">${food.src === 'off' ? 'Open Food Facts' : food.src === 'custom' ? 'Mon aliment' : 'Générique'}</span> ${crTag(st)} <button type="button" class="badge edit-food" data-a="edit-food">✎ Modifier l'aliment</button></div></div></div>
       ${st ? `<div class="cr-note cr-${st.state}">${raw ? `<b>Valeurs pour le produit cru (sec).</b> Pesé avant cuisson → « g crus ». Pesé dans l'assiette → unité <b>« g cuits »</b>, l'appli divise par ${String(st.ratio).replace('.', ',')}.` : `<b>Valeurs pour le produit cuit.</b> Pèse ta portion cuite, dans l'assiette.`}</div>` : ''}
-      <section class="card"><div class="nutri-grid"><div class="kc"><b class="num" data-o="kcal"></b><span>kcal</span></div><div class="pr"><b class="num" data-o="p"></b><span>protéines</span></div><div><b class="num" data-o="c"></b><span>glucides</span></div><div><b class="num" data-o="f"></b><span>lipides</span></div></div></section>
+      <section class="card"><div class="nutri-grid"><div class="kc"><b class="num" data-o="kcal"></b><span>kcal</span></div><div class="pr"><b class="num" data-o="p"></b><span>protéines</span></div><div><b class="num" data-o="c"></b><span>glucides</span></div><div><b class="num" data-o="f"></b><span>lipides</span></div></div><div class="q-chips" data-o="q"></div></section>
       <section class="card stack">
         <div class="qty-row"><label class="field"><span>Quantité</span><input type="number" inputmode="decimal" step="any" min="0" data-f="qty" value="${qty}"></label>
         <label class="field"><span>Unité</span><select data-f="mode"><option value="g" ${mode === 'g' ? 'selected' : ''}>${raw ? 'g crus' : st ? 'g cuits' : 'grammes (g / ml)'}</option>${raw ? `<option value="c" ${mode === 'c' ? 'selected' : ''}>g cuits</option>` : ''}${food.unit ? `<option value="u" ${mode === 'u' ? 'selected' : ''}>${esc(food.unit.label)}${/\d\s*(g|ml)\b/i.test(food.unit.label) ? '' : ` — ${r0(food.unit.g)} g`}</option>` : ''}</select></label></div>
@@ -1405,7 +1406,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
         <div class="chips" data-f="chips"></div>
         <label class="field"><span>Repas</span><select data-f="meal">${mealOptions(entry ? entry.meal : ctx.meal)}</select></label>
       </section>
-      <p class="note">Pour 100 g : ${r0(p.kcal)} kcal · ${r1(p.p)} g protéines · ${r1(p.c)} g glucides · ${r1(p.f)} g lipides${food.code ? ` · code ${esc(food.code)}` : ''}</p>`);
+      <p class="note">Pour 100 g : ${r0(p.kcal)} kcal · ${r1(p.p)} g protéines · ${r1(p.c)} g glucides · ${r1(p.f)} g lipides${p.fib != null ? ` · ${r1(p.fib)} g fibres` : ''}${p.salt != null ? ` · ${r1(p.salt)} g sel` : ''}${food.code ? ` · code ${esc(food.code)}` : ''}</p>`);
     sh.setFoot(`${entry ? '<button class="btn danger" data-a="del">Supprimer</button>' : ''}<button class="btn grow" data-a="save">${entry ? 'Enregistrer' : 'Ajouter'}</button>`);
     const qEl = $('[data-f="qty"]', sh.body), mEl = $('[data-f="mode"]', sh.body), chips = $('[data-f="chips"]', sh.body);
     const grams = () => { const v = num(qEl.value) || 0; return mEl.value === 'u' && food.unit ? v * food.unit.g : mEl.value === 'c' && raw ? v / st.ratio : v; };
@@ -1417,6 +1418,8 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       $('[data-o="p"]', sh.body).textContent = r1(p.p * k);
       $('[data-o="c"]', sh.body).textContent = r1(p.c * k);
       $('[data-o="f"]', sh.body).textContent = r1(p.f * k);
+      const qc = [p.fib != null ? `<span class="qc-fib">${r1(p.fib * k)} g fibres</span>` : '<span class="qc-na">fibres non renseignées</span>', p.salt != null ? `<span class="qc-salt ${p.salt * k > 2 ? 'hi' : ''}">${r1(p.salt * k)} g sel</span>` : '', p.veg ? `<span class="qc-veg">🥦 ${r1(grams() * p.veg / 100 / 80).replace('.', ',')} portion F&L</span>` : '', p.dairy ? `<span class="qc-dairy">🥛 ${r1(grams() / p.dairy).replace('.', ',')} laitier</span>` : ''].filter(Boolean);
+      $('[data-o="q"]', sh.body).innerHTML = qc.join('');
     };
     const drawChips = () => { chips.innerHTML = (mEl.value === 'u' ? [0.5, 1, 2, 3] : (mEl.value === 'c' ? [100, 150, 200, 250, 300, 350] : [30, 50, 100, 150, 200, 250])).map(v => `<button type="button" class="chip" data-v="${v}">${mEl.value === 'u' ? r1(v) : v + ' g'}</button>`).join(''); };
     qEl.addEventListener('input', upd);
@@ -1513,7 +1516,9 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       <label class="field"><span>Calories (kcal) *</span><input type="number" inputmode="decimal" data-f="kcal" value="${val(f.per100?.kcal)}"></label>
       <label class="field"><span>Protéines (g)</span><input type="number" inputmode="decimal" data-f="p" value="${val(f.per100?.p)}"></label>
       <label class="field"><span>Glucides (g)</span><input type="number" inputmode="decimal" data-f="c" value="${val(f.per100?.c)}"></label>
-      <label class="field"><span>Lipides (g)</span><input type="number" inputmode="decimal" data-f="f" value="${val(f.per100?.f)}"></label></div>
+      <label class="field"><span>Lipides (g)</span><input type="number" inputmode="decimal" data-f="f" value="${val(f.per100?.f)}"></label>
+      <label class="field"><span>Fibres (g)</span><input type="number" inputmode="decimal" data-f="fib" value="${val(f.per100?.fib)}"></label>
+      <label class="field"><span>Sel (g)</span><input type="number" inputmode="decimal" data-f="salt" value="${val(f.per100?.salt)}"></label></div>
       <p class="note">Si l'étiquette n'indique que les kJ, divise par 4,184.</p></section>
       <h3>Portion (facultatif)</h3>
       <section class="card"><div class="grid2"><label class="field"><span>Nom de la portion</span><input type="text" data-f="ul" value="${esc(f.unit?.label || '')}" placeholder="ex. 1 bol"></label>
@@ -1526,7 +1531,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
         const name = g('name'), kcal = num(g('kcal'));
         if (!name || kcal == null) { toast('Nom et calories obligatoires'); return; }
         const ug = num(g('ug'));
-        const nf = { src: 'custom', id: f.id || uid(), name, brand: g('brand'), code: g('code').replace(/\D/g, ''), per100: { kcal, p: num(g('p')) || 0, c: num(g('c')) || 0, f: num(g('f')) || 0 }, unit: ug > 0 ? { label: g('ul') || '1 portion', g: ug } : null };
+        const nf = { src: 'custom', id: f.id || uid(), name, brand: g('brand'), code: g('code').replace(/\D/g, ''), per100: { ...(f.per100 || {}), kcal, p: num(g('p')) || 0, c: num(g('c')) || 0, f: num(g('f')) || 0, fib: num(g('fib')), salt: num(g('salt')) }, unit: ug > 0 ? { label: g('ul') || '1 portion', g: ug } : null };
         S.foods = editing ? S.foods.map(x => x.id === nf.id ? nf : x) : [nf, ...S.foods];
         Store.put('foods', S.foods);
         if (editing) for (const [dk, d] of Object.entries(S.days)) { let ch = false; for (const e of d.entries || []) if (e.fid === nf.id && e.src === 'custom') { const k = e.grams / 100; Object.assign(e, { name: nf.name, brand: nf.brand, per100: nf.per100, unit: nf.unit, kcal: nf.per100.kcal * k, p: nf.per100.p * k, c: nf.per100.c * k, f: nf.per100.f * k }); ch = true; } if (ch) saveDay(dk); }
@@ -1655,7 +1660,9 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
   const Mu = window.KaloMuscuInit({ $, $$, esc, r0, r1, num, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, closeAll, niceStep, bindTip, currentWeight });
 
   /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
-  const Bo = window.KaloBoostInit({ $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
+  const Nu = window.KaloNutriInit({ $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN });
+  GEN.forEach(Nu.enrichGen);
+  const Bo = window.KaloBoostInit({ Nu, $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
     goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData });
 
   /* ---------- Actions ---------- */
@@ -1748,7 +1755,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     },
     install: async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice.catch(() => {}); installPrompt = null; render(); },
   };
-  Object.assign(actions, Mu.actions, Bo.actions);
+  Object.assign(actions, Mu.actions, Bo.actions, { 'quality-info': () => Nu.qualityInfo(), 'plan-day': () => Nu.openPlanner(UI.date) });
 
   document.addEventListener('click', e => {
     if (e.target.matches?.('input[type=date]')) { try { e.target.showPicker?.(); } catch (err) { /* ignore */ } }

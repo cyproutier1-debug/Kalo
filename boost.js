@@ -94,6 +94,7 @@ window.KaloBoostInit = K => {
     else if (remK < 0) tips.push(`Tu dépasses de <b>${r0(-remK)} kcal</b>. Pas grave : 30 min de marche rapide ≈ 150 kcal, et demain on repart propre.`);
     else if (remP > 10) tips.push(`Il te reste <b>${r0(remP)} g de protéines</b> pour <b>${r0(remK)} kcal</b>. ${remP / Math.max(1, remK) > 0.12 ? 'Vise des aliments très protéinés et peu caloriques.' : 'Tu as de la marge.'}`);
     else tips.push(`Protéines atteintes 💪 Il te reste <b>${r0(Math.max(0, remK))} kcal</b> à répartir.`);
+    const ql = K.Nu?.coachLine(k); if (ql) tips.push(ql);
     if (h >= 14 && water < waterGoal() * 0.5) tips.push(`Pense à boire : seulement ${r1(water / 1000)} L aujourd'hui.`);
     if (h >= 12 && supps.length) tips.push(`Compléments à prendre : ${supps.slice(0, 3).map(x => esc(x.name)).join(', ')}${supps.length > 3 ? '…' : ''}.`);
     const sug = remP > 10 && remK > 80 ? suggestions(remK, remP, k) : [];

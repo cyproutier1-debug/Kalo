@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.7.0** : carte « Qualité du jour » (fibres, sel, fruits & légumes, laitiers, score /100), données Open Food Facts (fibres, sel, % fruits/légumes estimé des ingrédients) + rattrapage des produits déjà saisis, planificateur « Compléter ma journée » (combinaisons d'aliments simples respectant kcal/macros restants, adapté au repas, ajout en 1 tap), fibres/sel dans la fiche aliment, le formulaire et le scan IA. Module `nutri.js`.
 - **v3.6.8** : féculents étiquetés CRU / CUIT (recherche + fiche), unité « g cuits » avec conversion automatique (pâtes ÷2,3, riz ÷2,6…), journal affiché « 150 g cuits (≈ 65 g crus) ».
 - **v3.6.7** : main pointeuse + anneau sous le point de poids sélectionné (Journal, Progrès, projection) ; service worker restauré.
 
