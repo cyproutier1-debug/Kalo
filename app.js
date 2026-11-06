@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.7.1';
+  const APP_VERSION = '3.7.2';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -151,7 +151,7 @@
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.photoPos = all.photoPos || null; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -485,7 +485,7 @@
     };
     return `
       <header class="hero">
-        ${S.photo ? `<div class="hero-photo" style="background-image:url('${S.photo}')" role="img" aria-label="Ma photo objectif"></div>` : ''}
+        ${S.photo ? `<div class="hero-photo" role="img" aria-label="Ma photo objectif">${photoImg(S.photo, S.photoPos)}</div>` : ''}
         <div class="brand-row">${brandHTML()}<button class="icon-btn glass" data-tab="profile" aria-label="Profil et réglages">${ICON.gear}</button></div>
         <div class="hero-text ${S.photo ? '' : 'wide'}">
           <div class="day-title"><button class="icon-btn" data-action="day-prev" aria-label="Jour précédent">${ICON.left}</button><label>${esc(label)}<input type="date" value="${k}" data-input="date" aria-label="Choisir une date" style="position:absolute;inset:0;opacity:0;width:100%"></label><button class="icon-btn" data-action="day-next" aria-label="Jour suivant">${ICON.right}</button></div>
@@ -765,9 +765,46 @@
       const sc = Math.min(1, 1100 / Math.max(img.naturalWidth, img.naturalHeight));
       const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      S.photo = c.toDataURL('image/jpeg', 0.85);
-      await Store.put('photo', S.photo); render(); toast('Photo objectif ajoutée 💪');
+      openPhotoEditor(c.toDataURL('image/jpeg', 0.88), { x: 50, y: 20, z: 1 }, true);
     } catch (e) { toast('Image illisible, essaie une autre photo'); }
+  }
+  /* Cadrage de la photo objectif : position (x, y en %) et zoom, appliqués via object-position + scale autour du même point */
+  const photoImg = (src, pos) => { const q = pos || { x: 50, y: 0, z: 1 }; return `<img src="${src}" alt="" draggable="false" style="object-position:${q.x}% ${q.y}%;transform:scale(${q.z});transform-origin:${q.x}% ${q.y}%">`; };
+  function openPhotoEditor(src, pos0, isNew) {
+    const pos = { x: 50, y: 0, z: 1, ...(pos0 || {}) };
+    const sh = makeSheet(isNew ? 'Cadrer ma photo' : 'Recadrer ma photo');
+    const heroH = Math.round($('.hero')?.offsetHeight || 260), boxW = Math.round(Math.min(window.innerWidth, 560) * 0.72);
+    sh.setBody(`<p class="muted small" style="margin:0 0 12px">Glisse la photo pour la placer, pince ou utilise le curseur pour zoomer. Le cadre montre exactement ce qui s'affichera en haut du Journal.</p>
+      <div class="ph-stage"><div class="ph-box" style="width:${boxW}px;height:${heroH}px">${photoImg(src, pos)}<i class="ph-shade"></i><i class="ph-grid"></i></div></div>
+      <label class="field ph-zoom"><span>Zoom</span><input type="range" min="1" max="3" step="0.01" value="${pos.z}" data-f="z"></label>
+      <div class="ph-nudge"><button class="btn ghost small" data-a="up" aria-label="Monter">▲</button><button class="btn ghost small" data-a="down" aria-label="Descendre">▼</button><button class="btn ghost small" data-a="left" aria-label="Gauche">◀</button><button class="btn ghost small" data-a="right" aria-label="Droite">▶</button><button class="btn plain small" data-a="reset">Réinitialiser</button></div>`);
+    sh.setFoot(`<button class="btn plain" data-a="cancel">Annuler</button><button class="btn grow" data-a="ok">Valider</button>`);
+    const box = $('.ph-box', sh.body), img = $('img', box), zEl = $('[data-f="z"]', sh.body);
+    const apply = () => { pos.x = Math.max(0, Math.min(100, pos.x)); pos.y = Math.max(0, Math.min(100, pos.y)); pos.z = Math.max(1, Math.min(3, pos.z));
+      img.style.objectPosition = `${pos.x}% ${pos.y}%`; img.style.transformOrigin = `${pos.x}% ${pos.y}%`; img.style.transform = `scale(${pos.z})`; zEl.value = pos.z; };
+    // débordement réel de l'image dans le cadre (en px) pour qu'un glissement suive exactement le doigt
+    const over = () => { const nw = img.naturalWidth || 1, nh = img.naturalHeight || 1, bw = box.clientWidth, bh = box.clientHeight, k = Math.max(bw / nw, bh / nh); return { ox: nw * k * pos.z - bw, oy: nh * k * pos.z - bh }; };
+    const pts = new Map(); let last = null, pinch0 = null;
+    box.addEventListener('pointerdown', e => { box.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); last = { x: e.clientX, y: e.clientY }; if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y), z: pos.z }; } box.classList.add('drag'); });
+    box.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size >= 2 && pinch0) { const [a, b] = [...pts.values()]; pos.z = pinch0.z * Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, pinch0.d); apply(); return; }
+      const o = over(), dx = e.clientX - last.x, dy = e.clientY - last.y; last = { x: e.clientX, y: e.clientY };
+      if (o.ox > 0.5) pos.x -= dx / o.ox * 100; if (o.oy > 0.5) pos.y -= dy / o.oy * 100; apply();
+    });
+    const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch0 = null; if (pts.size === 1) last = [...pts.values()][0]; if (!pts.size) box.classList.remove('drag'); };
+    box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
+    box.addEventListener('wheel', e => { e.preventDefault(); pos.z *= e.deltaY < 0 ? 1.06 : 1 / 1.06; apply(); }, { passive: false });
+    zEl.addEventListener('input', () => { pos.z = +zEl.value; apply(); });
+    const step = 6;
+    sh.body.addEventListener('click', e => { const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
+      if (a === 'up') pos.y += step; if (a === 'down') pos.y -= step; if (a === 'left') pos.x += step; if (a === 'right') pos.x -= step;
+      if (a === 'reset') Object.assign(pos, { x: 50, y: 20, z: 1 }); apply(); });
+    sh.foot.onclick = async e => { const a = e.target.closest('[data-a]')?.dataset.a;
+      if (a === 'cancel') closeSheet(1);
+      if (a === 'ok') { S.photo = src; S.photoPos = { x: Math.round(pos.x * 10) / 10, y: Math.round(pos.y * 10) / 10, z: Math.round(pos.z * 100) / 100 };
+        await Store.put('photo', S.photo); await Store.put('photoPos', S.photoPos); closeSheet(1, () => { render(); toast(isNew ? 'Photo objectif ajoutée 💪' : 'Cadrage enregistré'); }); } };
+    openSheet(sh.el);
   }
   function viewProfile() {
     const p = S.profile, g = goals(), c = g, w = currentWeight();
@@ -786,7 +823,7 @@
       <section class="card stack">
         <div class="card-title">📷 Ma photo objectif</div>
         ${S.photo ? `<div class="photo-preview" style="background-image:url('${S.photo}')"></div>` : '<p class="note" style="margin:0">Ajoute une image de toi à ton poids objectif, générée par IA : elle s\'affichera en haut de l\'accueil pour te motiver chaque jour.</p>'}
-        <div class="grid2"><button class="btn ${S.photo ? 'outline' : ''}" data-action="photo-pick" ${S.photo ? '' : 'style="grid-column:1/-1"'}>${S.photo ? 'Changer' : 'Ajouter ma photo'}</button>${S.photo ? '<button class="btn danger" data-action="photo-del">Retirer</button>' : ''}</div>
+        <div class="grid2"><button class="btn ${S.photo ? 'outline' : ''}" data-action="photo-pick" ${S.photo ? '' : 'style="grid-column:1/-1"'}>${S.photo ? 'Changer' : 'Ajouter ma photo'}</button>${S.photo ? '<button class="btn danger" data-action="photo-del">Retirer</button><button class="btn outline" data-action="photo-crop" style="grid-column:1/-1">✥ Recadrer / déplacer</button>' : ''}</div>
         <details><summary class="btn plain" style="padding-left:0">Créer ma photo avec l'IA (ChatGPT, Gemini…)</summary>
           <ol class="note" style="padding-left:18px;margin:8px 0">
             <li>Ouvre l'app ChatGPT ou Gemini.</li>
@@ -1630,7 +1667,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', supps: S.supps, theme: S.theme, fx: S.fx, favs: S.favs, badges: S.badges, muscu: Mu.exportData() };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', photoPos: S.photoPos || null, supps: S.supps, theme: S.theme, fx: S.fx, favs: S.favs, badges: S.badges, muscu: Mu.exportData() };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
@@ -1649,7 +1686,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       const keepAI = S.ai;
       await Store.clear();
       await Store.put('ai', keepAI);
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx); if (d.favs) await Store.put('favs', d.favs); if (d.badges) { await Store.put('badges', d.badges); await Store.put('badgesInit', true); }
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.photoPos) await Store.put('photoPos', d.photoPos); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx); if (d.favs) await Store.put('favs', d.favs); if (d.badges) { await Store.put('badges', d.badges); await Store.put('badgesInit', true); }
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await Mu.importData(d.muscu);
       await loadState(); render(); toast('Sauvegarde restaurée');
@@ -1682,7 +1719,8 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       UI.date = k; openAdd(guessMeal(), k);
     },
     'photo-pick': () => $('#photoInput').click(),
-    'photo-del': () => { if (!confirm('Retirer ta photo objectif ?')) return; S.photo = ''; Store.del('photo'); render(); },
+    'photo-del': () => { if (!confirm('Retirer ta photo objectif ?')) return; S.photo = ''; S.photoPos = null; Store.del('photo'); Store.del('photoPos'); render(); },
+    'photo-crop': () => { if (S.photo) openPhotoEditor(S.photo, S.photoPos || { x: 50, y: 0, z: 1 }, false); },
     'copy-prompt': () => { navigator.clipboard?.writeText(aiPrompt()).then(() => toast('Texte copié ✓'), () => toast('Copie impossible : sélectionne le texte')); },
     'supps-manage': () => openSupps(),
     theme: b => setTheme(b.dataset.v),

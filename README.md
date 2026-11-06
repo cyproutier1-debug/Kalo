@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.7.2** : photo objectif recadrable (glisser, pincer/curseur pour zoomer, flèches, réinitialiser) avant validation et depuis Profil → « Recadrer / déplacer » ; aperçu identique au haut du Journal.
 - **v3.7.1** : « Qualité du jour » → menu déroulant d'idées d'aliments classées par points gagnés (chaque aliment testé sur ta journée, adapté aux calories restantes et au repas), conseil sel ; bouton ⓘ pour les explications.
 - **v3.7.0** : carte « Qualité du jour » (fibres, sel, fruits & légumes, laitiers, score /100), données Open Food Facts (fibres, sel, % fruits/légumes estimé des ingrédients) + rattrapage des produits déjà saisis, planificateur « Compléter ma journée » (combinaisons d'aliments simples respectant kcal/macros restants, adapté au repas, ajout en 1 tap), fibres/sel dans la fiche aliment, le formulaire et le scan IA. Module `nutri.js`.
 - **v3.6.8** : féculents étiquetés CRU / CUIT (recherche + fiche), unité « g cuits » avec conversion automatique (pâtes ÷2,3, riz ÷2,6…), journal affiché « 150 g cuits (≈ 65 g crus) ».
@@ -80,7 +81,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 
 - **Compléments** (entre le résumé du jour et le bilan) : crayon → ajoute tes compléments (suggestions créatine, magnésium, oméga 3, D3 + K2… ou nom/dose libres). Touche une pastille pour la cocher ; elles se décochent chaque nouveau jour. « Tous pris ✓ » quand tout est coché.
 
-- **Photo objectif** : Profil → *Ma photo objectif* → Ajouter. L'image (idéalement générée par IA à ton poids objectif) s'affiche en haut de l'accueil. Le Profil fournit le texte à coller dans ChatGPT / Gemini avec ta photo. L'image est compressée et stockée sur le téléphone (incluse dans l'export).
+- **Photo objectif** : Profil → *Ma photo objectif* → Ajouter → écran de cadrage (glisse pour déplacer, pince ou curseur pour zoomer, flèches pour ajuster, aperçu au format exact du haut du Journal) → Valider. « ✥ Recadrer / déplacer » pour reprendre le cadrage plus tard. L'image (idéalement générée par IA à ton poids objectif) s'affiche en haut de l'accueil. Le Profil fournit le texte à coller dans ChatGPT / Gemini avec ta photo. L'image est compressée et stockée sur le téléphone (incluse dans l'export).
 - **Repas** : sous chaque nom de repas, total protéines (P), glucides (G) et lipides (L) du repas, à côté des kcal.
 - **Anneau calories** : calories restantes, arc plein = mangé, arc clair = prévu.
 - **Barres protéines et glucides** : couleur selon la progression : rouge au départ, orange à mi-chemin, vert quand l'objectif est atteint.
