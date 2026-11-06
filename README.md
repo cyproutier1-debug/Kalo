@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.7.4** : photo de profil séparée de la photo objectif (Profil → touche ton avatar, recadrage rond, Retirer).
 - **v3.7.3** : « Données partielles » → bouton « Compléter » (fibres et sel par aliment, estimations rapides 0 / 1 / 3 / 6 g, valeur réutilisée tous les jours) ; 0 g automatique pour les aliments sans fibres par nature (viande, poisson, œufs, laitiers, whey, boissons, matières grasses) ; rattrapage Open Food Facts étendu aux aliments perso avec code-barres.
 - **v3.7.2** : photo objectif recadrable (glisser, pincer/curseur pour zoomer, flèches, réinitialiser) avant validation et depuis Profil → « Recadrer / déplacer » ; aperçu identique au haut du Journal.
 - **v3.7.1** : « Qualité du jour » → menu déroulant d'idées d'aliments classées par points gagnés (chaque aliment testé sur ta journée, adapté aux calories restantes et au repas), conseil sel ; bouton ⓘ pour les explications.
@@ -82,6 +83,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
 
 - **Compléments** (entre le résumé du jour et le bilan) : crayon → ajoute tes compléments (suggestions créatine, magnésium, oméga 3, D3 + K2… ou nom/dose libres). Touche une pastille pour la cocher ; elles se décochent chaque nouveau jour. « Tous pris ✓ » quand tout est coché.
 
+- **Photo de profil** (avatar) : séparée de la photo objectif. Profil → touche l'avatar rond → choisis une photo → recadrage dans un cercle → Valider (« Retirer » en la retouchant). Incluse dans l'export.
 - **Photo objectif** : Profil → *Ma photo objectif* → Ajouter → écran de cadrage (glisse pour déplacer, pince ou curseur pour zoomer, flèches pour ajuster, aperçu au format exact du haut du Journal) → Valider. « ✥ Recadrer / déplacer » pour reprendre le cadrage plus tard. L'image (idéalement générée par IA à ton poids objectif) s'affiche en haut de l'accueil. Le Profil fournit le texte à coller dans ChatGPT / Gemini avec ta photo. L'image est compressée et stockée sur le téléphone (incluse dans l'export).
 - **Repas** : sous chaque nom de repas, total protéines (P), glucides (G) et lipides (L) du repas, à côté des kcal.
 - **Anneau calories** : calories restantes, arc plein = mangé, arc clair = prévu.

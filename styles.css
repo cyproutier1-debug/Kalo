@@ -1061,3 +1061,9 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .fix-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .fix-quick .chip { font-size: 12px; padding: 6px 10px; }
 .fix-quick .chip.on { background: rgba(var(--accent-rgb), .2); border-color: rgba(var(--accent-rgb), .6); color: var(--accent); }
+/* v3.7.4 — photo de profil séparée */
+.avatar-edit { position: relative; padding: 0; cursor: pointer; overflow: visible; background-position: center; }
+.avatar-edit::before { content: ""; position: absolute; inset: 0; border-radius: 50%; }
+.avatar-cam { position: absolute; right: -2px; bottom: -2px; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font: 700 14px/30px var(--f-text); font-style: normal; text-align: center; box-shadow: 0 2px 8px rgba(0, 0, 0, .45); border: 2px solid var(--card, #0B0F0D); }
+.avatar { background-position: center; }
+.ph-box.round { border-radius: 50%; outline-offset: 3px; }

@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.7.3';
+  const APP_VERSION = '3.7.4';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -151,7 +151,7 @@
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.photoPos = all.photoPos || null; S.nutriFix = all.nutriFix || {}; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.photoPos = all.photoPos || null; S.nutriFix = all.nutriFix || {}; S.avatar = all.avatar || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -528,7 +528,7 @@
         <div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>Poids</span>${p.target ? '<span><i class="dash"></i>Objectif</span>' : ''}</div>
       </section>
       <section class="card prof-mini" data-tab="profile">
-        <div class="avatar" ${S.photo ? `style="background-image:url('${S.photo}')"` : ''}>${S.photo ? '' : ICON.body}</div>
+        <div class="avatar" ${S.avatar ? `style="background-image:url('${S.avatar}')"` : ''}>${S.avatar ? '' : ICON.body}</div>
         <div><div class="k num">${r0(g.kcal)} <small>kcal</small></div><div class="s">Objectif quotidien</div></div>
         <div class="chips2"><span>${p.sex === 'f' ? 'Femme' : 'Homme'}</span><span>${p.age} ans</span><span class="more">Voir plus ›</span></div>
       </section>`;
@@ -758,27 +758,28 @@
     const p = S.profile;
     return `Voici une photo de moi. Génère une image photoréaliste de moi-même à ${p.target ? r1(p.target) : 'mon poids idéal'} kg pour ${p.height} cm : garde exactement mon visage, ma couleur de peau, mes cheveux et mon âge. Silhouette plus sèche et athlétique, ventre plat, épaules et bras dessinés, posture confiante. Portrait vertical cadré du haut des cuisses à la tête, fond noir, éclairage de studio contrasté avec un léger reflet vert néon, rendu photo professionnelle très réaliste.`;
   }
-  async function handlePhoto(file) {
+  async function handlePhoto(file, kind) {
     try {
       const url = URL.createObjectURL(file);
       const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
       const sc = Math.min(1, 1100 / Math.max(img.naturalWidth, img.naturalHeight));
       const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      openPhotoEditor(c.toDataURL('image/jpeg', 0.88), { x: 50, y: 20, z: 1 }, true);
+      openPhotoEditor(c.toDataURL('image/jpeg', 0.88), kind === 'avatar' ? { x: 50, y: 30, z: 1 } : { x: 50, y: 20, z: 1 }, kind === 'avatar' ? !S.avatar : true, kind);
     } catch (e) { toast('Image illisible, essaie une autre photo'); }
   }
   /* Cadrage de la photo objectif : position (x, y en %) et zoom, appliqués via object-position + scale autour du même point */
   const photoImg = (src, pos) => { const q = pos || { x: 50, y: 0, z: 1 }; return `<img src="${src}" alt="" draggable="false" style="object-position:${q.x}% ${q.y}%;transform:scale(${q.z});transform-origin:${q.x}% ${q.y}%">`; };
-  function openPhotoEditor(src, pos0, isNew) {
+  function openPhotoEditor(src, pos0, isNew, kind) {
+    const av = kind === 'avatar';
     const pos = { x: 50, y: 0, z: 1, ...(pos0 || {}) };
-    const sh = makeSheet(isNew ? 'Cadrer ma photo' : 'Recadrer ma photo');
-    const heroH = Math.round($('.hero')?.offsetHeight || 260), boxW = Math.round(Math.min(window.innerWidth, 560) * 0.72);
-    sh.setBody(`<p class="muted small" style="margin:0 0 12px">Glisse la photo pour la placer, pince ou utilise le curseur pour zoomer. Le cadre montre exactement ce qui s'affichera en haut du Journal.</p>
-      <div class="ph-stage"><div class="ph-box" style="width:${boxW}px;height:${heroH}px">${photoImg(src, pos)}<i class="ph-shade"></i><i class="ph-grid"></i></div></div>
+    const sh = makeSheet(av ? 'Photo de profil' : isNew ? 'Cadrer ma photo' : 'Recadrer ma photo');
+    const heroH = av ? 240 : Math.round($('.hero')?.offsetHeight || 260), boxW = av ? 240 : Math.round(Math.min(window.innerWidth, 560) * 0.72);
+    sh.setBody(`<p class="muted small" style="margin:0 0 12px">Glisse la photo pour la placer, pince ou utilise le curseur pour zoomer. ${av ? 'Le cercle montre ta photo de profil.' : "Le cadre montre exactement ce qui s'affichera en haut du Journal."}</p>
+      <div class="ph-stage"><div class="ph-box ${av ? 'round' : ''}" style="width:${boxW}px;height:${heroH}px">${photoImg(src, pos)}${av ? '' : '<i class="ph-shade"></i>'}<i class="ph-grid"></i></div></div>
       <label class="field ph-zoom"><span>Zoom</span><input type="range" min="1" max="3" step="0.01" value="${pos.z}" data-f="z"></label>
       <div class="ph-nudge"><button class="btn ghost small" data-a="up" aria-label="Monter">▲</button><button class="btn ghost small" data-a="down" aria-label="Descendre">▼</button><button class="btn ghost small" data-a="left" aria-label="Gauche">◀</button><button class="btn ghost small" data-a="right" aria-label="Droite">▶</button><button class="btn plain small" data-a="reset">Réinitialiser</button></div>`);
-    sh.setFoot(`<button class="btn plain" data-a="cancel">Annuler</button><button class="btn grow" data-a="ok">Valider</button>`);
+    sh.setFoot(`${av && !isNew && S.avatar ? '<button class="btn danger" data-a="del">Retirer</button>' : '<button class="btn plain" data-a="cancel">Annuler</button>'}<button class="btn grow" data-a="ok">Valider</button>`);
     const box = $('.ph-box', sh.body), img = $('img', box), zEl = $('[data-f="z"]', sh.body);
     const apply = () => { pos.x = Math.max(0, Math.min(100, pos.x)); pos.y = Math.max(0, Math.min(100, pos.y)); pos.z = Math.max(1, Math.min(3, pos.z));
       img.style.objectPosition = `${pos.x}% ${pos.y}%`; img.style.transformOrigin = `${pos.x}% ${pos.y}%`; img.style.transform = `scale(${pos.z})`; zEl.value = pos.z; };
@@ -802,6 +803,14 @@
       if (a === 'reset') Object.assign(pos, { x: 50, y: 20, z: 1 }); apply(); });
     sh.foot.onclick = async e => { const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'cancel') closeSheet(1);
+      if (a === 'del') { S.avatar = ''; await Store.del('avatar'); closeSheet(1, () => { render(); toast('Photo de profil retirée'); }); return; }
+      if (a === 'ok' && av) { // photo de profil : on enregistre directement le carré recadré (400 px)
+        const c = document.createElement('canvas'), N = 400; c.width = c.height = N; const nw = img.naturalWidth, nh = img.naturalHeight, bw = box.clientWidth, bh = box.clientHeight, k = Math.max(bw / nw, bh / nh);
+        const dw = nw * k * pos.z, dh = nh * k * pos.z, left = pos.x / 100 * (bw - dw), top = pos.y / 100 * (bh - dh), sc = N / bw;
+        c.getContext('2d').drawImage(img, left * sc, top * sc, dw * sc, dh * sc);
+        S.avatar = c.toDataURL('image/jpeg', 0.88); await Store.put('avatar', S.avatar);
+        closeSheet(1, () => { render(); toast('Photo de profil enregistrée'); }); return;
+      }
       if (a === 'ok') { S.photo = src; S.photoPos = { x: Math.round(pos.x * 10) / 10, y: Math.round(pos.y * 10) / 10, z: Math.round(pos.z * 100) / 100 };
         await Store.put('photo', S.photo); await Store.put('photoPos', S.photoPos); closeSheet(1, () => { render(); toast(isNew ? 'Photo objectif ajoutée 💪' : 'Cadrage enregistré'); }); } };
     openSheet(sh.el);
@@ -816,7 +825,7 @@
     const prompt = aiPrompt();
     return `<h1>Mon profil</h1>
       <section class="card glow">
-        <div class="profile-head"><div class="avatar big" ${S.photo ? `style="background-image:url('${S.photo}')"` : ''}>${S.photo ? '' : ICON.body}</div>
+        <div class="profile-head"><button class="avatar big avatar-edit" data-action="avatar-pick" aria-label="${S.avatar ? 'Modifier' : 'Ajouter'} ma photo de profil" ${S.avatar ? `style="background-image:url('${S.avatar}')"` : ''}>${S.avatar ? '' : ICON.body}<i class="avatar-cam">${S.avatar ? '✎' : '📷'}</i></button>
           <div><div class="n">${esc(p.name || 'Mon profil')}</div><div class="d">${p.age} ans · ${hM} · ${r1(w)} kg</div></div></div>
         <div class="pstats"><div><b class="num">${r1(w)} kg</b><span>Poids actuel</span></div><div><b class="num">${p.target ? r1(p.target) + ' kg' : '–'}</b><span>Objectif</span></div><div><b class="num">${r1(imc)}</b><span>IMC</span></div></div>
       </section>
@@ -1667,7 +1676,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
 
   /* ---------- Export / import ---------- */
   async function exportData() {
-    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', photoPos: S.photoPos || null, nutriFix: S.nutriFix || {}, supps: S.supps, theme: S.theme, fx: S.fx, favs: S.favs, badges: S.badges, muscu: Mu.exportData() };
+    const data = { app: 'kalo', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, weights: S.weights, foods: S.foods, recents: S.recents, days: S.days, photo: S.photo || '', photoPos: S.photoPos || null, avatar: S.avatar || '', nutriFix: S.nutriFix || {}, supps: S.supps, theme: S.theme, fx: S.fx, favs: S.favs, badges: S.badges, muscu: Mu.exportData() };
     const name = `kalo-sauvegarde-${today()}.json`;
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const file = new File([blob], name, { type: 'application/json' });
@@ -1686,7 +1695,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       const keepAI = S.ai;
       await Store.clear();
       await Store.put('ai', keepAI);
-      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.photoPos) await Store.put('photoPos', d.photoPos); if (d.nutriFix) await Store.put('nutriFix', d.nutriFix); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx); if (d.favs) await Store.put('favs', d.favs); if (d.badges) { await Store.put('badges', d.badges); await Store.put('badgesInit', true); }
+      await Store.put('profile', d.profile); await Store.put('weights', d.weights || []); await Store.put('foods', d.foods || []); await Store.put('recents', d.recents || []); if (d.photo) await Store.put('photo', d.photo); if (d.photoPos) await Store.put('photoPos', d.photoPos); if (d.nutriFix) await Store.put('nutriFix', d.nutriFix); if (d.avatar) await Store.put('avatar', d.avatar); if (d.supps) await Store.put('supps', d.supps); if (d.theme) await Store.put('theme', d.theme); if (d.fx) await Store.put('fx', d.fx); if (d.favs) await Store.put('favs', d.favs); if (d.badges) { await Store.put('badges', d.badges); await Store.put('badgesInit', true); }
       for (const k in d.days || {}) await Store.put('day:' + k, d.days[k]);
       await Mu.importData(d.muscu);
       await loadState(); render(); toast('Sauvegarde restaurée');
@@ -1719,6 +1728,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       UI.date = k; openAdd(guessMeal(), k);
     },
     'photo-pick': () => $('#photoInput').click(),
+    'avatar-pick': () => $('#avatarInput').click(),
     'photo-del': () => { if (!confirm('Retirer ta photo objectif ?')) return; S.photo = ''; S.photoPos = null; Store.del('photo'); Store.del('photoPos'); render(); },
     'photo-crop': () => { if (S.photo) openPhotoEditor(S.photo, S.photoPos || { x: 50, y: 0, z: 1 }, false); },
     'copy-prompt': () => { navigator.clipboard?.writeText(aiPrompt()).then(() => toast('Texte copié ✓'), () => toast('Copie impossible : sélectionne le texte')); },
@@ -1819,6 +1829,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     if (t.dataset.input === 'import' && t.files[0]) importData(t.files[0]);
     if (t.dataset.input === 'theme') setTheme(t.value);
     if (t.dataset.input === 'photo' && t.files[0]) { handlePhoto(t.files[0]); t.value = ''; }
+    if (t.dataset.input === 'avatar' && t.files[0]) { handlePhoto(t.files[0], 'avatar'); t.value = ''; }
   });
 
   let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!stack.length) { if (UI.tab === 'progress') { drawChart(); drawProjection(); } if (UI.tab === 'journal') drawMini(); if (UI.tab === 'muscu') Mu.afterRender(); } }, 150); });
