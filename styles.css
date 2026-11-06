@@ -951,3 +951,17 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .supps.open .supp-drop { grid-template-rows: 1fr; }
 .supp-drop-in { overflow: hidden; min-height: 0; }
 .duo .supps { align-self: start; }
+
+/* v3.6.5 — eau toujours bleue, double vague, montée fluide */
+.water-bg .water-fill { top: 0 !important; height: 100%; background: linear-gradient(180deg, #4CC9F7 0%, #2F8BEF 45%, #1E56D6 100%) !important; transition: transform 1.25s cubic-bezier(.22, 1, .36, 1) !important; will-change: transform; }
+.water-bg .water-fill > svg { display: none; }
+.water-bg .water-fill .wave { display: block; position: absolute; left: 0; width: 200%; height: 16px; filter: none; }
+.water-bg .wave.w-back { top: -13px; fill: #2A79E6; opacity: .75; animation: wave 5.2s linear infinite reverse; }
+.water-bg .wave.w-front { top: -10px; fill: #4CC9F7; animation: wave 3.4s linear infinite; }
+.water.rising .wave.w-front { animation-duration: 1.3s; }
+.water.rising .wave.w-back { animation-duration: 2s; }
+.water.rising .water-fill .wave { height: 22px; transition: height .4s; }
+.water-shine { position: absolute; left: 10%; right: 55%; top: 10px; height: 46%; border-radius: 40px; background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0)); filter: blur(2px); pointer-events: none; }
+.water.done { box-shadow: 0 0 26px rgba(56, 189, 248, .35); }
+.duo .water { border-color: rgba(125, 211, 252, .3); }
+@media (prefers-reduced-motion: reduce) { .water-bg .wave { animation: none !important; } .water-bg .water-fill { transition: none !important; } }

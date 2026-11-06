@@ -13,14 +13,29 @@ window.KaloBoostInit = K => {
     // bouteille en fond de carte : l'eau monte jusqu'au niveau atteint, pourcentage au centre
     // couleur de progression comme les protéines / glucides : rouge (0 %) → orange (50 %) → vert (100 %)
     const col = progColor ? progColor(pct) : '#38BDF8';
+    const prevLvl = UI.waterLvl ?? 100, prevPct = UI.waterPct ?? 0; UI.waterLvl = lvl; UI.waterPct = Math.round(pct * 100);
+    if (prevLvl !== lvl || prevPct !== UI.waterPct) requestAnimationFrame(() => requestAnimationFrame(() => animWater(prevPct, UI.waterPct, prevLvl - lvl)));
     return `<section class="card water ${pct >= 1 ? 'done' : ''}" style="--wcol:${col}">
-      <div class="water-bg" aria-hidden="true"><div class="water-fill" style="top:${lvl.toFixed(1)}%"><svg viewBox="0 0 120 12" preserveAspectRatio="none"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z"/></svg></div></div>
+      <div class="water-bg" aria-hidden="true"><div class="water-fill" style="transform:translateY(${prevLvl.toFixed(1)}%)" data-lvl="${lvl.toFixed(1)}">${WAVE('w-back')}${WAVE('w-front')}<i class="water-shine"></i></div></div>
       <div class="water-fg">
         <div class="card-title">Hydratation</div>
-        <div class="water-center"><b class="num water-pct">${Math.round(pct * 100)}%</b><span class="num water-val">${r1(ml / 1000)} / ${r1(goal / 1000)} L</span></div>
+        <div class="water-center"><b class="num water-pct">${prevPct}%</b><span class="num water-val">${r1(ml / 1000)} / ${r1(goal / 1000)} L</span></div>
         <div class="water-btns"><button class="chip" data-action="water" data-v="-250" ${ml ? '' : 'disabled'} aria-label="Retirer un verre">−</button><button class="chip" data-action="water" data-v="250" aria-label="Ajouter un verre de 25 cl">+25 cl</button><button class="chip" data-action="water" data-v="500" aria-label="Ajouter 50 cl">+50 cl</button></div>
       </div>
     </section>`;
+  }
+  // vague : deux couches décalées (arrière plus sombre et plus lente) sur une période parfaitement raccordée
+  const WAVE = cls => `<svg class="wave ${cls}" viewBox="0 0 240 20" preserveAspectRatio="none"><path d="M0 10 C20 3 40 3 60 10 S100 17 120 10 S160 3 180 10 S220 17 240 10 V20 H0Z"/></svg>`;
+  function animWater(from, to, dLvl) {
+    const card = $('#view .card.water'); if (!card) return;
+    const fill = card.querySelector('.water-fill'), num = card.querySelector('.water-pct');
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (fill) { if (!reduce && dLvl > 0) { card.classList.remove('rising'); void card.offsetWidth; card.classList.add('rising'); setTimeout(() => card.classList.remove('rising'), 1500); } fill.style.transform = `translateY(${fill.dataset.lvl}%)`; }
+    if (!num) return;
+    if (reduce) { num.textContent = to + '%'; return; }
+    const t0 = performance.now(), D = 1100, ease = x => 1 - Math.pow(1 - x, 4);
+    const step = now => { const k = Math.min(1, (now - t0) / D); num.textContent = Math.round(from + (to - from) * ease(k)) + '%'; if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
   }
   function addWater(k, v) {
     const d = getDay(k), before = d.water || 0; d.water = Math.max(0, before + v); if (!d.water) delete d.water;
