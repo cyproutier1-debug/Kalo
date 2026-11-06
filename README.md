@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.8.0** : onglet **Social** au centre de la barre (amis par code, résumés nutrition/entraînement, classement 7 jours, fiche ami) ; l'ajout d'aliment passe sur un bouton + flottant dans le Journal. Serveur Supabase (`social.js`, `social-config.js`, `supabase/schema.sql`).
 - **v3.7.4** : photo de profil séparée de la photo objectif (Profil → touche ton avatar, recadrage rond, Retirer).
 - **v3.7.3** : « Données partielles » → bouton « Compléter » (fibres et sel par aliment, estimations rapides 0 / 1 / 3 / 6 g, valeur réutilisée tous les jours) ; 0 g automatique pour les aliments sans fibres par nature (viande, poisson, œufs, laitiers, whey, boissons, matières grasses) ; rattrapage Open Food Facts étendu aux aliments perso avec code-barres.
 - **v3.7.2** : photo objectif recadrable (glisser, pincer/curseur pour zoomer, flèches, réinitialiser) avant validation et depuis Profil → « Recadrer / déplacer » ; aperçu identique au haut du Journal.
@@ -16,7 +17,7 @@ L'app doit être servie en **https** (sinon pas de caméra ni d'installation). G
 
 1. Crée un compte sur https://github.com (gratuit).
 2. Clique **New repository** → nom : `kalo` → **Public** → **Create repository**.
-3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, fx.js, exercises.js, body.js, anim.js, anim3d.js, muscu.js, boost.js, sw.js, manifest.webmanifest, et les dossiers `icons`, `vendor`, `thumbs` et `fonts`) → **Commit changes**.
+3. Sur la page du dépôt : **uploading an existing file** → glisse **le contenu** du dossier `kalo` (index.html, app.js, styles.css, foods.js, fx.js, exercises.js, body.js, anim.js, anim3d.js, muscu.js, boost.js, sw.js, manifest.webmanifest, nutri.js, social.js, social-config.js, et les dossiers `icons`, `vendor`, `thumbs`, `fonts` et `supabase`) → **Commit changes**.
    - `index.html` doit être à la racine du dépôt, pas dans un sous-dossier.
 4. **Settings** → **Pages** → Source : **Deploy from a branch** → Branch : `main` / `(root)` → **Save**.
 5. Attends 1 à 2 minutes : l'adresse s'affiche en haut de la page Pages, du type `https://TON-PSEUDO.github.io/kalo/`.
@@ -136,6 +137,18 @@ Unbounded 900 (grands titres), Oxanium 800 (chiffres), Sora 700/600 (titres de c
 - Les fibres sont **facultatives** sur l'étiquette européenne : beaucoup de produits ne les indiquent pas. Kalo met 0 g automatiquement pour les aliments qui n'en contiennent pas par nature (viande, poisson, œufs, laitiers, whey, boissons, matières grasses : par catégorie Open Food Facts ou par le nom). Pour le reste, le bandeau « Fibres inconnues pour X % des calories · Compléter → » ouvre la liste des aliments concernés : saisis la valeur de l'emballage ou une estimation (0 / 1 / 3 / 6 g pour 100 g, total pour un ajout rapide) ; elle est réutilisée tous les jours et incluse dans l'export.
 - **Compléter ma journée** : teste ~14 000 combinaisons de 1 à 3 aliments simples et garde celles qui comblent protéines, fibres, fruits & légumes et laitiers **sans dépasser** les calories, glucides et lipides restants (sel limité si la journée est déjà salée). 3 propositions avec une source de protéines différente, adaptées au repas choisi (collation : laitiers, fruits, crudités, oléagineux ; repas : protéine + légumes). Ajout au journal en un geste.
 - Fiche aliment : fibres, sel, portion de fruits & légumes et de laitier pour la quantité saisie. Formulaire « Créer / Modifier un aliment » : champs fibres et sel. Photo IA : fibres, sel et grammes de fruits/légumes demandés à l'IA.
+
+## Social (v3.8)
+
+- **Onglet Social** (au centre de la barre). L'ajout d'aliment se fait avec le **bouton + flottant** en bas à droite du Journal (et « + Ajouter » sous chaque repas).
+- **Activation volontaire** : pseudo + case de consentement. Compte anonyme (pas d'e-mail ni de mot de passe), code ami de 6 caractères.
+- **Ajouter un ami** : saisis son code, ou ouvre son lien `…/Kalo/?ami=CODE` (bouton « Partager »). L'amitié est réciproque : donner son code = accepter d'être suivi. Retirer un ami coupe le partage dans les deux sens. 50 amis max.
+- **Partagé** : pseudo, photo de profil (96 px), pour les 14 derniers jours le % de calories et de protéines par rapport à l'objectif, le score qualité, les séries de jours ; les séances (nom, durée, séries, volume, muscles principaux, records) ; le poids **en % seulement** (30 jours, depuis le début, % du chemin vers l'objectif). **Jamais** : kg, taille, âge, aliments, photo objectif.
+- **Fiche ami** : stats 7 jours, barres calories vs objectif sur 14 jours (vert 80-105 %, point jaune = protéines atteintes), poids en %, séances récentes avec muscles et records.
+- **Classement 7 jours** : 2 pts/jour saisi, 3 pts/jour dans l'objectif kcal (80-105 %), 3 pts/jour protéines atteintes, 5 pts/séance, + qualité moyenne ÷ 20. Récompense la régularité, jamais le fait de manger moins.
+- **Réglages** (roue dentée) : pseudo et photo, mettre le partage en pause, changer de code, supprimer le compte social (efface profil, résumé et amitiés du serveur ; le journal du téléphone n'est pas touché).
+- Synchronisation : résumé envoyé quelques secondes après une modification et quand l'app passe en arrière-plan, seulement s'il a changé. Le compte social n'est pas dans l'export (changer de téléphone = réactiver et réajouter ses amis).
+- **Serveur** : projet Supabase gratuit. Une fois : coller `supabase/schema.sql` dans SQL Editor → Run ; Authentication → Sign In / Providers → activer « Allow anonymous sign-ins » ; mettre l'URL du projet et la clé publique (anon / publishable) dans `social-config.js`. Jamais la clé `service_role`. La sécurité repose sur les règles RLS : chacun ne lit que son profil et ceux de ses amis.
 
 ## Sources de données
 

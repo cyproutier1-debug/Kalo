@@ -630,5 +630,11 @@ window.KaloMuscuInit = K => {
   }
   const stats = (days = 7) => ({ n: M.workouts.length, streak: streakWeeks(), week: M.workouts.filter(w => w.start >= Date.now() - days * DAY).length,
     prs: M.workouts.reduce((a, w) => a + recordsOf(w).length, 0) });
-  return { view, afterRender, actions, onLoad, updateBanner, exportData, importData, stats, M };
+  /* Résumé partageable (onglet Social) : séances récentes sans le détail des séries */
+  const socialSummary = (days = 14) => M.workouts.filter(w => w.end && w.start >= Date.now() - days * DAY).sort((a, b) => b.start - a.start).slice(0, 20).map(w => {
+    const mus = {}; let sets = 0;
+    for (const x of w.exercises) { const e = exo(x.exId), n = x.sets.filter(s => isWork(s, e.type)).length; if (!n) continue; sets += n; mus[e.muscle] = (mus[e.muscle] || 0) + n; }
+    return { t: w.start, name: w.name, min: Math.round((w.end - w.start) / 60000), vol: Math.round(volume(w)), sets, mus: Object.entries(mus).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([m]) => (MUS[m]?.name || MUS[m] || m)), prs: recordsOf(w).slice(0, 3).map(r => ({ ex: exo(r.exId).name, txt: r.txt })) };
+  });
+  return { view, afterRender, actions, onLoad, updateBanner, exportData, importData, stats, socialSummary, M };
 };

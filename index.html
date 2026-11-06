@@ -25,11 +25,12 @@
     <nav id="tabbar" aria-label="Navigation principale">
       <button data-tab="journal" class="tab"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Journal</span></button>
       <button data-tab="progress" class="tab"><svg viewBox="0 0 24 24"><path d="M4 20V11M9.3 20V6M14.6 20v-6M20 20V9M2.5 20.5h19"/></svg><span>Progrès</span></button>
-      <button data-action="add-global" class="tab tab-plus" aria-label="Ajouter un aliment"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button data-tab="social" class="tab tab-social"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.9-3.6 3.4-5.5 6.5-5.5s5.6 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.7"/><path d="M16.5 14.6c2.6.1 4.3 1.8 5 4.9"/></svg><span>Social</span></button>
       <button data-tab="muscu" class="tab"><svg viewBox="0 0 24 24"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg><span>Muscu</span></button>
       <button data-tab="profile" class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>Profil</span></button>
     </nav>
     <button id="wo-banner" data-action="wo-open" hidden></button>
+    <button id="fab-add" data-action="add-global" aria-label="Ajouter un aliment" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     <div id="sheets"></div>
     <div id="toast" role="status"></div>
     <input type="file" id="photoInput" data-input="photo" accept="image/*" hidden>
@@ -46,6 +47,8 @@
   <script src="boost.js"></script>
   <script>(function(){var a=document.getElementById('ambient'),h='';for(var i=0;i<16;i++){var s=(2+Math.random()*3).toFixed(1);h+='<i style="left:'+(Math.random()*100).toFixed(1)+'%;width:'+s+'px;height:'+s+'px;animation-duration:'+(14+Math.random()*14).toFixed(1)+'s;animation-delay:-'+(Math.random()*28).toFixed(1)+'s;--dx:'+((Math.random()-.5)*60).toFixed(0)+'px"></i>';}a.innerHTML=h;})();</script>
   <script src="fx.js"></script>
+  <script src="social-config.js"></script>
+  <script src="social.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.7.4';
+  const APP_VERSION = '3.8.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -151,7 +151,7 @@
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.photoPos = all.photoPos || null; S.nutriFix = all.nutriFix || {}; S.avatar = all.avatar || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.photoPos = all.photoPos || null; S.nutriFix = all.nutriFix || {}; S.avatar = all.avatar || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all); So.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -358,10 +358,12 @@
     $('#tabbar').style.display = S.profile ? '' : 'none';
     if (!S.profile) { v.innerHTML = viewOnboarding(); bindOnboarding(); return; }
     $$('#tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === (UI.tab === 'foods' ? 'profile' : UI.tab)));
-    const views = { journal: viewJournal, progress: viewProgress, muscu: Mu.view, foods: viewFoods, profile: viewProfile };
+    const views = { journal: viewJournal, progress: viewProgress, muscu: Mu.view, foods: viewFoods, profile: viewProfile, social: So.view };
     v.innerHTML = (views[UI.tab] || viewJournal)();
     if (UI.tab === 'progress') { drawChart(); drawProjection(); }
     if (UI.tab === 'journal') drawMini();
+    const fab = $('#fab-add'); if (fab) fab.hidden = UI.tab !== 'journal';
+    So.schedule();
     if (UI.tab === 'muscu') Mu.afterRender();
     Mu.updateBanner();
     const key = UI.tab + (UI.tab === 'journal' ? UI.date : '');
@@ -1708,6 +1710,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
   /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
   const Nu = window.KaloNutriInit({ $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN, openDetail });
   GEN.forEach(Nu.enrichGen);
+  const So = window.KaloSocialInit({ $, esc, r0, r1, cap, dkey, addDays, today, F, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, currentWeight, sortedWeights, Mu, Nu, progColor, ICON });
   const Bo = window.KaloBoostInit({ Nu, $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
     goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData });
 
@@ -1803,7 +1806,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     },
     install: async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice.catch(() => {}); installPrompt = null; render(); },
   };
-  Object.assign(actions, Mu.actions, Bo.actions, Nu.actions, { 'quality-info': () => Nu.qualityInfo(), 'plan-day': () => Nu.openPlanner(UI.date) });
+  Object.assign(actions, Mu.actions, Bo.actions, Nu.actions, So.actions, { 'quality-info': () => Nu.qualityInfo(), 'plan-day': () => Nu.openPlanner(UI.date) });
 
   document.addEventListener('click', e => {
     if (e.target.matches?.('input[type=date]')) { try { e.target.showPicker?.(); } catch (err) { /* ignore */ } }
