@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.6.8** : féculents étiquetés CRU / CUIT (recherche + fiche), unité « g cuits » avec conversion automatique (pâtes ÷2,3, riz ÷2,6…), journal affiché « 150 g cuits (≈ 65 g crus) ».
 - **v3.6.7** : main pointeuse + anneau sous le point de poids sélectionné (Journal, Progrès, projection) ; service worker restauré.
 
 ## 1. Mettre l'app en ligne (gratuit, une seule fois, ~10 min)

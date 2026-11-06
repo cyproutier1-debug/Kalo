@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.6.7';
+  const APP_VERSION = '3.6.8';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -410,8 +410,26 @@
   }
 
   // Journal
+  /* Féculents : valeurs crues (paquet sec) ou cuites ? ratio poids cuit / poids cru moyen */
+  const STARCH = [
+    [/riz|risotto/i, 2.6], [/quinoa/i, 2.7], [/semoule|couscous|boulgour|boulghour|polenta/i, 2.4],
+    [/lentille|pois chiche|haricots? (secs?|rouges?|blancs?)|flageolet|f[èe]ves s[èe]ches/i, 2.5],
+    [/p[âa]tes|spaghett|penne|tagliatell|fusill|macaroni|coquillette|farfalle|linguine|lasagn|nouille|vermicelle|tortellini|ravioli|gnocchi|torsade|rigatoni|orzo|udon|soba|ramen/i, 2.3],
+  ];
+  function starchInfo(f) {
+    const p = f && f.per100; if (!p) return null;
+    const hit = STARCH.find(([re]) => re.test(f.name || '')); if (!hit) return null;
+    if (/galette|souffl|cracker|chips|biscuit|g[âa]teau|au lait|farine|cr[èe]me|boisson|lait de|vinaigre|sirop|sauce/i.test(f.name)) return null; // pas un féculent à cuire
+    if (/cuit|cuisin|pr[êe]t|micro-?ondes|express|sachet cuisson rapide|en conserve|bo[iî]te/i.test(f.name) && !/\bcru/i.test(f.name)) return p.kcal < 260 ? { state: 'cuit', ratio: hit[1] } : null;
+    if (/tortellini|ravioli|gnocchi/i.test(f.name) && p.kcal < 300) return null; // pâtes fraîches farcies : se pèsent telles quelles
+    if (p.kcal >= 280) return { state: 'cru', ratio: hit[1] };
+    if (p.kcal <= 200) return { state: 'cuit', ratio: hit[1] };
+    return null;
+  }
+  const crTag = st => st ? `<span class="badge cr cr-${st.state}">${st.state === 'cru' ? 'CRU · poids sec' : 'CUIT'}</span>` : '';
   function entrySub(e) {
     if (e.src === 'quick') return 'Ajout rapide';
+    if (e.cg) return [e.brand, `${r0(e.cg)} g cuits (≈ ${r0(e.grams)} g crus)`].filter(Boolean).join(' · ');
     const q = e.count && e.unit ? (e.count === 1 ? e.unit.label : `${r1(e.count)} × ${e.unit.label.replace(/^1\s+/, '')}`) + (/\d\s*(g|ml)\b/i.test(e.unit.label) ? '' : ` · ${r0(e.grams)} g`) : `${r0(e.grams)} g`;
     return [e.brand, q].filter(Boolean).join(' · ');
   }
@@ -718,7 +736,7 @@
     const p = f.per100;
     const thumb = f.img ? `<img class="thumb" src="${esc(f.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="thumb">${f.src === 'gen' ? 'GÉN' : f.src === 'custom' ? 'PERSO' : f.src === 'ai' ? 'IA' : 'OFF'}</span>`;
     const sub = [f.brand, p ? `${r0(p.kcal)} kcal · ${r1(p.p)} g prot. / 100 g` : 'valeurs manquantes'].filter(Boolean).join(' · ');
-    return `<button class="item" data-i="${i}">${thumb}<div class="grow"><div class="name">${esc(f.name)}</div><div class="sub">${esc(sub)}</div></div>${f.ns ? `<span class="badge ns ns-${f.ns}">${f.ns.toUpperCase()}</span>` : ''}</button>`;
+    return `<button class="item" data-i="${i}">${thumb}<div class="grow"><div class="name">${esc(f.name)} ${crTag(starchInfo(f))}</div><div class="sub">${esc(sub)}</div></div>${f.ns ? `<span class="badge ns ns-${f.ns}">${f.ns.toUpperCase()}</span>` : ''}</button>`;
   }
   function viewFoods() {
     return `<button class="btn plain back-link" data-tab="profile">${ICON.back} Profil</button><h1>Mes aliments</h1>
@@ -1366,8 +1384,10 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       return;
     }
     const recent = S.recents.find(r => foodKey(r) === foodKey(food));
+    const st = starchInfo(food), raw = st && st.state === 'cru';
     let mode = 'g', qty = 100;
-    if (entry) { if (entry.count && entry.unit) { mode = 'u'; qty = entry.count; } else qty = Math.round(entry.grams * 10) / 10; }
+    if (entry && entry.cg && raw) { mode = 'c'; qty = Math.round(entry.cg); }
+    else if (entry) { if (entry.count && entry.unit) { mode = 'u'; qty = entry.count; } else qty = Math.round(entry.grams * 10) / 10; }
     else if (ctx.grams) { mode = 'g'; qty = Math.round(ctx.grams); }
     else if (recent?.lastGrams) { if (recent.lastCount && food.unit) { mode = 'u'; qty = recent.lastCount; } else qty = recent.lastGrams; }
     else if (food.unit) { mode = 'u'; qty = 1; }
@@ -1375,28 +1395,32 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     sh.setBody(`
       <div class="food-hero">${food.img ? `<img src="${esc(food.img)}" alt="" referrerpolicy="no-referrer">` : ''}
         <div class="grow"><div class="title">${esc(food.name)}</div><div class="muted small">${esc([food.brand, food.qtyLabel].filter(Boolean).join(' · '))}</div>
-        <div style="margin-top:6px">${food.ns ? `<span class="badge ns ns-${food.ns}">Nutri-Score ${food.ns.toUpperCase()}</span> ` : ''}<span class="badge">${food.src === 'off' ? 'Open Food Facts' : food.src === 'custom' ? 'Mon aliment' : 'Générique'}</span> <button type="button" class="badge edit-food" data-a="edit-food">✎ Modifier l'aliment</button></div></div></div>
+        <div style="margin-top:6px">${food.ns ? `<span class="badge ns ns-${food.ns}">Nutri-Score ${food.ns.toUpperCase()}</span> ` : ''}<span class="badge">${food.src === 'off' ? 'Open Food Facts' : food.src === 'custom' ? 'Mon aliment' : 'Générique'}</span> ${crTag(st)} <button type="button" class="badge edit-food" data-a="edit-food">✎ Modifier l'aliment</button></div></div></div>
+      ${st ? `<div class="cr-note cr-${st.state}">${raw ? `<b>Valeurs pour le produit cru (sec).</b> Pesé avant cuisson → « g crus ». Pesé dans l'assiette → unité <b>« g cuits »</b>, l'appli divise par ${String(st.ratio).replace('.', ',')}.` : `<b>Valeurs pour le produit cuit.</b> Pèse ta portion cuite, dans l'assiette.`}</div>` : ''}
       <section class="card"><div class="nutri-grid"><div class="kc"><b class="num" data-o="kcal"></b><span>kcal</span></div><div class="pr"><b class="num" data-o="p"></b><span>protéines</span></div><div><b class="num" data-o="c"></b><span>glucides</span></div><div><b class="num" data-o="f"></b><span>lipides</span></div></div></section>
       <section class="card stack">
         <div class="qty-row"><label class="field"><span>Quantité</span><input type="number" inputmode="decimal" step="any" min="0" data-f="qty" value="${qty}"></label>
-        <label class="field"><span>Unité</span><select data-f="mode"><option value="g" ${mode === 'g' ? 'selected' : ''}>grammes (g / ml)</option>${food.unit ? `<option value="u" ${mode === 'u' ? 'selected' : ''}>${esc(food.unit.label)}${/\d\s*(g|ml)\b/i.test(food.unit.label) ? '' : ` — ${r0(food.unit.g)} g`}</option>` : ''}</select></label></div>
+        <label class="field"><span>Unité</span><select data-f="mode"><option value="g" ${mode === 'g' ? 'selected' : ''}>${raw ? 'g crus' : st ? 'g cuits' : 'grammes (g / ml)'}</option>${raw ? `<option value="c" ${mode === 'c' ? 'selected' : ''}>g cuits</option>` : ''}${food.unit ? `<option value="u" ${mode === 'u' ? 'selected' : ''}>${esc(food.unit.label)}${/\d\s*(g|ml)\b/i.test(food.unit.label) ? '' : ` — ${r0(food.unit.g)} g`}</option>` : ''}</select></label></div>
+        <div class="cr-conv muted small" data-o="conv"></div>
         <div class="chips" data-f="chips"></div>
         <label class="field"><span>Repas</span><select data-f="meal">${mealOptions(entry ? entry.meal : ctx.meal)}</select></label>
       </section>
       <p class="note">Pour 100 g : ${r0(p.kcal)} kcal · ${r1(p.p)} g protéines · ${r1(p.c)} g glucides · ${r1(p.f)} g lipides${food.code ? ` · code ${esc(food.code)}` : ''}</p>`);
     sh.setFoot(`${entry ? '<button class="btn danger" data-a="del">Supprimer</button>' : ''}<button class="btn grow" data-a="save">${entry ? 'Enregistrer' : 'Ajouter'}</button>`);
     const qEl = $('[data-f="qty"]', sh.body), mEl = $('[data-f="mode"]', sh.body), chips = $('[data-f="chips"]', sh.body);
-    const grams = () => { const v = num(qEl.value) || 0; return mEl.value === 'u' && food.unit ? v * food.unit.g : v; };
+    const grams = () => { const v = num(qEl.value) || 0; return mEl.value === 'u' && food.unit ? v * food.unit.g : mEl.value === 'c' && raw ? v / st.ratio : v; };
     const upd = () => {
       const k = grams() / 100;
+      const cv = $('[data-o="conv"]', sh.body);
+      cv.textContent = mEl.value === 'c' ? `≈ ${r0(grams())} g de produit sec comptés` : raw && mEl.value === 'g' ? `≈ ${r0(grams() * st.ratio)} g une fois cuit` : '';
       $('[data-o="kcal"]', sh.body).textContent = r0(p.kcal * k);
       $('[data-o="p"]', sh.body).textContent = r1(p.p * k);
       $('[data-o="c"]', sh.body).textContent = r1(p.c * k);
       $('[data-o="f"]', sh.body).textContent = r1(p.f * k);
     };
-    const drawChips = () => { chips.innerHTML = (mEl.value === 'u' ? [0.5, 1, 2, 3] : [30, 50, 100, 150, 200, 250]).map(v => `<button type="button" class="chip" data-v="${v}">${mEl.value === 'u' ? r1(v) : v + ' g'}</button>`).join(''); };
+    const drawChips = () => { chips.innerHTML = (mEl.value === 'u' ? [0.5, 1, 2, 3] : (mEl.value === 'c' ? [100, 150, 200, 250, 300, 350] : [30, 50, 100, 150, 200, 250])).map(v => `<button type="button" class="chip" data-v="${v}">${mEl.value === 'u' ? r1(v) : v + ' g'}</button>`).join(''); };
     qEl.addEventListener('input', upd);
-    mEl.addEventListener('change', () => { qEl.value = mEl.value === 'u' ? 1 : (food.unit ? food.unit.g : 100); drawChips(); upd(); });
+    mEl.addEventListener('change', () => { qEl.value = mEl.value === 'u' ? 1 : mEl.value === 'c' ? 200 : (food.unit ? food.unit.g : 100); drawChips(); upd(); });
     chips.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) { qEl.value = b.dataset.v; upd(); } });
     drawChips(); upd();
     // modifier l'aliment lui-même (valeurs, nom, portion) ; un produit Open Food Facts / générique devient « Mon aliment »
@@ -1414,7 +1438,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
         const e2 = {
           id: entry ? entry.id : uid(), meal, src: food.src, fid: food.id || '', code: food.code || '', name: food.name, brand: food.brand || '',
           per100: p, unit: food.unit || null, img: food.img || '', ns: food.ns || '', qtyLabel: food.qtyLabel || '',
-          grams: g, count, kcal: p.kcal * k, p: p.p * k, c: p.c * k, f: p.f * k, t: entry ? entry.t : Date.now(),
+          grams: g, count, cg: mEl.value === 'c' ? num(qEl.value) : null, kcal: p.kcal * k, p: p.p * k, c: p.c * k, f: p.f * k, t: entry ? entry.t : Date.now(),
         };
         const d = getDay(ctx.date);
         if (entry) d.entries = d.entries.map(x => x.id === entry.id ? e2 : x); else d.entries.push(e2);

@@ -976,3 +976,15 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 @keyframes handIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes handTap { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .chart-hand.show { animation: handIn .01s forwards; } }
+
+/* v3.6.8 — féculents cru / cuit */
+.badge.cr { font-weight: 700; letter-spacing: .02em; }
+.badge.cr-cru { background: rgba(255, 166, 0, .16); color: #FFB547; border: 1px solid rgba(255, 166, 0, .4); }
+.badge.cr-cuit { background: rgba(56, 189, 248, .14); color: #7DD3FC; border: 1px solid rgba(56, 189, 248, .4); }
+.item .name .badge.cr { font-size: 10px; padding: 2px 6px; vertical-align: 2px; margin-left: 4px; }
+.cr-note { margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; font-size: 13px; line-height: 1.4; color: var(--ink-2); }
+.cr-note b { color: var(--ink); }
+.cr-note.cr-cru { background: rgba(255, 166, 0, .09); border: 1px solid rgba(255, 166, 0, .3); }
+.cr-note.cr-cuit { background: rgba(56, 189, 248, .08); border: 1px solid rgba(56, 189, 248, .28); }
+.cr-conv:empty { display: none; }
+.cr-conv { margin-top: 2px; padding-left: 4px; }
