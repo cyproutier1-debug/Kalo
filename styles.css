@@ -933,3 +933,21 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .water-fg .water-btns { gap: 4px; padding: 0 2px; }
 .water-fg .water-btns .chip { font-size: 12px; padding: 7px 0; }
 .water-fg .water-btns .chip:first-child { flex: 0 0 30px; }
+
+/* v3.6.4 — eau sur toute la carte, couleur de progression ; compléments au-delà de 4 dans un menu déroulant */
+.water-bg { inset: 0 !important; border: 0 !important; border-radius: 0 !important; background: rgba(255, 255, 255, .02) !important; box-shadow: none !important; }
+.water-bg::before { display: none; }
+.water-bg .water-fill { background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(0, 0, 0, .28)), var(--wcol, #38BDF8); transition: top .6s cubic-bezier(.3, .8, .3, 1), background-color .6s; }
+.water-bg .water-fill svg { fill: var(--wcol, #38BDF8); filter: brightness(1.12); }
+.duo .water { border-color: color-mix(in srgb, var(--wcol, #38BDF8) 40%, transparent); }
+.water.done { box-shadow: 0 0 26px color-mix(in srgb, var(--wcol, #38BDF8) 45%, transparent); }
+.water-pct { color: var(--wcol, #fff); text-shadow: 0 0 2px #05070c, 0 0 4px #05070c, 0 1px 1px #05070c, 0 2px 12px rgba(0, 0, 0, .75); }
+.water-fg { padding: 16px 12px 12px; }
+.supp-more-btn { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 7px; padding: 8px 10px; border-radius: 14px; border: 1px dashed rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .03); color: var(--ink-2); font: 600 12.5px var(--f-card); }
+.supp-more-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .3s ease; flex: 0 0 auto; }
+.supps.open .supp-more-btn svg { transform: rotate(180deg); }
+.supps.open .supp-more-btn { color: var(--accent); border-color: rgba(var(--accent-rgb), .4); }
+.supp-drop { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .32s ease; }
+.supps.open .supp-drop { grid-template-rows: 1fr; }
+.supp-drop-in { overflow: hidden; min-height: 0; }
+.duo .supps { align-self: start; }

@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.6.3';
+  const APP_VERSION = '3.6.4';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -519,10 +519,14 @@
   function suppsCard(k) {
     const sl = S.supps, taken = S.days[k]?.supps || {};
     const n = sl.filter(x => taken[x.id]).length, all = sl.length && n === sl.length;
-    return `<section class="card supps ${all ? 'all' : ''}">
+    return `<section class="card supps ${all ? 'all' : ''} ${UI.suppsOpen ? 'open' : ''}">
       <div class="card-title">${ICON.pill}Compléments</div>
       <div class="row between supp-head"><span class="supp-count ${all ? 'good-text' : n ? '' : 'over-text'}">${sl.length ? (all ? 'Tous pris ✓' : `${n} / ${sl.length} pris`) : ''}</span><button class="icon-btn" data-action="supps-manage" aria-label="Gérer mes compléments">${ICON.edit}</button></div>
-      ${sl.length ? `<div class="supp-row">${sl.map(x => `<button class="supp ${taken[x.id] ? 'on' : ''}" data-action="supp-toggle" data-id="${x.id}" aria-pressed="${!!taken[x.id]}"><span class="dot">${ICON.check}</span><span class="txt"><b>${esc(x.name)}</b>${x.dose ? `<small>${esc(x.dose)}</small>` : ''}</span></button>`).join('')}</div>`
+      ${sl.length ? (() => {
+        const chip = x => `<button class="supp ${taken[x.id] ? 'on' : ''}" data-action="supp-toggle" data-id="${x.id}" aria-pressed="${!!taken[x.id]}"><span class="dot">${ICON.check}</span><span class="txt"><b>${esc(x.name)}</b>${x.dose ? `<small>${esc(x.dose)}</small>` : ''}</span></button>`;
+        const first = sl.slice(0, 4), rest = sl.slice(4), restTaken = rest.filter(x => taken[x.id]).length;
+        return `<div class="supp-row">${first.map(chip).join('')}</div>${rest.length ? `<button class="supp-more-btn" data-action="supps-more" aria-expanded="${!!UI.suppsOpen}"><span>+ ${rest.length} autre${rest.length > 1 ? 's' : ''}${restTaken ? ` · ${restTaken} pris` : ''}</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="supp-drop"><div class="supp-drop-in"><div class="supp-row">${rest.map(chip).join('')}</div></div></div>` : ''}`;
+      })()
         : '<button class="btn ghost block small" style="margin-top:12px" data-action="supps-manage">+ Ajouter (créatine, magnésium…)</button>'}
     </section>`;
   }
@@ -1606,7 +1610,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
   const Mu = window.KaloMuscuInit({ $, $$, esc, r0, r1, num, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, closeAll, niceStep, bindTip, currentWeight });
 
   /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
-  const Bo = window.KaloBoostInit({ $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet,
+  const Bo = window.KaloBoostInit({ $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
     goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData });
 
   /* ---------- Actions ---------- */
@@ -1641,6 +1645,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     'mini-range': b => { UI.mini = +b.dataset.v; render(); },
     fx: b => { S.fx[b.dataset.k] = b.dataset.v === '1'; Store.put('fx', S.fx); render(); },
     'fx-test': b => celebrate(() => b.closest('.card')),
+    'supps-more': b => { UI.suppsOpen = !UI.suppsOpen; b.closest('.supps')?.classList.toggle('open', UI.suppsOpen); b.setAttribute('aria-expanded', UI.suppsOpen); },
     'meal-done': b => {
       const k = UI.date, m = b.dataset.meal; if (isLocked(k)) return;
       const d = getDay(k); d.mealsDone = d.mealsDone || {};

@@ -1,7 +1,7 @@
 'use strict';
 // Kalo « boost » : coach du jour, hydratation, repas favoris, séries et trophées, bilan de la semaine, rappel de sauvegarde.
 window.KaloBoostInit = K => {
-  const { $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet,
+  const { $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
     goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData } = K;
   const DAY = 864e5;
 
@@ -11,7 +11,9 @@ window.KaloBoostInit = K => {
     const ml = S.days[k]?.water || 0, goal = waterGoal(), pct = Math.min(1, ml / goal);
     const lvl = (1 - pct) * 100;
     // bouteille en fond de carte : l'eau monte jusqu'au niveau atteint, pourcentage au centre
-    return `<section class="card water ${pct >= 1 ? 'done' : ''}">
+    // couleur de progression comme les protéines / glucides : rouge (0 %) → orange (50 %) → vert (100 %)
+    const col = progColor ? progColor(pct) : '#38BDF8';
+    return `<section class="card water ${pct >= 1 ? 'done' : ''}" style="--wcol:${col}">
       <div class="water-bg" aria-hidden="true"><div class="water-fill" style="top:${lvl.toFixed(1)}%"><svg viewBox="0 0 120 12" preserveAspectRatio="none"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z"/></svg></div></div>
       <div class="water-fg">
         <div class="card-title">Hydratation</div>
@@ -24,7 +26,7 @@ window.KaloBoostInit = K => {
     const d = getDay(k), before = d.water || 0; d.water = Math.max(0, before + v); if (!d.water) delete d.water;
     saveDay(k); render();
     try { navigator.vibrate?.(10); } catch (e) { /* ignore */ }
-    if (before < waterGoal() && (d.water || 0) >= waterGoal()) { toast('Objectif hydratation atteint 💧'); celebrate(() => $('#view .card.water')); }
+    if (before < waterGoal() && (d.water || 0) >= waterGoal()) { if (S.fx?.sound) window.KaloFX?.prime?.(); toast('Objectif hydratation atteint 💧'); try { navigator.vibrate?.(30); } catch (e) { /* ignore */ } requestAnimationFrame(() => celebrate(() => $('#view .card.water'))); }
   }
 
   /* ---------- Repas favoris ---------- */
