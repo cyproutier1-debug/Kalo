@@ -107,7 +107,7 @@ Unbounded 900 (grands titres), Oxanium 800 (chiffres), Sora 700/600 (titres de c
 
 ## Couleur de l'app
 
-- Profil → **Couleur de l'app** : 8 couleurs prêtes (vert, cyan, bleu, violet, rose, rouge, orange, jaune) ou couleur personnalisée. Appliquée partout instantanément, conservée et incluse dans l'export.
+- Profil → **Couleur de l'app** : 8 couleurs prêtes (vert, cyan, bleu, violet, rose, rouge, orange, jaune) ou couleur personnalisée. Jaune par défaut pour un nouveau compte (les comptes existants gardent leur couleur). Appliquée partout instantanément, conservée et incluse dans l'export.
 - Couleurs de sens fixes : vert = objectif atteint / déficit, orange = dépassement, bleu = repas validé. L'icône de l'écran d'accueil ne change pas (limite iOS / Android).
 
 ## Fonctionnement des objectifs

@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.6.1';
+  const APP_VERSION = '3.6.2';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -81,7 +81,7 @@
   /* ---------- Couleur de l'app ---------- */
   const THEMES = [['Vert', '#2EE68A'], ['Cyan', '#22D3EE'], ['Bleu', '#3D9BFF'], ['Violet', '#A76BFF'], ['Rose', '#FF5FA8'], ['Rouge', '#FF4D5E'], ['Orange', '#FF9A2E'], ['Jaune', '#FFD23F']];
   function applyTheme(hex) {
-    if (!/^#[0-9a-f]{6}$/i.test(hex || '')) hex = '#2EE68A';
+    if (!/^#[0-9a-f]{6}$/i.test(hex || '')) hex = '#FFD23F';
     const rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
     const mix = (t, to) => '#' + rgb.map((v, i) => Math.round(v + (to[i] - v) * t).toString(16).padStart(2, '0')).join('');
     const lum = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
@@ -146,12 +146,12 @@
   };
 
   /* ---------- État ---------- */
-  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [], ai: { provider: 'gemini', keys: {} }, theme: '#2EE68A', fx: { anim: true, sound: true } };
+  const S = { profile: null, days: {}, weights: [], foods: [], recents: [], off: {}, photo: '', supps: [], ai: { provider: 'gemini', keys: {} }, theme: '#FFD23F', fx: { anim: true, sound: true } };
   const UI = { tab: 'journal', date: today(), period: 'week', metric: 'kcal', anchor: today(), proj: 'auto', mini: 30 };
 
   async function loadState() {
     const all = await Store.loadAll();
-    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || '#2EE68A'; applyTheme(S.theme); S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
+    S.profile = all.profile || null; S.weights = all.weights || []; S.foods = all.foods || []; S.recents = all.recents || []; S.photo = all.photo || ''; S.supps = all.supps || []; S.ai = all.ai || { provider: 'gemini', keys: {} }; S.theme = all.theme || (all.profile ? '#2EE68A' : '#FFD23F'); applyTheme(S.theme); /* jaune par défaut pour les nouveaux comptes, vert conservé pour les anciens sans choix */ S.fx = { anim: true, sound: true, ...(all.fx || {}) }; Mu.onLoad(all); Bo.onLoad(all);
     S.days = {}; S.off = {};
     for (const k in all) {
       if (k.startsWith('day:')) S.days[k.slice(4)] = all[k];
@@ -1674,7 +1674,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
       const p = readProfileForm($('#oform')); if (!profileValid(p) || !p.weight) return;
       S.profile = { ...p, goalMode: 'auto', createdAt: today() };
       S.weights = [{ date: today(), kg: p.weight }];
-      Store.put('profile', S.profile); Store.put('weights', S.weights);
+      Store.put('profile', S.profile); Store.put('weights', S.weights); Store.put('theme', S.theme); // la couleur par défaut (jaune) est figée pour ce compte
       try { navigator.storage?.persist?.(); } catch (e) { /* ignore */ }
       UI.tab = 'journal'; render();
     },
