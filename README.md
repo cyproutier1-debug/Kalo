@@ -100,6 +100,7 @@ Les données (journal, pesées, aliments perso) sont stockées **uniquement sur 
   - Chaque téléphone a ses propres programmes : rien n'est partagé entre utilisateurs. Une copie non modifiée d'un programme proposé se met à jour automatiquement quand le modèle évolue.
 - Bibliothèque d'environ 100 exercices (`exercises.js`) + exercices personnalisés (charge × reps, poids du corps + lest, durée, cardio).
 - *Mes aliments* (aliments créés, récents) est maintenant dans Profil.
+- **Modifier un aliment** : sur la fiche d'un aliment (en l'ajoutant ou en touchant un aliment du journal), bouton « ✎ Modifier l'aliment » → nom, marque, valeurs pour 100 g, portion. Pour tes aliments, les ajouts déjà faits dans le journal sont recalculés ; un produit Open Food Facts ou générique modifié devient « Mon aliment » (reconnu au prochain scan).
 
 ## Polices
 

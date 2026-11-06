@@ -965,3 +965,4 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .water.done { box-shadow: 0 0 26px rgba(56, 189, 248, .35); }
 .duo .water { border-color: rgba(125, 211, 252, .3); }
 @media (prefers-reduced-motion: reduce) { .water-bg .wave { animation: none !important; } .water-bg .water-fill { transition: none !important; } }
+.badge.edit-food { border: 1px solid rgba(var(--accent-rgb), .45); color: var(--accent); background: rgba(var(--accent-rgb), .08); cursor: pointer; font: inherit; font-size: inherit; }

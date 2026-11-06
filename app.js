@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.6.5';
+  const APP_VERSION = '3.6.6';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1361,7 +1361,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     sh.setBody(`
       <div class="food-hero">${food.img ? `<img src="${esc(food.img)}" alt="" referrerpolicy="no-referrer">` : ''}
         <div class="grow"><div class="title">${esc(food.name)}</div><div class="muted small">${esc([food.brand, food.qtyLabel].filter(Boolean).join(' · '))}</div>
-        <div style="margin-top:6px">${food.ns ? `<span class="badge ns ns-${food.ns}">Nutri-Score ${food.ns.toUpperCase()}</span> ` : ''}<span class="badge">${food.src === 'off' ? 'Open Food Facts' : food.src === 'custom' ? 'Mon aliment' : 'Générique'}</span></div></div></div>
+        <div style="margin-top:6px">${food.ns ? `<span class="badge ns ns-${food.ns}">Nutri-Score ${food.ns.toUpperCase()}</span> ` : ''}<span class="badge">${food.src === 'off' ? 'Open Food Facts' : food.src === 'custom' ? 'Mon aliment' : 'Générique'}</span> <button type="button" class="badge edit-food" data-a="edit-food">✎ Modifier l'aliment</button></div></div></div>
       <section class="card"><div class="nutri-grid"><div class="kc"><b class="num" data-o="kcal"></b><span>kcal</span></div><div class="pr"><b class="num" data-o="p"></b><span>protéines</span></div><div><b class="num" data-o="c"></b><span>glucides</span></div><div><b class="num" data-o="f"></b><span>lipides</span></div></div></section>
       <section class="card stack">
         <div class="qty-row"><label class="field"><span>Quantité</span><input type="number" inputmode="decimal" step="any" min="0" data-f="qty" value="${qty}"></label>
@@ -1385,6 +1385,12 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
     mEl.addEventListener('change', () => { qEl.value = mEl.value === 'u' ? 1 : (food.unit ? food.unit.g : 100); drawChips(); upd(); });
     chips.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) { qEl.value = b.dataset.v; upd(); } });
     drawChips(); upd();
+    // modifier l'aliment lui-même (valeurs, nom, portion) ; un produit Open Food Facts / générique devient « Mon aliment »
+    $('[data-a="edit-food"]', sh.body).onclick = () => {
+      const own = food.src === 'custom' && S.foods.find(x => x.id === food.id);
+      const base = own || { ...food, id: undefined, src: 'custom' };
+      openFoodForm(base, { ctx: { ...ctx, entry, grams: grams() }, replace: sh });
+    };
     sh.foot.onclick = e => {
       const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'del') { deleteEntry(ctx.date, entry.id); closeAll(() => toast('Supprimé')); }
@@ -1485,6 +1491,7 @@ Les valeurs kcal, proteines, glucides, lipides sont celles de la quantité estim
         const nf = { src: 'custom', id: f.id || uid(), name, brand: g('brand'), code: g('code').replace(/\D/g, ''), per100: { kcal, p: num(g('p')) || 0, c: num(g('c')) || 0, f: num(g('f')) || 0 }, unit: ug > 0 ? { label: g('ul') || '1 portion', g: ug } : null };
         S.foods = editing ? S.foods.map(x => x.id === nf.id ? nf : x) : [nf, ...S.foods];
         Store.put('foods', S.foods);
+        if (editing) for (const [dk, d] of Object.entries(S.days)) { let ch = false; for (const e of d.entries || []) if (e.fid === nf.id && e.src === 'custom') { const k = e.grams / 100; Object.assign(e, { name: nf.name, brand: nf.brand, per100: nf.per100, unit: nf.unit, kcal: nf.per100.kcal * k, p: nf.per100.p * k, c: nf.per100.c * k, f: nf.per100.f * k }); ch = true; } if (ch) saveDay(dk); }
         if (ctx) closeSheet(replace ? 2 : 1, () => openDetail(nf, ctx));
         else closeSheet(1, () => toast('Aliment enregistré'));
       }
