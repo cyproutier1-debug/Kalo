@@ -73,6 +73,15 @@ window.KaloSocialInit = function (K) {
   }
   const schedule = () => { clearTimeout(upT); upT = setTimeout(() => upload(false), 8000); };
 
+  // messages compréhensibles pour les erreurs de configuration du serveur
+  function explain(e) {
+    const m = String(e?.message || e);
+    if (/anonymous.*(disabled|not enabled)|signups not allowed|signup.*disabled/i.test(m)) return 'Serveur : connexion anonyme désactivée (Supabase → Authentication → Sign In / Providers → « Allow anonymous sign-ins »)';
+    if (/PGRST20[25]|does not exist|schema cache|relation/i.test(m)) return 'Serveur : tables absentes (Supabase → SQL Editor → exécuter schema.sql)';
+    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Pas de connexion au serveur : vérifie ta connexion internet';
+    if (/invalid api key|apikey|No API key/i.test(m)) return 'Serveur : clé publique invalide';
+    return 'Activation impossible : ' + m;
+  }
   /* ---------- Amis ---------- */
   let loading = false;
   async function loadFriends() {
@@ -238,7 +247,7 @@ window.KaloSocialInit = function (K) {
       if (!$('[data-f="so-ok"]')?.checked) { toast('Coche la case pour accepter le partage'); return; }
       b.disabled = true; b.textContent = 'Activation…';
       try { await join(nm); toast('Social activé 🎉'); await loadFriends(); if (UI.soPending) { const c = UI.soPending; UI.soPending = ''; await addFriend(c); } }
-      catch (e) { toast('Activation impossible : ' + e.message); }
+      catch (e) { toast(explain(e), 6000); }
       render();
     },
     'so-add': async b => { const inp = $('[data-f="so-code"]'); b.disabled = true; const ok = await addFriend(inp?.value); b.disabled = false; if (ok) { UI.soPending = ''; render(); } },
