@@ -136,7 +136,6 @@ Unbounded 900 (grands titres), Oxanium 800 (chiffres), Sora 700/600 (titres de c
 
 - Produits : [Open Food Facts](https://world.openfoodfacts.org) (base collaborative, licence ODbL). Si un produit est absent ou incomplet, crée-le dans l'app : il sera reconnu au prochain scan.
 - Aliments génériques (`foods.js`) : valeurs moyennes, modifiables. Fibres, sel, part de fruits/légumes et portion laitière des génériques dans `nutri.js` (moyennes proches de la table Ciqual, Anses, Licence Ouverte).
-
 - Animations d'exercices : créées par Kalo (`anim.js` en 2D, `anim3d.js` en 3D, vignettes `thumbs/` générées à partir de `anim3d.js`), aucune image externe. Corps du personnage : maillage, squelette et morphologies MakeHuman (licence CC0, domaine public), préparés pour Kalo dans `vendor/human/` (~430 ko par version, chargés à l'ouverture d'une fiche). Moteur 3D : three.js r187 (MIT, © 2010-2026 three.js authors, `vendor/THREE-LICENSE.txt`).
 - Carte musculaire : react-native-body-highlighter (MIT, © 2022 ELABBASSI Hicham).
 - Scanner : détecteur natif du navigateur sur Android, bibliothèque ZXing (Apache 2.0, dans `vendor/`) sur iPhone.
