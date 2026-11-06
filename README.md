@@ -127,7 +127,15 @@ Unbounded 900 (grands titres), Oxanium 800 (chiffres), Sora 700/600 (titres de c
 ## Sources de données
 
 - Produits : [Open Food Facts](https://world.openfoodfacts.org) (base collaborative, licence ODbL). Si un produit est absent ou incomplet, crée-le dans l'app : il sera reconnu au prochain scan.
-- Aliments génériques (`foods.js`) : valeurs moyennes, modifiables.
+- Aliments génériques (`foods.js`) : valeurs moyennes, modifiables. Fibres, sel, part de fruits/légumes et portion laitière des génériques dans `nutri.js` (moyennes proches de la table Ciqual, Anses, Licence Ouverte).
+
+## Qualité du jour (v3.7)
+
+- Carte dans le Journal : **fibres** (objectif ≥ 30 g, Anses), **sel** (≤ 6 g, trait = limite), **fruits & légumes** (5 portions de 80 g, feuilles), **laitiers** (2 portions, PNNS 2019 : yaourt/skyr 125 g, fromage blanc 100 g, lait 150 ml, fromage 30 g). Score /100 = fibres 30 + fruits & légumes 35 + laitiers 15 + sel 20. Touche la carte pour les explications.
+- Produits scannés : fibres, sel et **% de fruits/légumes/légumineuses estimé depuis les ingrédients** par Open Food Facts (une salade composée compte pour sa part de légumes). Jus, confitures et fruits secs ne comptent pas. Légumineuses = ½ portion. Les produits saisis avant la v3.7 sont complétés automatiquement au premier affichage (réseau requis).
+- « Données partielles » s'affiche quand plus de 15 % des calories viennent d'aliments sans fibres renseignées (ajout rapide, étiquette incomplète) : pas d'estimation inventée.
+- **Compléter ma journée** : teste ~14 000 combinaisons de 1 à 3 aliments simples et garde celles qui comblent protéines, fibres, fruits & légumes et laitiers **sans dépasser** les calories, glucides et lipides restants (sel limité si la journée est déjà salée). 3 propositions avec une source de protéines différente, adaptées au repas choisi (collation : laitiers, fruits, crudités, oléagineux ; repas : protéine + légumes). Ajout au journal en un geste.
+- Fiche aliment : fibres, sel, portion de fruits & légumes et de laitier pour la quantité saisie. Formulaire « Créer / Modifier un aliment » : champs fibres et sel. Photo IA : fibres, sel et grammes de fruits/légumes demandés à l'IA.
 - Animations d'exercices : créées par Kalo (`anim.js` en 2D, `anim3d.js` en 3D, vignettes `thumbs/` générées à partir de `anim3d.js`), aucune image externe. Corps du personnage : maillage, squelette et morphologies MakeHuman (licence CC0, domaine public), préparés pour Kalo dans `vendor/human/` (~430 ko par version, chargés à l'ouverture d'une fiche). Moteur 3D : three.js r187 (MIT, © 2010-2026 three.js authors, `vendor/THREE-LICENSE.txt`).
 - Carte musculaire : react-native-body-highlighter (MIT, © 2022 ELABBASSI Hicham).
 - Scanner : détecteur natif du navigateur sur Android, bibliothèque ZXing (Apache 2.0, dans `vendor/`) sur iPhone.
