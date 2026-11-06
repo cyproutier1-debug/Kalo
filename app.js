@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.6.0';
+  const APP_VERSION = '3.6.1';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -490,8 +490,7 @@
       </section>
       ${Bo.backupCard()}
       ${Bo.coachCard(k)}
-      ${suppsCard(k)}
-      ${Bo.waterCard(k)}
+      <div class="duo">${suppsCard(k)}${Bo.waterCard(k)}</div>
       ${locked ? validatedCard(k, t, burn) : ''}
       <section class="card">
         <div class="row between"><div class="card-title">${ICON.cal}Bilan du jour</div>${locked ? '' : `<button class="watch-pill ${burn.measured ? 'on' : ''}" data-action="burn">${ICON.watch}Ma montre<i></i></button>`}</div>
@@ -521,10 +520,10 @@
     const sl = S.supps, taken = S.days[k]?.supps || {};
     const n = sl.filter(x => taken[x.id]).length, all = sl.length && n === sl.length;
     return `<section class="card supps ${all ? 'all' : ''}">
-      <div class="row between"><div class="card-title">${ICON.pill}Compléments</div>
-        <div class="row" style="gap:4px">${sl.length ? `<span class="supp-count ${all ? 'good-text' : n ? '' : 'over-text'}">${all ? 'Tous pris ✓' : `${n} / ${sl.length} pris`}</span>` : ''}<button class="icon-btn" data-action="supps-manage" aria-label="Gérer mes compléments">${ICON.edit}</button></div></div>
+      <div class="card-title">${ICON.pill}Compléments</div>
+      <div class="row between supp-head"><span class="supp-count ${all ? 'good-text' : n ? '' : 'over-text'}">${sl.length ? (all ? 'Tous pris ✓' : `${n} / ${sl.length} pris`) : ''}</span><button class="icon-btn" data-action="supps-manage" aria-label="Gérer mes compléments">${ICON.edit}</button></div>
       ${sl.length ? `<div class="supp-row">${sl.map(x => `<button class="supp ${taken[x.id] ? 'on' : ''}" data-action="supp-toggle" data-id="${x.id}" aria-pressed="${!!taken[x.id]}"><span class="dot">${ICON.check}</span><span class="txt"><b>${esc(x.name)}</b>${x.dose ? `<small>${esc(x.dose)}</small>` : ''}</span></button>`).join('')}</div>`
-        : '<button class="btn ghost block small" style="margin-top:12px" data-action="supps-manage">+ Ajouter mes compléments (créatine, magnésium…)</button>'}
+        : '<button class="btn ghost block small" style="margin-top:12px" data-action="supps-manage">+ Ajouter (créatine, magnésium…)</button>'}
     </section>`;
   }
   const SUPP_SUGGEST = [['Créatine', '5 g'], ['Magnésium', '300 mg'], ['Oméga 3', '2 gélules'], ['Vitamine D3 + K2', '1 gélule'], ['Zinc', '15 mg'], ['Multivitamines', '1 comprimé'], ['Whey', '30 g'], ['Vitamine C', '500 mg'], ['Fer', '1 comprimé'], ['Collagène', '10 g']];

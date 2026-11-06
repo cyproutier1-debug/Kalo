@@ -11,11 +11,14 @@ window.KaloBoostInit = K => {
     const ml = S.days[k]?.water || 0, goal = waterGoal(), pct = Math.min(1, ml / goal), glasses = Math.round(goal / 250), full = Math.floor(ml / 250);
     const lvl = (1 - pct) * 100;
     return `<section class="card water ${pct >= 1 ? 'done' : ''}">
-      <div class="water-bottle" aria-hidden="true"><div class="water-fill" style="top:${lvl.toFixed(1)}%"><svg viewBox="0 0 120 12" preserveAspectRatio="none"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z"/></svg></div><b class="num">${Math.round(pct * 100)}%</b></div>
-      <div class="grow"><div class="row between"><div class="card-title">💧 Hydratation</div><span class="num water-val">${r1(ml / 1000)} / ${r1(goal / 1000)} L</span></div>
-        <div class="glasses">${Array.from({ length: Math.min(16, glasses) }, (_, i) => `<i class="${i < full ? 'on' : ''}"></i>`).join('')}</div>
-        <div class="water-btns"><button class="chip" data-action="water" data-v="-250" ${ml ? '' : 'disabled'} aria-label="Retirer un verre">−</button><button class="chip" data-action="water" data-v="250">+ 1 verre</button><button class="chip" data-action="water" data-v="500">+ 50 cl</button></div>
-      </div></section>`;
+      <div class="card-title">💧 Hydratation</div>
+      <div class="water-top">
+        <div class="water-bottle" aria-hidden="true"><div class="water-fill" style="top:${lvl.toFixed(1)}%"><svg viewBox="0 0 120 12" preserveAspectRatio="none"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0Z"/></svg></div><b class="num">${Math.round(pct * 100)}%</b></div>
+        <div class="water-info"><span class="num water-val">${r1(ml / 1000)} <small>/ ${r1(goal / 1000)} L</small></span>
+          <div class="glasses">${Array.from({ length: Math.min(16, glasses) }, (_, i) => `<i class="${i < full ? 'on' : ''}"></i>`).join('')}</div></div>
+      </div>
+      <div class="water-btns"><button class="chip" data-action="water" data-v="-250" ${ml ? '' : 'disabled'} aria-label="Retirer un verre">−</button><button class="chip" data-action="water" data-v="250" aria-label="Ajouter un verre de 25 cl">+25 cl</button><button class="chip" data-action="water" data-v="500" aria-label="Ajouter 50 cl">+50 cl</button></div>
+    </section>`;
   }
   function addWater(k, v) {
     const d = getDay(k), before = d.water || 0; d.water = Math.max(0, before + v); if (!d.water) delete d.water;
@@ -77,9 +80,15 @@ window.KaloBoostInit = K => {
     if (h >= 14 && water < waterGoal() * 0.5) tips.push(`Pense à boire : seulement ${r1(water / 1000)} L aujourd'hui.`);
     if (h >= 12 && supps.length) tips.push(`Compléments à prendre : ${supps.slice(0, 3).map(x => esc(x.name)).join(', ')}${supps.length > 3 ? '…' : ''}.`);
     const sug = remP > 10 && remK > 80 ? suggestions(remK, remP, k) : [];
-    return `<section class="card coach"><div class="card-title">🧠 Coach du jour</div>
-      ${tips.map(x => `<p class="coach-tip">${x}</p>`).join('')}
-      ${sug.length ? `<div class="coach-sug"><span class="muted small">Idées tirées de tes aliments :</span>${sug.map((s, i) => `<button class="coach-food" data-action="coach-add" data-i="${i}"><b>${esc(s.f.name)}</b><span class="num">${r0(s.g)} g · +${r0(s.p)} g prot. · ${r0(s.kc)} kcal</span><i>+</i></button>`).join('')}</div>` : ''}
+    // seule la phrase principale est visible ; rappels et idées d'aliments dans un menu déroulant
+    const more = tips.slice(1), n = sug.length + more.length, open = !!UI.coachOpen;
+    return `<section class="card coach ${open ? 'open' : ''}"><div class="card-title">🧠 Coach du jour</div>
+      <p class="coach-tip">${tips[0]}</p>
+      ${n ? `<button class="coach-more" data-action="coach-toggle" aria-expanded="${open}"><span>${sug.length ? `${sug.length} idée${sug.length > 1 ? 's' : ''} d'aliments` : 'Rappels'}${sug.length && more.length ? ' et rappels' : ''}</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="coach-drop"><div class="coach-drop-in">
+        ${more.map(x => `<p class="coach-tip small">${x}</p>`).join('')}
+        ${sug.length ? `<div class="coach-sug"><span class="muted small">Idées tirées de tes aliments :</span>${sug.map((s, i) => `<button class="coach-food" data-action="coach-add" data-i="${i}"><b>${esc(s.f.name)}</b><span class="num">${r0(s.g)} g · +${r0(s.p)} g prot. · ${r0(s.kc)} kcal</span><i>+</i></button>`).join('')}</div>` : ''}
+      </div></div>` : ''}
     </section>`;
   }
   let lastSug = [];
@@ -229,6 +238,7 @@ window.KaloBoostInit = K => {
     water: b => addWater(UI.date, +b.dataset.v),
     'fav-save': b => saveFav(UI.date, b.dataset.meal),
     'coach-add': b => coachAdd(+b.dataset.i),
+    'coach-toggle': b => { UI.coachOpen = !UI.coachOpen; const c = b.closest('.coach'); c?.classList.toggle('open', UI.coachOpen); b.setAttribute('aria-expanded', UI.coachOpen); },
     badge: b => badgeInfo(b.dataset.id),
     'backup-later': () => { S.meta = { ...(S.meta || {}), snooze: Date.now() + 7 * DAY }; Store.put('meta', S.meta); render(); },
   };
