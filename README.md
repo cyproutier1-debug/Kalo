@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.8.15** : flou de mouvement sur l'animation des sélecteurs (le liquide se floute pendant le passage le plus rapide, net au départ et à l'arrivée).
 - **v3.8.14** : filet entre les boutons retiré (le bouton quitté se vide, le bouton choisi se remplit).
 - **v3.8.13** : sélecteurs en effet sablier : le bouton quitté se vide vers un goulot, un filet de liquide traverse, le bouton choisi se remplit (ease-in-out, 0,76 s, tout reste dans le cadre) ; la couleur du texte suit le liquide.
 - **v3.8.12** : animation « liquide » des sélecteurs (Rythme réel / prévu, 7j / 30j / 90j, Ma montre / Formule, etc.) : la pastille s'étire vers le bouton choisi, s'affine puis rebondit.

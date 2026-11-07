@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.14';
+  const APP_VERSION = '3.8.15';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -397,18 +397,20 @@
       place(ghost, from.x, from.w); ghost.style.opacity = 1;
       const gOut = dir > 0 ? { left: from.x + from.w - H * .5 + 'px', width: H * .5 + 'px' } : { left: from.x + 'px', width: H * .5 + 'px' };
       ghost.animate([
-        { left: from.x + 'px', width: from.w + 'px', transform: 'scaleY(1)', opacity: 1 },
-        { ...gOut, transform: 'scaleY(.55)', opacity: 1, offset: .5 },
-        { ...gOut, transform: 'scaleY(.2)', opacity: 0, offset: .62 },
-        { ...gOut, transform: 'scaleY(.2)', opacity: 0 },
+        { left: from.x + 'px', width: from.w + 'px', transform: 'scaleY(1)', opacity: 1, filter: 'blur(0px)' },
+        { left: (from.x + (parseFloat(gOut.left) - from.x) * .45) + 'px', width: (from.w + (parseFloat(gOut.width) - from.w) * .45) + 'px', transform: 'scaleY(.82)', opacity: 1, filter: 'blur(1.5px)', offset: .25 },
+        { ...gOut, transform: 'scaleY(.55)', opacity: 1, filter: 'blur(3px)', offset: .5 },
+        { ...gOut, transform: 'scaleY(.2)', opacity: 0, filter: 'blur(4px)', offset: .62 },
+        { ...gOut, transform: 'scaleY(.2)', opacity: 0, filter: 'blur(4px)' },
       ], { duration: D, easing: E, fill: 'forwards' });
       // 3) le nouveau bouton se remplit depuis le goulot (bord côté goulot fixe, l'autre avance)
       const pIn = dir > 0 ? { left: to.x + 'px', width: H * .5 + 'px' } : { left: to.x + to.w - H * .5 + 'px', width: H * .5 + 'px' };
       pill.animate([
-        { ...pIn, transform: 'scaleY(.2)', opacity: 0 },
-        { ...pIn, transform: 'scaleY(.2)', opacity: 0, offset: .38 },
-        { ...pIn, transform: 'scaleY(.55)', opacity: 1, offset: .5 },
-        { left: to.x + 'px', width: to.w + 'px', transform: 'scaleY(1)', opacity: 1 },
+        { ...pIn, transform: 'scaleY(.2)', opacity: 0, filter: 'blur(4px)' },
+        { ...pIn, transform: 'scaleY(.2)', opacity: 0, filter: 'blur(4px)', offset: .38 },
+        { ...pIn, transform: 'scaleY(.55)', opacity: 1, filter: 'blur(3px)', offset: .5 },
+        { left: (to.x + (dir > 0 ? 0 : to.w * .25)) + 'px', width: to.w * .75 + 'px', transform: 'scaleY(.85)', opacity: 1, filter: 'blur(1.5px)', offset: .75 },
+        { left: to.x + 'px', width: to.w + 'px', transform: 'scaleY(1)', opacity: 1, filter: 'blur(0px)' },
       ], { duration: D, easing: E });
       // le texte suit le liquide : l'ancien reste foncé tant qu'il est plein, le nouveau fonce quand il se remplit
       const old = btns.find(b => b !== on && Math.abs(b.offsetLeft - from.x) < 3);
