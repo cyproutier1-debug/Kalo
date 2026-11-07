@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.11';
+  const APP_VERSION = '3.8.12';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -369,7 +369,47 @@
     const key = UI.tab + (UI.tab === 'journal' ? UI.date : '');
     if (UI._shown !== key && !stack.length) { UI._shown = key; playEnter(v); }
     Bo.checkBadges(stack.length > 0);
+    liquidSegs();
   }
+
+  /* Sélecteurs segmentés : une pastille « liquide » glisse d'un bouton à l'autre.
+     Le bord avant part vite, le bord arrière traîne (étirement), la pastille s'amincit pendant le trajet puis rebondit légèrement. */
+  const segPos = new Map();
+  function liquidSegs(root = document) {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    root.querySelectorAll('.seg').forEach(seg => {
+      const btns = [...seg.children].filter(b => b.tagName === 'BUTTON'), on = btns.find(b => b.classList.contains('on'));
+      if (!on || !on.offsetWidth) return;
+      seg.classList.add('liquid');
+      let pill = seg.querySelector(':scope > .seg-pill');
+      if (!pill) { pill = document.createElement('i'); pill.className = 'seg-pill'; seg.prepend(pill); }
+      const key = btns.map(b => b.textContent.trim()).join('|');
+      const to = { x: on.offsetLeft, w: on.offsetWidth, y: on.offsetTop, h: on.offsetHeight };
+      const from = pill.dataset.x != null && pill.dataset.x !== '' ? { x: +pill.dataset.x, w: +pill.dataset.w } : segPos.get(key);
+      segPos.set(key, to); pill.dataset.x = to.x; pill.dataset.w = to.w;
+      Object.assign(pill.style, { top: to.y + 'px', height: to.h + 'px', width: to.w + 'px', transform: `translateX(${to.x}px)` });
+      if (!from || Math.abs(from.x - to.x) < 1 || reduce || !pill.animate) return;
+      const dir = to.x > from.x ? 1 : -1, fL = from.x, fR = from.x + from.w, tL = to.x, tR = to.x + to.w;
+      const lead = (a, b, k) => a + (b - a) * k;
+      // bord avant / bord arrière selon le sens
+      const frame = (kLead, kTrail, sy, over = 0) => {
+        const L = dir > 0 ? lead(fL, tL, kTrail) : lead(fL, tL, kLead) + over * dir;
+        const R = dir > 0 ? lead(fR, tR, kLead) + over * dir : lead(fR, tR, kTrail);
+        return { transform: `translateX(${L}px) scaleY(${sy})`, width: Math.max(8, R - L) + 'px' };
+      };
+      pill.getAnimations?.().forEach(a => a.cancel());
+      pill.animate([
+        { ...frame(0, 0, 1), offset: 0 },
+        { ...frame(.55, .08, .9), offset: .32 },
+        { ...frame(1, .55, .84, 3), offset: .6 },
+        { ...frame(1, .96, 1.05, 1), offset: .82 },
+        { ...frame(1, 1, 1), offset: 1 },
+      ], { duration: 620, easing: 'cubic-bezier(.3, .7, .2, 1)' });
+      on.animate?.([{ transform: 'scale(.94)' }, { transform: 'scale(1.03)', offset: .7 }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+    });
+  }
+  // sélecteurs qui changent sans re-rendu complet (fiches) : on recale après chaque toucher
+  document.addEventListener('click', e => { if (e.target.closest('.seg')) requestAnimationFrame(() => requestAnimationFrame(() => liquidSegs())); }, true);
 
   // Accueil / onboarding
   function profileFields(p = {}) {
