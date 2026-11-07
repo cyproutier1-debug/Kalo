@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.7';
+  const APP_VERSION = '3.8.8';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1835,6 +1835,9 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     if (t.dataset.input === 'avatar' && t.files[0]) { handlePhoto(t.files[0], 'avatar'); t.value = ''; }
   });
 
+  // pas de zoom au pincement (iOS ignore user-scalable=no) ; le recadrage photo garde son propre pincement (événements pointer)
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !e.target.closest('.ph-box')) e.preventDefault(); }, { passive: false });
   let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!stack.length) { if (UI.tab === 'progress') { drawChart(); drawProjection(); } if (UI.tab === 'journal') drawMini(); if (UI.tab === 'muscu') Mu.afterRender(); } }, 150); });
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; if (UI.tab === 'profile') render(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && UI.date !== today() && UI.tab === 'journal' && !stack.length && UI._lastToday !== today()) { UI.date = today(); render(); } UI._lastToday = today(); });

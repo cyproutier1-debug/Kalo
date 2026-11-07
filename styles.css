@@ -1150,3 +1150,6 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 #scroller { position: fixed; inset: 0; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; z-index: 1; }
 #tabbar { transform: translateZ(0); }
+/* v3.8.8 — pas de zoom : double-tap désactivé, pas de zoom auto sur les champs iOS (police ≥ 16 px) */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@supports (-webkit-touch-callout: none) { input, select, textarea { font-size: max(16px, 1em) !important; } }
