@@ -1146,3 +1146,7 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .duo .supp .txt b { flex: 0 1 auto; }
 .duo .supp .txt small { flex: 0 10 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .duo .supp .txt b { flex: none; max-width: 100%; }
+/* v3.8.7 — la page ne défile plus : seul #scroller défile, la barre d'onglets ne peut plus se décoller (rebond iOS) */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+#scroller { position: fixed; inset: 0; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; z-index: 1; }
+#tabbar { transform: translateZ(0); }

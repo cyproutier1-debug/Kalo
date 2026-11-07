@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.6';
+  const APP_VERSION = '3.8.7';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1784,7 +1784,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       S.weights = [{ date: today(), kg: p.weight }];
       Store.put('profile', S.profile); Store.put('weights', S.weights); Store.put('theme', S.theme); // la couleur par défaut (jaune) est figée pour ce compte
       try { navigator.storage?.persist?.(); } catch (e) { /* ignore */ }
-      UI.tab = 'journal'; render();
+      UI.tab = 'journal'; render(); $('#scroller')?.scrollTo(0, 0);
     },
     'save-profile': () => {
       const p = readProfileForm($('#pform')); delete p.weight;
@@ -1813,7 +1813,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     const prov = e.target.closest('#view [data-ai-prov]');
     if (prov) { saveAIKey($('#ai-settings')); S.ai.provider = prov.dataset.aiProv; Store.put('ai', S.ai); render(); return; }
     const tab = e.target.closest('[data-tab]');
-    if (tab) { UI.tab = tab.dataset.tab; if (UI.tab === 'progress') UI.anchor = today(); render(); window.scrollTo(0, 0); return; }
+    if (tab) { UI.tab = tab.dataset.tab; if (UI.tab === 'progress') UI.anchor = today(); render(); $('#scroller')?.scrollTo(0, 0); return; }
     const b = e.target.closest('[data-action]');
     if (b && !b.disabled && actions[b.dataset.action]) { actions[b.dataset.action](b, e); return; }
     const it = e.target.closest('#view [data-list] .item[data-i]');

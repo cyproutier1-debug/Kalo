@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.8.7** : la barre d'onglets ne se décolle plus du bas sur iPhone (seul le contenu défile, la page reste fixe ; plus de rebond qui déplace la barre).
 - **v3.8.6** : ligne Compléments + Hydratation plus basse (≈ −25 %) : compléments sur une ligne « nom · dose », hydratation plus compacte.
 - **v3.8.5** : ordre du Journal : Qualité du jour, Compléments + Hydratation, puis Coach du jour.
 - **v3.8.4** : « Qualité du jour » au-dessus du « Coach du jour » (v3.8.3 : adresse du serveur social corrigée).
