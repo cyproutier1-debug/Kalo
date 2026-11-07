@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.18';
+  const APP_VERSION = '3.8.19';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -395,37 +395,21 @@
       place(pill, to.x, to.w); ghost.style.opacity = 0;
       if (!from || Math.abs(from.x - to.x) < 1 || reduce || !pill.animate) return;
       track.querySelectorAll('*').forEach(el => el.getAnimations?.().forEach(a => a.cancel()));
-      const dir = to.x > from.x ? 1 : -1, H = to.h, D = 340, E = 'cubic-bezier(.65, 0, .35, 1)';
-      // ancien bouton : il se vide vers le côté du nouveau (bord opposé fixe)
-      place(ghost, from.x, from.w); ghost.style.opacity = '';
-      ghost.style.transformOrigin = dir > 0 ? 'right center' : 'left center';
-      const gS = Math.min(1, H * .5 / from.w);
-      ghost.animate([
-        { transform: 'translateX(0) scaleX(1)', opacity: 1 },
-        { transform: `translateX(${dir * H * .15}px) scaleX(${(1 + gS) / 2})`, opacity: 1, offset: .3 },
-        { transform: `translateX(${dir * H * .35}px) scaleX(${gS})`, opacity: 1, offset: .5 },
-        { transform: `translateX(${dir * H * .45}px) scaleX(${gS})`, opacity: 0, offset: .62 },
-        { transform: `translateX(${dir * H * .45}px) scaleX(${gS})`, opacity: 0 },
-      ], { duration: D, easing: E, fill: 'forwards' });
-      // nouveau bouton : il se remplit depuis le côté de l'ancien
-      pill.style.transformOrigin = dir > 0 ? 'left center' : 'right center';
-      const pS = Math.min(1, H * .5 / to.w);
+      // coulissement simple : la pastille glisse de l'ancien bouton au nouveau (transform seulement → GPU), courbe douce type iOS
+      const D = 420, E = 'cubic-bezier(.32, .72, 0, 1)';
+      pill.style.transformOrigin = 'left center';
       pill.animate([
-        { transform: `translateX(${-dir * H * .45}px) scaleX(${pS})`, opacity: 0 },
-        { transform: `translateX(${-dir * H * .45}px) scaleX(${pS})`, opacity: 0, offset: .38 },
-        { transform: `translateX(${-dir * H * .3}px) scaleX(${pS})`, opacity: 1, offset: .5 },
-        { transform: `translateX(${-dir * H * .1}px) scaleX(${(1 + pS) / 2 + .1})`, opacity: 1, offset: .74 },
-        { transform: 'translateX(0) scaleX(1)', opacity: 1 },
+        { transform: `translateX(${from.x - to.x}px) scaleX(${from.w / to.w})` },
+        { transform: 'translateX(0) scaleX(1)' },
       ], { duration: D, easing: E });
-      // flou de mouvement : fondu vers la copie floutée au moment le plus rapide
-      const blurIn = [{ opacity: 0 }, { opacity: .9, offset: .45 }, { opacity: .9, offset: .55 }, { opacity: 0 }];
-      const sharpOut = [{ opacity: 1 }, { opacity: .15, offset: .45 }, { opacity: .15, offset: .55 }, { opacity: 1 }];
-      [ghost, pill].forEach(el => { el.querySelector('.soft').animate(blurIn, { duration: D, easing: E }); el.querySelector('.sharp').animate(sharpOut, { duration: D, easing: E }); });
+      // léger flou de mouvement au départ, quand ça va le plus vite
+      pill.querySelector('.soft').animate([{ opacity: .7 }, { opacity: 0, offset: .55 }, { opacity: 0 }], { duration: D, easing: 'ease-out' });
+      pill.querySelector('.sharp').animate([{ opacity: .35 }, { opacity: 1, offset: .55 }, { opacity: 1 }], { duration: D, easing: 'ease-out' });
       // le texte suit le liquide : l'ancien reste foncé tant qu'il est plein, le nouveau fonce quand il se remplit
       const old = btns.find(b => b !== on && Math.abs(b.offsetLeft - from.x) < 3);
       const cOn = getComputedStyle(on).color, cOff = old ? getComputedStyle(old).color : null;
-      on.animate([{ color: cOff || cOn }, { color: cOff || cOn, offset: .55 }, { color: cOn }], { duration: D, easing: E });
-      if (old) old.animate([{ color: cOn }, { color: cOn, offset: .3 }, { color: cOff, offset: .55 }, { color: cOff }], { duration: D, easing: E });
+      on.animate([{ color: cOff || cOn }, { color: cOn }], { duration: D * .6, easing: 'ease-out' });
+      if (old) old.animate([{ color: cOn }, { color: cOff }], { duration: D * .6, easing: 'ease-out' });
     });
   }
   // sélecteurs qui changent sans re-rendu complet (fiches) : on recale après chaque toucher
