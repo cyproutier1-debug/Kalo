@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.16';
+  const APP_VERSION = '3.8.17';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -375,6 +375,9 @@
   /* Sélecteurs segmentés : effet sablier. Le liquide de l'ancien bouton se vide vers le nouveau
      en passant par un goulot étroit, puis remplit le bouton choisi. Tout reste dans le cadre (piste découpée). */
   const segPos = new Map();
+  // Animation 100 % GPU : seulement transform (translate/scale) et opacity. Le flou de mouvement est une copie floutée
+  // calculée une seule fois, qui apparaît puis disparaît (pas de flou recalculé à chaque image).
+  const blobHTML = '<b class="sharp"></b><b class="soft"></b>';
   function liquidSegs(root = document) {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     root.querySelectorAll('.seg').forEach(seg => {
@@ -382,7 +385,7 @@
       if (!on || !on.offsetWidth) return;
       seg.classList.add('liquid');
       let track = seg.querySelector(':scope > .seg-track');
-      if (!track) { track = document.createElement('i'); track.className = 'seg-track'; track.innerHTML = '<i class="seg-ghost"></i><i class="seg-pill"></i>'; seg.prepend(track); }
+      if (!track) { track = document.createElement('i'); track.className = 'seg-track'; track.innerHTML = `<i class="seg-ghost">${blobHTML}</i><i class="seg-pill">${blobHTML}</i>`; seg.prepend(track); }
       const pill = track.querySelector('.seg-pill'), ghost = track.querySelector('.seg-ghost');
       const key = btns.map(b => b.textContent.trim()).join('|');
       const to = { x: on.offsetLeft, w: on.offsetWidth, y: on.offsetTop, h: on.offsetHeight };
@@ -391,27 +394,33 @@
       const place = (el, x, w) => Object.assign(el.style, { top: to.y + 'px', height: to.h + 'px', left: x + 'px', width: w + 'px' });
       place(pill, to.x, to.w); ghost.style.opacity = 0;
       if (!from || Math.abs(from.x - to.x) < 1 || reduce || !pill.animate) return;
-      [pill, ghost].forEach(el => el.getAnimations?.().forEach(a => a.cancel()));
-      const dir = to.x > from.x ? 1 : -1, H = to.h, D = 760, E = 'cubic-bezier(.65, 0, .35, 1)';
-      // 1) l'ancien bouton se vide vers le goulot (bord opposé fixe, bord côté goulot qui recule)
-      place(ghost, from.x, from.w); ghost.style.opacity = 1;
-      const gOut = dir > 0 ? { left: from.x + from.w - H * .5 + 'px', width: H * .5 + 'px' } : { left: from.x + 'px', width: H * .5 + 'px' };
+      track.querySelectorAll('*').forEach(el => el.getAnimations?.().forEach(a => a.cancel()));
+      const dir = to.x > from.x ? 1 : -1, H = to.h, D = 720, E = 'cubic-bezier(.65, 0, .35, 1)';
+      // ancien bouton : il se vide vers le côté du nouveau (bord opposé fixe)
+      place(ghost, from.x, from.w); ghost.style.opacity = '';
+      ghost.style.transformOrigin = dir > 0 ? 'right center' : 'left center';
+      const gS = Math.min(1, H * .5 / from.w);
       ghost.animate([
-        { left: from.x + 'px', width: from.w + 'px', transform: 'none', opacity: 1, filter: 'blur(0px)' },
-        { left: (from.x + (parseFloat(gOut.left) - from.x) * .45) + 'px', width: (from.w + (parseFloat(gOut.width) - from.w) * .45) + 'px', transform: 'none', opacity: 1, filter: 'blur(1.5px)', offset: .25 },
-        { ...gOut, transform: 'none', opacity: 1, filter: 'blur(3px)', offset: .5 },
-        { ...gOut, transform: 'none', opacity: 0, filter: 'blur(4px)', offset: .62 },
-        { ...gOut, transform: 'none', opacity: 0, filter: 'blur(4px)' },
+        { transform: 'translateX(0) scaleX(1)', opacity: 1 },
+        { transform: `translateX(${dir * H * .15}px) scaleX(${(1 + gS) / 2})`, opacity: 1, offset: .3 },
+        { transform: `translateX(${dir * H * .35}px) scaleX(${gS})`, opacity: 1, offset: .5 },
+        { transform: `translateX(${dir * H * .45}px) scaleX(${gS})`, opacity: 0, offset: .62 },
+        { transform: `translateX(${dir * H * .45}px) scaleX(${gS})`, opacity: 0 },
       ], { duration: D, easing: E, fill: 'forwards' });
-      // 3) le nouveau bouton se remplit depuis le goulot (bord côté goulot fixe, l'autre avance)
-      const pIn = dir > 0 ? { left: to.x + 'px', width: H * .5 + 'px' } : { left: to.x + to.w - H * .5 + 'px', width: H * .5 + 'px' };
+      // nouveau bouton : il se remplit depuis le côté de l'ancien
+      pill.style.transformOrigin = dir > 0 ? 'left center' : 'right center';
+      const pS = Math.min(1, H * .5 / to.w);
       pill.animate([
-        { ...pIn, transform: 'none', opacity: 0, filter: 'blur(4px)' },
-        { ...pIn, transform: 'none', opacity: 0, filter: 'blur(4px)', offset: .38 },
-        { ...pIn, transform: 'none', opacity: 1, filter: 'blur(3px)', offset: .5 },
-        { left: (to.x + (dir > 0 ? 0 : to.w * .25)) + 'px', width: to.w * .75 + 'px', transform: 'none', opacity: 1, filter: 'blur(1.5px)', offset: .75 },
-        { left: to.x + 'px', width: to.w + 'px', transform: 'none', opacity: 1, filter: 'blur(0px)' },
+        { transform: `translateX(${-dir * H * .45}px) scaleX(${pS})`, opacity: 0 },
+        { transform: `translateX(${-dir * H * .45}px) scaleX(${pS})`, opacity: 0, offset: .38 },
+        { transform: `translateX(${-dir * H * .3}px) scaleX(${pS})`, opacity: 1, offset: .5 },
+        { transform: `translateX(${-dir * H * .1}px) scaleX(${(1 + pS) / 2 + .1})`, opacity: 1, offset: .74 },
+        { transform: 'translateX(0) scaleX(1)', opacity: 1 },
       ], { duration: D, easing: E });
+      // flou de mouvement : fondu vers la copie floutée au moment le plus rapide
+      const blurIn = [{ opacity: 0 }, { opacity: .9, offset: .45 }, { opacity: .9, offset: .55 }, { opacity: 0 }];
+      const sharpOut = [{ opacity: 1 }, { opacity: .15, offset: .45 }, { opacity: .15, offset: .55 }, { opacity: 1 }];
+      [ghost, pill].forEach(el => { el.querySelector('.soft').animate(blurIn, { duration: D, easing: E }); el.querySelector('.sharp').animate(sharpOut, { duration: D, easing: E }); });
       // le texte suit le liquide : l'ancien reste foncé tant qu'il est plein, le nouveau fonce quand il se remplit
       const old = btns.find(b => b !== on && Math.abs(b.offsetLeft - from.x) < 3);
       const cOn = getComputedStyle(on).color, cOff = old ? getComputedStyle(old).color : null;

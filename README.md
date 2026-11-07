@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.8.17** : animation des sélecteurs 100 % GPU (uniquement déplacement, étirement, transparence ; flou de mouvement par fondu vers une copie floutée) pour une fluidité maximale sur iPhone.
 - **v3.8.16** : animation des sélecteurs sans effet de rétrécissement en hauteur (le liquide garde toute la hauteur du bouton).
 - **v3.8.15** : flou de mouvement sur l'animation des sélecteurs (le liquide se floute pendant le passage le plus rapide, net au départ et à l'arrivée).
 - **v3.8.14** : filet entre les boutons retiré (le bouton quitté se vide, le bouton choisi se remplit).
