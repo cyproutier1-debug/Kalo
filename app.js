@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.13';
+  const APP_VERSION = '3.8.14';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -382,16 +382,16 @@
       if (!on || !on.offsetWidth) return;
       seg.classList.add('liquid');
       let track = seg.querySelector(':scope > .seg-track');
-      if (!track) { track = document.createElement('i'); track.className = 'seg-track'; track.innerHTML = '<i class="seg-ghost"></i><i class="seg-neck"></i><i class="seg-pill"></i>'; seg.prepend(track); }
-      const pill = track.querySelector('.seg-pill'), ghost = track.querySelector('.seg-ghost'), neck = track.querySelector('.seg-neck');
+      if (!track) { track = document.createElement('i'); track.className = 'seg-track'; track.innerHTML = '<i class="seg-ghost"></i><i class="seg-pill"></i>'; seg.prepend(track); }
+      const pill = track.querySelector('.seg-pill'), ghost = track.querySelector('.seg-ghost');
       const key = btns.map(b => b.textContent.trim()).join('|');
       const to = { x: on.offsetLeft, w: on.offsetWidth, y: on.offsetTop, h: on.offsetHeight };
       const from = track.dataset.x ? { x: +track.dataset.x, w: +track.dataset.w } : segPos.get(key);
       segPos.set(key, to); track.dataset.x = to.x; track.dataset.w = to.w;
       const place = (el, x, w) => Object.assign(el.style, { top: to.y + 'px', height: to.h + 'px', left: x + 'px', width: w + 'px' });
-      place(pill, to.x, to.w); ghost.style.opacity = 0; neck.style.opacity = 0;
+      place(pill, to.x, to.w); ghost.style.opacity = 0;
       if (!from || Math.abs(from.x - to.x) < 1 || reduce || !pill.animate) return;
-      [pill, ghost, neck].forEach(el => el.getAnimations?.().forEach(a => a.cancel()));
+      [pill, ghost].forEach(el => el.getAnimations?.().forEach(a => a.cancel()));
       const dir = to.x > from.x ? 1 : -1, H = to.h, D = 760, E = 'cubic-bezier(.65, 0, .35, 1)';
       // 1) l'ancien bouton se vide vers le goulot (bord opposé fixe, bord côté goulot qui recule)
       place(ghost, from.x, from.w); ghost.style.opacity = 1;
@@ -401,16 +401,6 @@
         { ...gOut, transform: 'scaleY(.55)', opacity: 1, offset: .5 },
         { ...gOut, transform: 'scaleY(.2)', opacity: 0, offset: .62 },
         { ...gOut, transform: 'scaleY(.2)', opacity: 0 },
-      ], { duration: D, easing: E, fill: 'forwards' });
-      // 2) le goulot : un filet fin qui relie les deux boutons
-      const nL = dir > 0 ? from.x + from.w - H * .5 : to.x + to.w - H * .5, nR = dir > 0 ? to.x + H * .5 : from.x + H * .5;
-      Object.assign(neck.style, { top: to.y + to.h / 2 - 3 + 'px', height: '6px', left: Math.min(nL, nR) + 'px', width: Math.abs(nR - nL) + 'px', transformOrigin: dir > 0 ? 'left center' : 'right center' });
-      neck.animate([
-        { transform: 'scaleX(0) scaleY(.4)', opacity: 0 },
-        { transform: 'scaleX(0) scaleY(.6)', opacity: 1, offset: .18 },
-        { transform: 'scaleX(1) scaleY(1)', opacity: 1, offset: .45 },
-        { transform: 'scaleX(1) scaleY(.5)', opacity: 1, offset: .7 },
-        { transform: 'scaleX(1) scaleY(0)', opacity: 0 },
       ], { duration: D, easing: E, fill: 'forwards' });
       // 3) le nouveau bouton se remplit depuis le goulot (bord côté goulot fixe, l'autre avance)
       const pIn = dir > 0 ? { left: to.x + 'px', width: H * .5 + 'px' } : { left: to.x + to.w - H * .5 + 'px', width: H * .5 + 'px' };
