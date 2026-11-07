@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.17';
+  const APP_VERSION = '3.8.18';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -395,7 +395,7 @@
       place(pill, to.x, to.w); ghost.style.opacity = 0;
       if (!from || Math.abs(from.x - to.x) < 1 || reduce || !pill.animate) return;
       track.querySelectorAll('*').forEach(el => el.getAnimations?.().forEach(a => a.cancel()));
-      const dir = to.x > from.x ? 1 : -1, H = to.h, D = 720, E = 'cubic-bezier(.65, 0, .35, 1)';
+      const dir = to.x > from.x ? 1 : -1, H = to.h, D = 340, E = 'cubic-bezier(.65, 0, .35, 1)';
       // ancien bouton : il se vide vers le côté du nouveau (bord opposé fixe)
       place(ghost, from.x, from.w); ghost.style.opacity = '';
       ghost.style.transformOrigin = dir > 0 ? 'right center' : 'left center';
