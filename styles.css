@@ -1125,3 +1125,24 @@ button.pd { font: inherit; color: inherit; cursor: pointer; }
 .so-diag { padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, .04); border-left: 3px solid rgba(255, 255, 255, .2); }
 .so-diag.ok { border-left-color: #2EE68A; } .so-diag.ko { border-left-color: #FF4D4F; }
 .so-diag .muted { margin-top: 4px; word-break: break-word; }
+/* v3.8.6 — ligne Compléments + Hydratation plus basse */
+.water-fg { min-height: 168px; padding: 12px 10px 10px; }
+.water-pct { font-size: 32px; }
+.duo > .card { padding: 11px 10px; }
+.duo .card-title { font-size: 15.5px; }
+.duo .card-title svg { width: 18px; height: 18px; }
+.duo .supp-head { min-height: 26px; margin-top: 0; }
+.duo .supp-row { margin-top: 4px; gap: 5px; }
+.duo .supp { padding: 4px 8px 4px 5px; gap: 7px; border-radius: 12px; }
+.duo .supp .dot { width: 22px; height: 22px; }
+.duo .supp .dot .ico-check { width: 15px; height: 15px; }
+.duo .supp .txt b { font-size: 13px; line-height: 1.15; }
+.duo .supp .txt small { font-size: 10.5px; line-height: 1.15; }
+.water-fg .water-btns .chip { padding: 5px 0; }
+.duo .supp .txt { display: flex; align-items: baseline; gap: 5px; overflow: hidden; }
+.duo .supp .txt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.duo .supp .txt small { flex: 0 0 auto; margin: 0; }
+.duo .supp-more-btn { margin-top: 5px; padding: 6px 9px; }
+.duo .supp .txt b { flex: 0 1 auto; }
+.duo .supp .txt small { flex: 0 10 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.duo .supp .txt b { flex: none; max-width: 100%; }
