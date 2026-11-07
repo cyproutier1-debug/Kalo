@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.4';
+  const APP_VERSION = '3.8.5';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -510,8 +510,8 @@
       </section>
       ${Bo.backupCard()}
       ${Nu.qualityCard(k)}
-      ${Bo.coachCard(k)}
       <div class="duo">${suppsCard(k)}${Bo.waterCard(k)}</div>
+      ${Bo.coachCard(k)}
       ${locked ? validatedCard(k, t, burn) : ''}
       <section class="card">
         <div class="row between"><div class="card-title">${ICON.cal}Bilan du jour</div>${locked ? '' : `<button class="watch-pill ${burn.measured ? 'on' : ''}" data-action="burn">${ICON.watch}Ma montre<i></i></button>`}</div>
