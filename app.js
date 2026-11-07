@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.12';
+  const APP_VERSION = '3.8.13';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -372,8 +372,8 @@
     liquidSegs();
   }
 
-  /* Sélecteurs segmentés : une pastille « liquide » glisse d'un bouton à l'autre.
-     Le bord avant part vite, le bord arrière traîne (étirement), la pastille s'amincit pendant le trajet puis rebondit légèrement. */
+  /* Sélecteurs segmentés : effet sablier. Le liquide de l'ancien bouton se vide vers le nouveau
+     en passant par un goulot étroit, puis remplit le bouton choisi. Tout reste dans le cadre (piste découpée). */
   const segPos = new Map();
   function liquidSegs(root = document) {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -381,31 +381,50 @@
       const btns = [...seg.children].filter(b => b.tagName === 'BUTTON'), on = btns.find(b => b.classList.contains('on'));
       if (!on || !on.offsetWidth) return;
       seg.classList.add('liquid');
-      let pill = seg.querySelector(':scope > .seg-pill');
-      if (!pill) { pill = document.createElement('i'); pill.className = 'seg-pill'; seg.prepend(pill); }
+      let track = seg.querySelector(':scope > .seg-track');
+      if (!track) { track = document.createElement('i'); track.className = 'seg-track'; track.innerHTML = '<i class="seg-ghost"></i><i class="seg-neck"></i><i class="seg-pill"></i>'; seg.prepend(track); }
+      const pill = track.querySelector('.seg-pill'), ghost = track.querySelector('.seg-ghost'), neck = track.querySelector('.seg-neck');
       const key = btns.map(b => b.textContent.trim()).join('|');
       const to = { x: on.offsetLeft, w: on.offsetWidth, y: on.offsetTop, h: on.offsetHeight };
-      const from = pill.dataset.x != null && pill.dataset.x !== '' ? { x: +pill.dataset.x, w: +pill.dataset.w } : segPos.get(key);
-      segPos.set(key, to); pill.dataset.x = to.x; pill.dataset.w = to.w;
-      Object.assign(pill.style, { top: to.y + 'px', height: to.h + 'px', width: to.w + 'px', transform: `translateX(${to.x}px)` });
+      const from = track.dataset.x ? { x: +track.dataset.x, w: +track.dataset.w } : segPos.get(key);
+      segPos.set(key, to); track.dataset.x = to.x; track.dataset.w = to.w;
+      const place = (el, x, w) => Object.assign(el.style, { top: to.y + 'px', height: to.h + 'px', left: x + 'px', width: w + 'px' });
+      place(pill, to.x, to.w); ghost.style.opacity = 0; neck.style.opacity = 0;
       if (!from || Math.abs(from.x - to.x) < 1 || reduce || !pill.animate) return;
-      const dir = to.x > from.x ? 1 : -1, fL = from.x, fR = from.x + from.w, tL = to.x, tR = to.x + to.w;
-      const lead = (a, b, k) => a + (b - a) * k;
-      // bord avant / bord arrière selon le sens
-      const frame = (kLead, kTrail, sy, over = 0) => {
-        const L = dir > 0 ? lead(fL, tL, kTrail) : lead(fL, tL, kLead) + over * dir;
-        const R = dir > 0 ? lead(fR, tR, kLead) + over * dir : lead(fR, tR, kTrail);
-        return { transform: `translateX(${L}px) scaleY(${sy})`, width: Math.max(8, R - L) + 'px' };
-      };
-      pill.getAnimations?.().forEach(a => a.cancel());
+      [pill, ghost, neck].forEach(el => el.getAnimations?.().forEach(a => a.cancel()));
+      const dir = to.x > from.x ? 1 : -1, H = to.h, D = 760, E = 'cubic-bezier(.65, 0, .35, 1)';
+      // 1) l'ancien bouton se vide vers le goulot (bord opposé fixe, bord côté goulot qui recule)
+      place(ghost, from.x, from.w); ghost.style.opacity = 1;
+      const gOut = dir > 0 ? { left: from.x + from.w - H * .5 + 'px', width: H * .5 + 'px' } : { left: from.x + 'px', width: H * .5 + 'px' };
+      ghost.animate([
+        { left: from.x + 'px', width: from.w + 'px', transform: 'scaleY(1)', opacity: 1 },
+        { ...gOut, transform: 'scaleY(.55)', opacity: 1, offset: .5 },
+        { ...gOut, transform: 'scaleY(.2)', opacity: 0, offset: .62 },
+        { ...gOut, transform: 'scaleY(.2)', opacity: 0 },
+      ], { duration: D, easing: E, fill: 'forwards' });
+      // 2) le goulot : un filet fin qui relie les deux boutons
+      const nL = dir > 0 ? from.x + from.w - H * .5 : to.x + to.w - H * .5, nR = dir > 0 ? to.x + H * .5 : from.x + H * .5;
+      Object.assign(neck.style, { top: to.y + to.h / 2 - 3 + 'px', height: '6px', left: Math.min(nL, nR) + 'px', width: Math.abs(nR - nL) + 'px', transformOrigin: dir > 0 ? 'left center' : 'right center' });
+      neck.animate([
+        { transform: 'scaleX(0) scaleY(.4)', opacity: 0 },
+        { transform: 'scaleX(0) scaleY(.6)', opacity: 1, offset: .18 },
+        { transform: 'scaleX(1) scaleY(1)', opacity: 1, offset: .45 },
+        { transform: 'scaleX(1) scaleY(.5)', opacity: 1, offset: .7 },
+        { transform: 'scaleX(1) scaleY(0)', opacity: 0 },
+      ], { duration: D, easing: E, fill: 'forwards' });
+      // 3) le nouveau bouton se remplit depuis le goulot (bord côté goulot fixe, l'autre avance)
+      const pIn = dir > 0 ? { left: to.x + 'px', width: H * .5 + 'px' } : { left: to.x + to.w - H * .5 + 'px', width: H * .5 + 'px' };
       pill.animate([
-        { ...frame(0, 0, 1), offset: 0 },
-        { ...frame(.55, .08, .9), offset: .32 },
-        { ...frame(1, .55, .84, 3), offset: .6 },
-        { ...frame(1, .96, 1.05, 1), offset: .82 },
-        { ...frame(1, 1, 1), offset: 1 },
-      ], { duration: 620, easing: 'cubic-bezier(.3, .7, .2, 1)' });
-      on.animate?.([{ transform: 'scale(.94)' }, { transform: 'scale(1.03)', offset: .7 }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+        { ...pIn, transform: 'scaleY(.2)', opacity: 0 },
+        { ...pIn, transform: 'scaleY(.2)', opacity: 0, offset: .38 },
+        { ...pIn, transform: 'scaleY(.55)', opacity: 1, offset: .5 },
+        { left: to.x + 'px', width: to.w + 'px', transform: 'scaleY(1)', opacity: 1 },
+      ], { duration: D, easing: E });
+      // le texte suit le liquide : l'ancien reste foncé tant qu'il est plein, le nouveau fonce quand il se remplit
+      const old = btns.find(b => b !== on && Math.abs(b.offsetLeft - from.x) < 3);
+      const cOn = getComputedStyle(on).color, cOff = old ? getComputedStyle(old).color : null;
+      on.animate([{ color: cOff || cOn }, { color: cOff || cOn, offset: .55 }, { color: cOn }], { duration: D, easing: E });
+      if (old) old.animate([{ color: cOn }, { color: cOn, offset: .3 }, { color: cOff, offset: .55 }, { color: cOff }], { duration: D, easing: E });
     });
   }
   // sélecteurs qui changent sans re-rendu complet (fiches) : on recale après chaque toucher
