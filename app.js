@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.3';
+  const APP_VERSION = '3.8.4';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -509,8 +509,8 @@
         <div class="today-sub num">${split ? `Mangé ${r0(t.eatenK)} · prévu ${r0(t.planK)} · ` : ''}consommé ${r0(t.kcal)} / ${r0(g.kcal)} kcal</div>
       </section>
       ${Bo.backupCard()}
-      ${Bo.coachCard(k)}
       ${Nu.qualityCard(k)}
+      ${Bo.coachCard(k)}
       <div class="duo">${suppsCard(k)}${Bo.waterCard(k)}</div>
       ${locked ? validatedCard(k, t, burn) : ''}
       <section class="card">
