@@ -463,7 +463,7 @@ h1 { font-size: 25px; }
 
 
 /* ===== v2.6 : fond dégradé bleu nuit + typographie de la maquette ===== */
-html { background: #02040A; }
+html { background: #04060E; }
 body { background: transparent; }
 body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
