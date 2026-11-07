@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.8.9** : barres de défilement masquées partout.
 - **v3.8.8** : zoom désactivé (pincement, double-tap, zoom automatique sur les champs de saisie iOS) ; le recadrage photo garde son pincement.
 - **v3.8.7** : la barre d'onglets ne se décolle plus du bas sur iPhone (seul le contenu défile, la page reste fixe ; plus de rebond qui déplace la barre).
 - **v3.8.6** : ligne Compléments + Hydratation plus basse (≈ −25 %) : compléments sur une ligne « nom · dose », hydratation plus compacte.

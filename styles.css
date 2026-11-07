@@ -1153,3 +1153,6 @@ html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 /* v3.8.8 — pas de zoom : double-tap désactivé, pas de zoom auto sur les champs iOS (police ≥ 16 px) */
 html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 @supports (-webkit-touch-callout: none) { input, select, textarea { font-size: max(16px, 1em) !important; } }
+/* v3.8.9 — pas de barre de défilement visible (rendu appli, pas site web) */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; background: transparent; }
