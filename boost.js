@@ -262,7 +262,7 @@ window.KaloBoostInit = K => {
       </div>
       <div class="wk-tiles">
         <div class="wk-tile"><div class="wk-l"><span class="wk-ico flame">${IC.flame}</span><b class="num">${r0(avgK)}</b></div><small>kcal / jour</small>${spark(tot.map(x => x.t.kcal), 'blue', 'spK')}</div>
-        <div class="wk-tile"><div class="wk-l"><span class="wk-ico bolt">${IC.bolt}</span><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / lg.length)}</b></div><small>kcal / jour ${def >= 0 ? 'de déficit' : "d'excédent"}</small>${spark(tot.map(x => dayBurn(x.k).v - x.t.kcal), 'cyan', 'spD')}</div>
+        <div class="wk-tile tap" data-action="def-open" role="button" aria-label="Voir le détail du déficit moyen"><div class="wk-l"><span class="wk-ico bolt">${IC.bolt}</span><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / lg.length)}</b></div><small>kcal / jour ${def >= 0 ? 'de déficit' : "d'excédent"}</small>${spark(tot.map(x => dayBurn(x.k).v - x.t.kcal), 'cyan', 'spD')}</div>
         <div class="wk-tile"><div class="wk-l"><span class="wk-ico scale">${IC.scale}</span><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / 7.7)} g</b></div><small>graisse estimée</small>${spark(fatC, 'green', 'spF')}</div>
         <div class="wk-tile"><div class="wk-l"><span class="wk-ico body">${IC.body}</span><b class="num">${dW == null ? '–' : (dW > 0 ? '+' : dW < 0 ? '−' : '') + String(r1(Math.abs(dW))).replace('.', ',') + ' kg'}</b></div><small>sur la balance</small>${spark(wSer, 'purple', 'spW')}</div>
       </div>

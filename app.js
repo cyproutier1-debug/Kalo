@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.9.8';
+  const APP_VERSION = '3.9.9';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1784,6 +1784,13 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
   /* ---------- Actions ---------- */
   const actions = {
     'def-range': b => { UI.defRange = +b.dataset.v; render(); },
+    'def-open': () => {
+      const sh = makeSheet('Déficit moyen');
+      const draw = () => { sh.setBody(deficitCard()); requestAnimationFrame(() => liquidSegs(sh.body)); };
+      draw(); sh.setFoot('<button class="btn grow" data-a="ok">Fermer</button>'); sh.foot.onclick = () => closeSheet(1);
+      sh.body.addEventListener('click', e => { const b = e.target.closest('[data-action="def-range"]'); if (!b) return; e.stopPropagation(); UI.defRange = +b.dataset.v; draw(); }, true);
+      openSheet(sh.el);
+    },
     'day-prev': () => { UI.date = dkey(addDays(dparse(UI.date), -1)); render(); },
     'day-next': () => { UI.date = dkey(addDays(dparse(UI.date), 1)); render(); },
     add: b => openAdd(b.dataset.meal),
