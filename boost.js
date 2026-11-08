@@ -172,6 +172,7 @@ window.KaloBoostInit = K => {
   const evalBadges = () => { const d = data(); return BADGES.map(([id, ico, name, desc, fn]) => { const [cur, tgt] = fn(d); return { id, ico, name, desc, cur: Math.min(+cur, tgt), tgt, ok: +cur >= tgt }; }); };
   let checking = false;
   function checkBadges(sheetsOpen) {
+    return; // trophées retirés de l'appli (v3.9.2)
     if (!S.profile || checking) return;
     const list = evalBadges(), seen = new Set(S.badges || []);
     const fresh = list.filter(b => b.ok && !seen.has(b.id));
@@ -194,18 +195,13 @@ window.KaloBoostInit = K => {
 
   /* ---------- Vue « Trophées & séries » (onglet Progrès) ---------- */
   function trophiesHTML() {
-    const list = evalBadges(), n = list.filter(b => b.ok).length;
     const sLog = streak(logged), sProt = streak(protHit), sKcal = streak(kcalOk);
-    const nextB = list.filter(b => !b.ok).sort((a, b) => b.cur / b.tgt - a.cur / a.tgt)[0];
     return `<div class="section-title"><h2>Séries</h2></div>
       <div class="streaks">
         <div class="streak ${sLog ? 'on' : ''}"><span class="fl">🔥</span><b class="num">${sLog}</b><small>jour${sLog > 1 ? 's' : ''} saisis</small></div>
         <div class="streak ${sProt ? 'on' : ''}"><span class="fl">💪</span><b class="num">${sProt}</b><small>jour${sProt > 1 ? 's' : ''} protéines ✓</small></div>
         <div class="streak ${sKcal ? 'on' : ''}"><span class="fl">🎯</span><b class="num">${sKcal}</b><small>jour${sKcal > 1 ? 's' : ''} sous l'objectif</small></div>
-      </div>
-      <div class="section-title"><h2>Trophées</h2><span class="muted num">${n} / ${list.length}</span></div>
-      ${nextB ? `<section class="card next-badge"><span class="ico">${nextB.ico}</span><div class="grow"><div class="small muted">Prochain trophée</div><b>${esc(nextB.name)}</b><div class="small">${esc(nextB.desc)}</div><div class="bar" style="margin-top:8px"><div style="width:${Math.round(nextB.cur / nextB.tgt * 100)}%;border-radius:8px"></div></div></div><span class="num small">${r0(nextB.cur)}/${r0(nextB.tgt)}</span></section>` : ''}
-      <div class="badges">${list.map(b => `<button class="badge-t ${b.ok ? 'ok' : ''}" data-action="badge" data-id="${b.id}"><span class="ico">${b.ico}</span><b>${esc(b.name)}</b>${b.ok ? '' : `<i style="width:${Math.round(b.cur / b.tgt * 100)}%"></i>`}</button>`).join('')}</div>`;
+      </div>`;
   }
   const badgeInfo = id => { const b = evalBadges().find(x => x.id === id); if (b) toast(`${b.ico} ${b.name} : ${b.desc}${b.ok ? ' · débloqué ✓' : ` · ${r0(b.cur)} / ${r0(b.tgt)}`}`, 3200); };
 
