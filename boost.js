@@ -220,19 +220,48 @@ window.KaloBoostInit = K => {
     const ws = sortedWeights(), w0 = ws.filter(w => w.date <= ks[0]).pop() || ws.find(w => w.date >= ks[0]), w1 = ws[ws.length - 1];
     const dW = w0 && w1 && w1.date > w0.date ? w1.kg - w0.kg : null;
     const mu = Mu.stats ? Mu.stats(7) : { week: 0 };
-    const C = 2 * Math.PI * 34;
-    return `<section class="card week">
-      <div class="row between"><div class="card-title">📊 Bilan des 7 derniers jours</div></div>
-      <div class="week-top"><div class="score-ring"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="8"/><circle class="arc" cx="40" cy="40" r="34" fill="none" stroke="url(#ringGrad)" style="stroke:var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(score / 100 * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg><div><b class="num">${grade[0]}</b><small class="num">${score}/100</small></div></div>
-        <div class="grow"><b class="week-grade">${grade[1]}</b><p class="note" style="margin:4px 0 0">Score = protéines atteintes + calories tenues, pondéré par le nombre de jours saisis (${lg.length}/7).</p></div></div>
-      <div class="week-grid">
-        <div><b class="num">${r0(avgK)}</b><small>kcal / jour</small></div>
-        <div><b class="num">${kOk}/${lg.length}</b><small>jours sous l'objectif</small></div>
-        <div><b class="num">${pHit}/${lg.length}</b><small>jours protéines ✓</small></div>
-        <div><b class="num ${def >= 0 ? 'good-text' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / 7.7)} g</b><small>graisse estimée</small></div>
-        <div><b class="num">${dW == null ? '–' : (dW > 0 ? '+' : dW < 0 ? '−' : '') + r1(Math.abs(dW)) + ' kg'}</b><small>sur la balance</small></div>
-        <div><b class="num">${mu.week ?? 0}</b><small>séance${(mu.week || 0) > 1 ? 's' : ''} de muscu</small></div>
-      </div></section>`;
+    // mini-courbes : calories par jour, graisse estimée cumulée, pesées de la semaine
+    const spark = (vals, cls, id) => {
+      const v = vals.filter(x => x != null); if (v.length < 2) return '';
+      const lo = Math.min(...v), hi = Math.max(...v), W = 100, H = 34, sp = hi - lo || 1;
+      const pts = vals.map((x, i) => x == null ? null : [i / (vals.length - 1) * W, 4 + (1 - (x - lo) / sp) * (H - 8)]).filter(Boolean);
+      // courbe lissée (Catmull-Rom → Bézier)
+      let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+      for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        d += `C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)},${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)},${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; }
+      return `<svg class="wk-spark ${cls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" x2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path d="${d}" fill="none" stroke="url(#${id})" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+    };
+    let cum = 0; const fatC = tot.map(x => (cum -= (dayBurn(x.k).v - x.t.kcal) / 7.7));
+    const wSer = ks.map(k => ws.find(w => w.date === k)?.kg ?? null);
+    const tone = grade[0] === 'S' || grade[0] === 'A' ? 'good' : grade[0] === 'B' ? 'mid' : grade[0] === 'C' ? 'warn' : 'bad';
+    const C = 2 * Math.PI * 52, IC = {
+      flame: '<svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.8.2 1.6 1 2.6 2 3.1C10.8 8.7 11.2 5.6 12 3z"/></svg>',
+      target: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2"/></svg>',
+      scale: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M8.5 9.5a4.8 4.8 0 0 1 7 0M12 9.6l1.6-2"/></svg>',
+      body: '<svg viewBox="0 0 24 24"><path d="M8.5 4.5c1 1.2 2.1 1.7 3.5 1.7s2.5-.5 3.5-1.7l4 2.5-1.8 3.5-2-1V20h-7.4V9.5l-2 1L4.5 7z"/><path d="M10 13h4"/></svg>',
+      dumbbell: '<svg viewBox="0 0 24 24"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg>',
+      bars: '<svg viewBox="0 0 24 24"><rect x="3.5" y="13" width="4" height="7" rx="1"/><rect x="10" y="8.5" width="4" height="11.5" rx="1"/><rect x="16.5" y="4" width="4" height="16" rx="1"/></svg>',
+      star: '<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/></svg>',
+    };
+    return `<section class="card week wk2">
+      <div class="wk-head"><span class="wk-logo">${IC.bars}</span><div class="card-title">Bilan des 7 derniers jours</div><button class="wk-gear" data-action="week-info" aria-label="Comment est calculé le bilan">${ICON.gear}</button></div>
+      <div class="wk-top">
+        <div class="wk-ring"><svg viewBox="0 0 120 120"><defs><linearGradient id="wkRing" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#2F7BFF"/><stop offset=".55" stop-color="#22C7E8"/><stop offset="1" stop-color="#3BE38A"/></linearGradient></defs>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(80,140,255,.12)" stroke-width="10"/>
+          <circle class="arc" cx="60" cy="60" r="52" fill="none" stroke="url(#wkRing)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(score / 100 * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 60 60)"/>
+          <circle cx="60" cy="60" r="40" fill="rgba(8,14,30,.85)" stroke="rgba(90,150,255,.18)" stroke-width="1"/></svg>
+          <div><b>${grade[0]}</b><small class="num">${score}/100</small></div></div>
+        <div class="grow"><span class="wk-badge ${tone}">${IC.star}${grade[1]}</span>
+          <p class="wk-desc">Score = protéines atteintes (${pHit}/${lg.length}) + calories tenues (${kOk}/${lg.length}), pondéré par le nombre de jours saisis (${lg.length}/7).</p></div>
+      </div>
+      <div class="wk-tiles">
+        <div class="wk-tile"><span class="wk-ico flame">${IC.flame}</span><div class="grow"><b class="num">${r0(avgK)}</b><small>kcal / jour</small></div>${spark(tot.map(x => x.t.kcal), 'blue', 'spK')}</div>
+        <div class="wk-tile"><span class="wk-ico target">${IC.target}</span><div class="grow"><b class="num">${kOk}/${lg.length}</b><small>jours sous l'objectif</small><i class="wk-bar"><i style="width:${Math.round(kOk / lg.length * 100)}%"></i></i></div></div>
+        <div class="wk-tile"><span class="wk-ico scale">${IC.scale}</span><div class="grow"><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / 7.7)} g</b><small>graisse estimée</small></div>${spark(fatC, 'green', 'spF')}</div>
+        <div class="wk-tile"><span class="wk-ico body">${IC.body}</span><div class="grow"><b class="num">${dW == null ? '–' : (dW > 0 ? '+' : dW < 0 ? '−' : '') + String(r1(Math.abs(dW))).replace('.', ',') + ' kg'}</b><small>sur la balance</small></div>${spark(wSer, 'purple', 'spW')}</div>
+      </div>
+      <button class="wk-row" data-tab="muscu"><span class="wk-ico dumb">${IC.dumbbell}</span><b class="num">${mu.week ?? 0}</b><small>séance${(mu.week || 0) > 1 ? 's' : ''} de muscu</small><span class="wk-chev">${ICON.right}</span></button>
+    </section>`;
   }
 
   /* ---------- Rappel de sauvegarde ---------- */
@@ -253,6 +282,7 @@ window.KaloBoostInit = K => {
     water: b => addWater(UI.date, +b.dataset.v),
     'fav-save': b => saveFav(UI.date, b.dataset.meal),
     'coach-add': b => coachAdd(+b.dataset.i),
+    'week-info': () => toast('Score /100 : chaque jour saisi vaut 50 pts si les protéines sont atteintes et 50 pts si les calories restent sous l\'objectif ; la moyenne est pondérée par le nombre de jours saisis sur 7. S ≥ 90, A ≥ 80, B ≥ 65, C ≥ 50.', 6000),
     'coach-toggle': b => { UI.coachOpen = !UI.coachOpen; const c = b.closest('.coach'); c?.classList.toggle('open', UI.coachOpen); b.setAttribute('aria-expanded', UI.coachOpen); },
     badge: b => badgeInfo(b.dataset.id),
     'backup-later': () => { S.meta = { ...(S.meta || {}), snooze: Date.now() + 7 * DAY }; Store.put('meta', S.meta); render(); },
