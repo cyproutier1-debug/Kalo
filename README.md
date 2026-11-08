@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.9.0** : **Coach poids** (onglet Progrès, au-dessus des pesées + une phrase dans le Coach du jour) : poids tendance lissé, tendance par semaine, moyenne 7 j vs 7 j précédents ; quand la balance remonte malgré la tendance ou le déficit, il chiffre pourquoi ce n'est pas de la graisse (≈ 7 700 kcal par kg) et détecte les causes probables (sel, glucides de la veille, séance de muscu, rebond après une grosse baisse) ; alerte stagnation 2 semaines ou perte trop rapide ; 8 conseils pour bien lire la balance. Module `poids.js`.
 - **v3.8.19** : sélecteurs : la pastille coulisse simplement d'un bouton à l'autre (0,42 s, démarrage vif puis arrivée en douceur façon iOS, léger flou de mouvement au départ).
 - **v3.8.18** : animation des sélecteurs deux fois plus rapide (0,34 s).
 - **v3.8.17** : animation des sélecteurs 100 % GPU (uniquement déplacement, étirement, transparence ; flou de mouvement par fondu vers une copie floutée) pour une fluidité maximale sur iPhone.

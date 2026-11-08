@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.8.19';
+  const APP_VERSION = '3.9.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1008,6 +1008,7 @@
         ${UI.period === 'year' && m !== 'weight' ? '<p class="note" style="margin:8px 0 0">Moyenne mensuelle des jours saisis.</p>' : ''}
       </section>
       <div class="stats">${stats}</div>
+      <div style="margin-top:14px">${Wc.card()}</div>
       <section class="card" style="margin-top:14px">
         <div class="row between" style="margin-bottom:6px"><h3 style="margin:0">Pesées</h3><button class="btn plain" data-action="add-weight">+ Ajouter</button></div>
         ${ws.length ? ws.map(w => `<button class="item" data-action="edit-weight" data-date="${w.date}" style="padding-left:0;padding-right:0"><div class="grow">${cap(F.dmy.format(dparse(w.date)))}</div><b class="num">${r1(w.kg)} kg</b></button>`).join('') : '<div class="empty small">Aucune pesée.</div>'}
@@ -1754,8 +1755,9 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
   /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
   const Nu = window.KaloNutriInit({ $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN, openDetail });
   GEN.forEach(Nu.enrichGen);
+  const Wc = window.KaloWeightInit({ S, UI, esc, r0, r1, dkey, dparse, addDays, today, cap, F, sortedWeights, dayTotals, dayBurn, Nu, Mu });
   const So = window.KaloSocialInit({ $, esc, r0, r1, cap, dkey, addDays, today, F, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, currentWeight, sortedWeights, Mu, Nu, progColor, ICON });
-  const Bo = window.KaloBoostInit({ Nu, $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
+  const Bo = window.KaloBoostInit({ Nu, Wc, $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
     goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData });
 
   /* ---------- Actions ---------- */
@@ -1850,7 +1852,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     },
     install: async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice.catch(() => {}); installPrompt = null; render(); },
   };
-  Object.assign(actions, Mu.actions, Bo.actions, Nu.actions, So.actions, { 'quality-info': () => Nu.qualityInfo(), 'plan-day': () => Nu.openPlanner(UI.date) });
+  Object.assign(actions, Mu.actions, Bo.actions, Nu.actions, So.actions, Wc.actions, { 'quality-info': () => Nu.qualityInfo(), 'plan-day': () => Nu.openPlanner(UI.date) });
 
   document.addEventListener('click', e => {
     if (e.target.matches?.('input[type=date]')) { try { e.target.showPicker?.(); } catch (err) { /* ignore */ } }
