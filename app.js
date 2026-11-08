@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.9.5';
+  const APP_VERSION = '3.9.6';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -635,8 +635,11 @@
     if (!pts.length) { wrap.innerHTML = '<div class="empty small">Aucune pesée sur cette période.<br><button class="btn plain" data-action="add-weight">+ Ajouter une pesée</button></div>'; return; }
     const W = Math.max(260, wrap.clientWidth || 320), H = 190, M = { l: 34, r: 14, t: 28, b: 22 };
     const pw = W - M.l - M.r, ph = H - M.t - M.b;
-    const t0 = start.getTime(), t1 = end.getTime() + 864e5;
+    // le graphique commence à la première pesée de la période (collé à gauche) et finit à la dernière (collé à droite)
+    const lastT = Math.max(pts[pts.length - 1].t, end.getTime() + 432e5);
+    const t0 = pts.length > 1 ? pts[0].t : start.getTime() + 432e5, t1 = lastT > t0 ? lastT : t0 + 864e5;
     const x = t => M.l + (t - t0) / (t1 - t0) * pw;
+    const s0 = dparse(pts[0].date) > start ? dparse(pts[0].date) : start, spanD = Math.round((t1 - t0) / 864e5);
     let lo = Math.min(...pts.map(q => q.v), tgt || Infinity), hi = Math.max(...pts.map(q => q.v));
     const padv = Math.max(1, (hi - lo) * 0.12); lo -= padv; hi += padv;
     const step = niceStep(hi - lo); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
@@ -644,7 +647,7 @@
     let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du poids"><defs><linearGradient id="miniFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--accent)" stop-opacity=".32"/><stop offset="1" style="stop-color:var(--accent)" stop-opacity="0"/></linearGradient></defs>`;
     for (let v = lo; v <= hi + 1e-9; v += step) s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--grid)"/><text x="${M.l - 6}" y="${y(v) + 4}" text-anchor="end">${r0(v)}</text>`;
     if (tgt) s += `<line x1="${M.l}" x2="${W - M.r}" y1="${y(tgt)}" y2="${y(tgt)}" stroke-dasharray="6 5" stroke-width="1.5" style="stroke:var(--ink-2)"/>`;
-    [start, addDays(start, Math.floor(N / 2)), end].forEach((dd, i) => { s += `<text x="${x(dd.getTime() + 432e5)}" y="${H - 5}" text-anchor="${i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}">${F.dm.format(dd)}</text>`; });
+    (spanD >= 2 ? [s0, addDays(s0, Math.round(spanD / 2)), end] : [s0, end]).forEach((dd, i, arr) => { s += `<text x="${x(dd.getTime() + 432e5)}" y="${H - 5}" text-anchor="${i === 0 ? 'start' : i === arr.length - 1 ? 'end' : 'middle'}">${F.dm.format(dd)}</text>`; });
     const line = pts.map((q, i) => (i ? 'L' : 'M') + x(q.t).toFixed(1) + ',' + y(q.v).toFixed(1)).join('');
     if (pts.length > 1) {
       s += `<path d="${line}L${x(pts[pts.length - 1].t).toFixed(1)},${M.t + ph}L${x(pts[0].t).toFixed(1)},${M.t + ph}Z" fill="url(#miniFill)"/>`;
