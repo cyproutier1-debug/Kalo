@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.9.0';
+  const APP_VERSION = '3.9.1';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1008,11 +1008,11 @@
         ${UI.period === 'year' && m !== 'weight' ? '<p class="note" style="margin:8px 0 0">Moyenne mensuelle des jours saisis.</p>' : ''}
       </section>
       <div class="stats">${stats}</div>
-      <div style="margin-top:14px">${Wc.card()}</div>
       <section class="card" style="margin-top:14px">
         <div class="row between" style="margin-bottom:6px"><h3 style="margin:0">Pesées</h3><button class="btn plain" data-action="add-weight">+ Ajouter</button></div>
         ${ws.length ? ws.map(w => `<button class="item" data-action="edit-weight" data-date="${w.date}" style="padding-left:0;padding-right:0"><div class="grow">${cap(F.dmy.format(dparse(w.date)))}</div><b class="num">${r1(w.kg)} kg</b></button>`).join('') : '<div class="empty small">Aucune pesée.</div>'}
       </section>
+      <div style="margin-top:14px">${Wc.card()}</div>
       ${Bo.trophiesHTML()}`;
   }
 
@@ -1650,7 +1650,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
         const d = $('[data-f="date"]', sh.body).value, kg = num($('[data-f="kg"]', sh.body).value);
         if (!d || !(kg >= 30 && kg <= 300)) { toast('Poids invalide'); return; }
         const before = goals().kcal;
-        S.weights = [...S.weights.filter(w => w.date !== d && (!ex || w.date !== ex.date)), { date: d, kg }];
+        S.weights = [...S.weights.filter(w => w.date !== d && (!ex || w.date !== ex.date)), { date: d, kg, ...(d === today() ? { h: new Date().getHours() + new Date().getMinutes() / 60 } : ex?.h != null && ex.date === d ? { h: ex.h } : {}) }];
         Store.put('weights', S.weights);
         const after = goals().kcal;
         closeSheet(1, () => toast(before !== after ? `Pesée enregistrée · nouvel objectif ${r0(after)} kcal` : 'Pesée enregistrée', 3200));
@@ -1755,7 +1755,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
   /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
   const Nu = window.KaloNutriInit({ $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN, openDetail });
   GEN.forEach(Nu.enrichGen);
-  const Wc = window.KaloWeightInit({ S, UI, esc, r0, r1, dkey, dparse, addDays, today, cap, F, sortedWeights, dayTotals, dayBurn, Nu, Mu });
+  const Wc = window.KaloWeightInit({ S, UI, esc, r0, r1, dkey, dparse, addDays, today, cap, F, sortedWeights, dayTotals, dayBurn, Nu, Mu, goals, currentWeight });
   const So = window.KaloSocialInit({ $, esc, r0, r1, cap, dkey, addDays, today, F, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, currentWeight, sortedWeights, Mu, Nu, progColor, ICON });
   const Bo = window.KaloBoostInit({ Nu, Wc, $, $$, esc, r0, r1, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, progColor,
     goals, dayTotals, getDay, saveDay, isLocked, dayBurn, currentWeight, sortedWeights, MEALS, mealName, guessMeal, openDetail, celebrate, Mu, exportData });

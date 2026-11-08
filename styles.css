@@ -1189,3 +1189,5 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adj
 .wc-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 14px; background: rgba(255, 255, 255, .04); text-align: center; }
 .wc-stats b { font-size: 16px; }
 .wc-stats span { font-size: 11px; color: var(--ink-3); line-height: 1.25; }
+.wc-sub { margin: 14px 0 2px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.wc-good { margin-top: 10px; padding: 10px 12px; border-radius: 14px; background: rgba(46, 230, 138, .08); border: 1px solid rgba(46, 230, 138, .25); font-size: 13px; color: #9BE7B9; line-height: 1.4; }
