@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.9.8** : le déficit moyen (kcal/jour, avec mini-courbe du déficit quotidien) remplace « jours sous l'objectif » dans le Bilan des 7 derniers jours ; la carte séparée « Déficit moyen » est retirée.
 - **v3.9.7** : carte « Déficit moyen » dans Progrès (sous le bilan 7 jours) avec sélecteur 7j / 30j / 90j : déficit moyen par jour saisi, graisse estimée par semaine (÷ 7 700 kcal/kg), tendance réelle de la balance pour comparer, jours saisis (dont avec la montre), meilleur et pire jour.
 - **v3.9.6** : mini-graphique Progrès du Journal collé à gauche : il démarre à la première pesée de la période et finit aujourd'hui, la courbe occupe toute la largeur et s'allonge au fil des pesées.
 - **v3.9.5** : graphique Calories / Protéines / Poids de l'onglet Progrès sur le même fond néon que le bilan 7 jours (léger halo sur les barres et courbes).

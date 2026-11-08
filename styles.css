@@ -1286,3 +1286,6 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adj
 .def-grid b { display: block; font-size: 16px; color: #F2F6FF; }
 .def-grid small { display: block; font-size: 11px; color: var(--ink-3); line-height: 1.3; margin-top: 2px; }
 .defc .card-title { white-space: nowrap; font-size: 17px; }
+/* v3.9.8 — déficit moyen dans le bilan 7 jours */
+.wk-ico.bolt { color: #33D6F0; } .wk-ico.bolt svg { fill: rgba(51, 214, 240, .25); filter: drop-shadow(0 0 5px rgba(51, 214, 240, .6)); }
+.wk-spark.cyan .ln { stroke: #33D6F0; } .wk-spark.cyan .a0 { stop-color: #33D6F0; stop-opacity: .32; } .wk-spark.cyan .a1 { stop-color: #33D6F0; stop-opacity: 0; }

@@ -240,6 +240,7 @@ window.KaloBoostInit = K => {
     const wSer = ks.map(k => ws.find(w => w.date === k)?.kg ?? null);
     const tone = grade[0] === 'S' || grade[0] === 'A' ? 'good' : grade[0] === 'B' ? 'mid' : grade[0] === 'C' ? 'warn' : 'bad';
     const C = 2 * Math.PI * 52, IC = {
+      bolt: '<svg viewBox="0 0 24 24"><path d="M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z"/></svg>',
       flame: '<svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.8.2 1.6 1 2.6 2 3.1C10.8 8.7 11.2 5.6 12 3z"/></svg>',
       target: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2"/></svg>',
       scale: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M8.5 9.5a4.8 4.8 0 0 1 7 0M12 9.6l1.6-2"/></svg>',
@@ -261,7 +262,7 @@ window.KaloBoostInit = K => {
       </div>
       <div class="wk-tiles">
         <div class="wk-tile"><div class="wk-l"><span class="wk-ico flame">${IC.flame}</span><b class="num">${r0(avgK)}</b></div><small>kcal / jour</small>${spark(tot.map(x => x.t.kcal), 'blue', 'spK')}</div>
-        <div class="wk-tile"><div class="wk-l"><span class="wk-ico target">${IC.target}</span><b class="num">${kOk}/${lg.length}</b></div><small>jours sous l'objectif</small><i class="wk-bar"><i style="width:${Math.round(kOk / lg.length * 100)}%"></i></i></div>
+        <div class="wk-tile"><div class="wk-l"><span class="wk-ico bolt">${IC.bolt}</span><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / lg.length)}</b></div><small>kcal / jour ${def >= 0 ? 'de déficit' : "d'excédent"}</small>${spark(tot.map(x => dayBurn(x.k).v - x.t.kcal), 'cyan', 'spD')}</div>
         <div class="wk-tile"><div class="wk-l"><span class="wk-ico scale">${IC.scale}</span><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / 7.7)} g</b></div><small>graisse estimée</small>${spark(fatC, 'green', 'spF')}</div>
         <div class="wk-tile"><div class="wk-l"><span class="wk-ico body">${IC.body}</span><b class="num">${dW == null ? '–' : (dW > 0 ? '+' : dW < 0 ? '−' : '') + String(r1(Math.abs(dW))).replace('.', ',') + ' kg'}</b></div><small>sur la balance</small>${spark(wSer, 'purple', 'spW')}</div>
       </div>
