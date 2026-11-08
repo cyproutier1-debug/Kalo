@@ -221,15 +221,20 @@ window.KaloBoostInit = K => {
     const dW = w0 && w1 && w1.date > w0.date ? w1.kg - w0.kg : null;
     const mu = Mu.stats ? Mu.stats(7) : { week: 0 };
     // mini-courbes : calories par jour, graisse estimée cumulée, pesées de la semaine
+    // mini-graphique : aire dégradée + courbe monotone (pas de vagues qui dépassent les vraies valeurs)
     const spark = (vals, cls, id) => {
-      const v = vals.filter(x => x != null); if (v.length < 2) return '';
-      const lo = Math.min(...v), hi = Math.max(...v), W = 100, H = 34, sp = hi - lo || 1;
-      const pts = vals.map((x, i) => x == null ? null : [i / (vals.length - 1) * W, 4 + (1 - (x - lo) / sp) * (H - 8)]).filter(Boolean);
-      // courbe lissée (Catmull-Rom → Bézier)
+      const v = vals.filter(x => x != null); if (v.length < 2) return '<i class="wk-spark-empty"></i>';
+      const lo = Math.min(...v), hi = Math.max(...v), W = 100, H = 24, sp = hi - lo || 1;
+      const pts = vals.map((x, i) => x == null ? null : [i / (vals.length - 1) * W, 3 + (1 - (x - lo) / sp) * (H - 6)]).filter(Boolean);
+      const n = pts.length, dx = [], m = [], tg = [];
+      for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; m[i] = (pts[i + 1][1] - pts[i][1]) / dx[i]; }
+      tg[0] = m[0]; tg[n - 1] = m[n - 2];
+      for (let i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+      for (let i = 0; i < n - 1; i++) { if (!m[i]) { tg[i] = tg[i + 1] = 0; continue; } const a = tg[i] / m[i], b = tg[i + 1] / m[i], h = a * a + b * b; if (h > 9) { const t = 3 / Math.sqrt(h); tg[i] = t * a * m[i]; tg[i + 1] = t * b * m[i]; } }
       let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-      for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-        d += `C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)},${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)},${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; }
-      return `<svg class="wk-spark ${cls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" x2="1"><stop offset="0" class="s0"/><stop offset="1" class="s1"/></linearGradient></defs><path d="${d}" fill="none" stroke="url(#${id})" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+      for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += `C${(pts[i][0] + h).toFixed(1)},${(pts[i][1] + tg[i] * h).toFixed(1)} ${(pts[i + 1][0] - h).toFixed(1)},${(pts[i + 1][1] - tg[i + 1] * h).toFixed(1)} ${pts[i + 1][0].toFixed(1)},${pts[i + 1][1].toFixed(1)}`; }
+      const area = `${d}L${pts[n - 1][0].toFixed(1)},${H}L${pts[0][0].toFixed(1)},${H}Z`;
+      return `<svg class="wk-spark ${cls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="a0"/><stop offset="1" class="a1"/></linearGradient></defs><path d="${area}" fill="url(#${id})"/><path d="${d}" fill="none" class="ln" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
     };
     let cum = 0; const fatC = tot.map(x => (cum -= (dayBurn(x.k).v - x.t.kcal) / 7.7));
     const wSer = ks.map(k => ws.find(w => w.date === k)?.kg ?? null);
@@ -255,10 +260,10 @@ window.KaloBoostInit = K => {
           <p class="wk-desc">Score = protéines atteintes (${pHit}/${lg.length}) + calories tenues (${kOk}/${lg.length}), pondéré par le nombre de jours saisis (${lg.length}/7).</p></div>
       </div>
       <div class="wk-tiles">
-        <div class="wk-tile"><span class="wk-ico flame">${IC.flame}</span><div class="grow"><b class="num">${r0(avgK)}</b><small>kcal / jour</small></div>${spark(tot.map(x => x.t.kcal), 'blue', 'spK')}</div>
-        <div class="wk-tile"><span class="wk-ico target">${IC.target}</span><div class="grow"><b class="num">${kOk}/${lg.length}</b><small>jours sous l'objectif</small><i class="wk-bar"><i style="width:${Math.round(kOk / lg.length * 100)}%"></i></i></div></div>
-        <div class="wk-tile"><span class="wk-ico scale">${IC.scale}</span><div class="grow"><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / 7.7)} g</b><small>graisse estimée</small></div>${spark(fatC, 'green', 'spF')}</div>
-        <div class="wk-tile"><span class="wk-ico body">${IC.body}</span><div class="grow"><b class="num">${dW == null ? '–' : (dW > 0 ? '+' : dW < 0 ? '−' : '') + String(r1(Math.abs(dW))).replace('.', ',') + ' kg'}</b><small>sur la balance</small></div>${spark(wSer, 'purple', 'spW')}</div>
+        <div class="wk-tile"><div class="wk-l"><span class="wk-ico flame">${IC.flame}</span><b class="num">${r0(avgK)}</b></div><small>kcal / jour</small>${spark(tot.map(x => x.t.kcal), 'blue', 'spK')}</div>
+        <div class="wk-tile"><div class="wk-l"><span class="wk-ico target">${IC.target}</span><b class="num">${kOk}/${lg.length}</b></div><small>jours sous l'objectif</small><i class="wk-bar"><i style="width:${Math.round(kOk / lg.length * 100)}%"></i></i></div>
+        <div class="wk-tile"><div class="wk-l"><span class="wk-ico scale">${IC.scale}</span><b class="num ${def >= 0 ? '' : 'over-text'}">${def >= 0 ? '−' : '+'}${r0(Math.abs(def) / 7.7)} g</b></div><small>graisse estimée</small>${spark(fatC, 'green', 'spF')}</div>
+        <div class="wk-tile"><div class="wk-l"><span class="wk-ico body">${IC.body}</span><b class="num">${dW == null ? '–' : (dW > 0 ? '+' : dW < 0 ? '−' : '') + String(r1(Math.abs(dW))).replace('.', ',') + ' kg'}</b></div><small>sur la balance</small>${spark(wSer, 'purple', 'spW')}</div>
       </div>
       <button class="wk-row" data-tab="muscu"><span class="wk-ico dumb">${IC.dumbbell}</span><b class="num">${mu.week ?? 0}</b><small>séance${(mu.week || 0) > 1 ? 's' : ''} de muscu</small><span class="wk-chev">${ICON.right}</span></button>
     </section>`;
