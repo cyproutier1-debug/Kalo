@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.9.6';
+  const APP_VERSION = '3.9.7';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -958,6 +958,24 @@
     return { r, days, logged, elapsed };
   }
 
+  /* Déficit moyen sur 7 / 30 / 90 jours (jours saisis seulement ; aujourd'hui compte s'il est validé) */
+  function deficitCard() {
+    const N = UI.defRange || 7, t0 = isLocked(today()) ? 0 : 1, days = [];
+    for (let i = t0; i < N + t0; i++) { const k = dkey(addDays(new Date(), -i)); if ((S.days[k]?.entries?.length || 0) > 0) days.push(k); }
+    const seg = `<div class="seg compact">${[7, 30, 90].map(v => `<button data-action="def-range" data-v="${v}" class="${N === v ? 'on' : ''}">${v}j</button>`).join('')}</div>`;
+    if (days.length < 2) return `<section class="card neon defc"><div class="row between"><div class="card-title">⚡ Déficit moyen</div>${seg}</div><p class="note" style="margin:10px 0 0">Saisis au moins 2 jours pour voir ton déficit moyen.</p></section>`;
+    const vals = days.map(k => dayBurn(k).v - dayTotals(k).kcal), avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const measured = days.filter(k => dayBurn(k).measured).length, perWeek = avg * 7 / 7700, tw = Wc.analyse()?.trendWeek;
+    const pos = avg >= 0, best = Math.max(...vals), worst = Math.min(...vals);
+    return `<section class="card neon defc"><div class="row between"><div class="card-title">⚡ Déficit moyen</div>${seg}</div>
+      <div class="def-main"><b class="num ${pos ? 'good-text' : 'over-text'}">${pos ? '−' : '+'}${r0(Math.abs(avg)).toLocaleString('fr-FR')}</b><span>kcal / jour ${pos ? 'de déficit' : "d'excédent"}</span></div>
+      <div class="def-grid">
+        <div><b class="num">${pos ? '−' : '+'}${String(r1(Math.abs(perWeek))).replace('.', ',')} kg</b><small>de graisse estimée / semaine</small></div>
+        <div><b class="num">${tw == null ? '–' : (tw > 0 ? '+' : tw < 0 ? '−' : '') + String(r1(Math.abs(tw))).replace('.', ',') + ' kg'}</b><small>sur la balance / semaine (tendance)</small></div>
+        <div><b class="num">${days.length}/${N}</b><small>jours saisis${measured ? ` · ${measured} avec la montre` : ''}</small></div>
+        <div><b class="num">${best >= 0 ? '−' : '+'}${r0(Math.abs(best))} / ${worst >= 0 ? '−' : '+'}${r0(Math.abs(worst))}</b><small>meilleur / pire jour (kcal)</small></div>
+      </div></section>`;
+  }
   function viewProgress() {
     const { r, logged, elapsed } = periodData();
     const g = goals(); const m = UI.metric;
@@ -1001,6 +1019,7 @@
     const ws = sortedWeights().reverse().slice(0, 8);
     return `<h1>Progrès</h1>
       ${Bo.weekHTML()}
+      ${deficitCard()}
       ${viewProjection()}
       <div class="seg">${[['week', 'Semaine'], ['month', 'Mois'], ['year', 'Année']].map(([v, l]) => `<button data-action="period" data-v="${v}" class="${UI.period === v ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="period-nav"><button class="icon-btn" data-action="per-prev" aria-label="Période précédente">${ICON.left}</button><b>${periodLabel(r)}</b><button class="icon-btn" data-action="per-next" aria-label="Période suivante" ${isCurrent ? 'disabled style="opacity:.3"' : ''}>${ICON.right}</button></div>
@@ -1765,6 +1784,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
 
   /* ---------- Actions ---------- */
   const actions = {
+    'def-range': b => { UI.defRange = +b.dataset.v; render(); },
     'day-prev': () => { UI.date = dkey(addDays(dparse(UI.date), -1)); render(); },
     'day-next': () => { UI.date = dkey(addDays(dparse(UI.date), 1)); render(); },
     add: b => openAdd(b.dataset.meal),
