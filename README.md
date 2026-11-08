@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.9.5** : graphique Calories / Protéines / Poids de l'onglet Progrès sur le même fond néon que le bilan 7 jours (léger halo sur les barres et courbes).
 - **v3.9.4** : bilan 7 jours plus compact (anneau et tuiles moins hautes) ; mini-graphiques refaits : aire dégradée sous une courbe monotone qui ne dépasse jamais les vraies valeurs, sur toute la largeur de la tuile.
 - **v3.9.3** : nouveau design du « Bilan des 7 derniers jours » (anneau dégradé bleu → vert avec la note, badge Excellent / Solide…, tuiles avec icônes et mini-courbes : kcal par jour, jours sous l'objectif avec barre, graisse estimée cumulée, poids de la semaine ; ligne séances de muscu qui ouvre l'onglet Muscu ; ⚙ explique le calcul).
 - **v3.9.2** : rubrique Trophées supprimée (onglet Progrès) et plus d'écran « Trophée débloqué » ; les Séries restent.

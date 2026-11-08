@@ -1272,3 +1272,7 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adj
 .wk-ring b { font-size: 32px; }
 .wk-ring small { font-size: 12px; }
 .wk-desc { margin-top: 8px; font-size: 12.5px; }
+/* v3.9.5 — fond néon partagé (bilan 7 jours, graphique Calories / Protéines / Poids) */
+.card.neon { position: relative; overflow: hidden; border: 1px solid rgba(80, 150, 255, .28); background: radial-gradient(120% 80% at 100% 0%, rgba(40, 120, 255, .16), transparent 60%), radial-gradient(90% 70% at 0% 100%, rgba(40, 210, 160, .08), transparent 60%), linear-gradient(180deg, rgba(10, 18, 38, .95), rgba(6, 10, 22, .95)); box-shadow: 0 0 0 1px rgba(80, 150, 255, .06) inset, 0 12px 40px rgba(20, 80, 200, .18); }
+.card.neon #chart svg rect:not([fill="transparent"]), .card.neon #chart svg path[stroke] { filter: drop-shadow(0 0 6px rgba(80, 180, 255, .35)); }
+.card.neon .chart-wrap svg line { stroke: rgba(90, 150, 255, .12); }

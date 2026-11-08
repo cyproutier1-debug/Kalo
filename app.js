@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.9.4';
+  const APP_VERSION = '3.9.5';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1001,7 +1001,7 @@
       ${viewProjection()}
       <div class="seg">${[['week', 'Semaine'], ['month', 'Mois'], ['year', 'Année']].map(([v, l]) => `<button data-action="period" data-v="${v}" class="${UI.period === v ? 'on' : ''}">${l}</button>`).join('')}</div>
       <div class="period-nav"><button class="icon-btn" data-action="per-prev" aria-label="Période précédente">${ICON.left}</button><b>${periodLabel(r)}</b><button class="icon-btn" data-action="per-next" aria-label="Période suivante" ${isCurrent ? 'disabled style="opacity:.3"' : ''}>${ICON.right}</button></div>
-      <section class="card">
+      <section class="card neon">
         <div class="seg" style="margin-bottom:12px">${[['kcal', 'Calories'], ['protein', 'Protéines'], ['weight', 'Poids']].map(([v, l]) => `<button data-action="metric" data-v="${v}" class="${m === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div class="chart-wrap" id="chart"></div>
         <div class="legend">${legend}</div>
