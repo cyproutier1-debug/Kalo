@@ -1304,3 +1304,6 @@ button.ring-goal:active { transform: scale(.96); }
 .gd-big span { font-size: 16px; color: var(--ink-2); }
 .gd-sub { text-align: center; font-size: 13px; color: var(--ink-2); margin: 8px 0 14px; }
 .gd-chips { justify-content: center; margin: 8px 0 !important; }
+
+/* v3.11.1 — étiquettes rouges sucré / salé */
+.badge.warn { background: rgba(255, 77, 79, .16); color: #FF6B6B; border: 1px solid rgba(255, 77, 79, .45); font-size: 10px; letter-spacing: .04em; padding: 1px 6px; margin-left: 5px; border-radius: 6px; }

@@ -49,6 +49,14 @@ window.KaloNutriInit = function (K) {
   };
   /* sucres libres pour 100 g d'un aliment : total moins lactose (produits laitiers) ou part de fruits/légumes entiers */
   const freeSug100 = p => { let v = +p?.sug || 0; if (!v) return 0; if (p.dairy) v = Math.max(0, v - 5); else if (p.veg) v *= 1 - Math.min(100, p.veg) / 100; return v; };
+  /* Étiquettes rouges : trop sucré (> 22,5 g/100 g, boissons > 10 g/100 ml) ou trop salé (> 1,5 g/100 g), seuils « rouge » des feux tricolores britanniques */
+  const DRINK = /(?<!\p{L})(soda|cola|coca|jus|boisson|limonade|sirop|nectar|th[ée] glac|smoothie|ice tea|energy|redbull|red bull|monster)(?!\p{L})/iu;
+  function flags(p, name) {
+    if (!p) return { sweet: false, salty: false };
+    const sug = p.sug != null ? p.sug : (SG[name] || 0), salt = p.salt != null ? p.salt : (Q[name]?.[1] || 0);
+    const fs = freeSug100({ sug, veg: p.veg ?? Q[name]?.[2], dairy: p.dairy ?? Q[name]?.[3] });
+    return { sweet: fs > (DRINK.test(name || '') ? 10 : 22.5), salty: salt > 1.5, fs, salt };
+  }
   /* Complète per100 d'un aliment générique avec ses données qualité */
   function enrichGen(f) {
     const q = Q[f.name]; if (!q || !f.per100) return f;
@@ -385,5 +393,5 @@ window.KaloNutriInit = function (K) {
     'quality-fix': () => openFixer(UI.date),
     'quality-sug': b => { const x = lastQSug[+b.dataset.i]; if (x) openDetail(x.it.f, { meal: guessMeal(), date: UI.date, grams: x.it.g }); },
   };
-  return { actions, scoreOf, enrichGen, offQuality, dayQuality, qualityCard, qualityInfo, openPlanner, coachLine, T, Q };
+  return { actions, flags, scoreOf, enrichGen, offQuality, dayQuality, qualityCard, qualityInfo, openPlanner, coachLine, T, Q };
 };

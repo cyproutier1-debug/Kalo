@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.11.0';
+  const APP_VERSION = '3.11.1';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -478,6 +478,7 @@
     if (p.kcal <= 200) return { state: 'cuit', ratio: hit[1] };
     return null;
   }
+  const warnTags = (p, name) => { const f = Nu.flags(p, name); return (f.sweet ? '<span class="badge warn" title="Très sucré">SUCRÉ</span>' : '') + (f.salty ? '<span class="badge warn" title="Très salé">SALÉ</span>' : ''); };
   const crTag = st => st ? `<span class="badge cr cr-${st.state}">${st.state === 'cru' ? 'CRU · poids sec' : 'CUIT'}</span>` : '';
   function entrySub(e) {
     if (e.src === 'quick') return 'Ajout rapide';
@@ -532,7 +533,7 @@
           <button class="meal-check ${done ? 'on' : ''}" data-action="meal-done" data-meal="${id}" ${locked ? 'disabled' : ''} aria-pressed="${done}" aria-label="${done ? 'Décocher' : 'Valider'} ${name}">${ICON.check}</button>
           <div class="grow"><h2>${name}</h2>${es.length ? `<div class="meal-macros num"><span class="mp">P ${r0(mp)} g</span><span class="mc">G ${r0(mc)} g</span><span class="mf">L ${r0(mf)} g</span></div>` : ''}</div>
           <span class="kcal num">${es.length ? `<span class="kv"><b>${r0(kc)}</b> kcal</span><small>${done ? 'mangé' : 'prévu'}</small>` : ''}</span></div>
-        ${es.map(e => `<button class="entry" data-action="edit-entry" data-id="${e.id}"><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${esc(entrySub(e))}</div></div><div class="val num">${r0(e.kcal)}<small>${r0(e.p)} g prot.</small></div></button>`).join('')}
+        ${es.map(e => `<button class="entry" data-action="edit-entry" data-id="${e.id}"><div class="grow"><div class="name">${esc(e.name)}${warnTags(e.per100, e.name)}</div><div class="sub">${esc(entrySub(e))}</div></div><div class="val num">${r0(e.kcal)}<small>${r0(e.p)} g prot.</small></div></button>`).join('')}
         ${locked || done ? (es.length ? '' : '<div class="empty small" style="padding:4px 16px 14px">Rien</div>') : `<div class="meal-foot"><button data-action="add" data-meal="${id}">+ Ajouter</button>${canCopy ? `<button data-action="copy-prev" data-meal="${id}">Copier la veille</button>` : ''}${es.length ? `<button data-action="fav-save" data-meal="${id}">⭐ Favori</button>` : ''}</div>`}</section>`;
     };
     return `
@@ -792,7 +793,7 @@
     const p = f.per100;
     const thumb = f.img ? `<img class="thumb" src="${esc(f.img)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="thumb">${f.src === 'gen' ? 'GÉN' : f.src === 'custom' ? 'PERSO' : f.src === 'ai' ? 'IA' : 'OFF'}</span>`;
     const sub = [f.brand, p ? `${r0(p.kcal)} kcal · ${r1(p.p)} g prot. / 100 g` : 'valeurs manquantes'].filter(Boolean).join(' · ');
-    return `<button class="item" data-i="${i}">${thumb}<div class="grow"><div class="name">${esc(f.name)} ${crTag(starchInfo(f))}</div><div class="sub">${esc(sub)}</div></div>${f.ns ? `<span class="badge ns ns-${f.ns}">${f.ns.toUpperCase()}</span>` : ''}</button>`;
+    return `<button class="item" data-i="${i}">${thumb}<div class="grow"><div class="name">${esc(f.name)} ${crTag(starchInfo(f))}${warnTags(p, f.name)}</div><div class="sub">${esc(sub)}</div></div>${f.ns ? `<span class="badge ns ns-${f.ns}">${f.ns.toUpperCase()}</span>` : ''}</button>`;
   }
   function viewFoods() {
     return `<button class="btn plain back-link" data-tab="profile">${ICON.back} Profil</button><h1>Mes aliments</h1>
