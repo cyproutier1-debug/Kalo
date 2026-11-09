@@ -1292,3 +1292,15 @@ html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adj
 .wk-tile.tap { cursor: pointer; transition: transform .12s ease; }
 .wk-tile.tap:active { transform: scale(.97); }
 .wk-tile.tap::after { content: "›"; position: absolute; top: 7px; right: 10px; font-size: 18px; line-height: 1; color: var(--ink-3); }
+
+/* v3.10.0 — objectif calorique ajustable par jour */
+button.ring-goal { background: none; border: 0; padding: 4px 10px; border-radius: 999px; cursor: pointer; color: var(--ink-2); font: inherit; font-size: 12px; -webkit-tap-highlight-color: transparent; }
+button.ring-goal u { text-decoration: none; opacity: .55; margin-left: 2px; }
+button.ring-goal.adj { color: var(--accent); background: rgba(var(--accent-rgb), .12); }
+button.ring-goal i { font-style: normal; font-weight: 700; }
+button.ring-goal:active { transform: scale(.96); }
+.gd-big { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-top: 4px; }
+.gd-big input { width: 150px; text-align: center; font-size: 44px; font-weight: 800; background: transparent; border: 0; border-bottom: 2px solid rgba(var(--accent-rgb), .5); color: var(--ink); padding: 2px 0; border-radius: 0; }
+.gd-big span { font-size: 16px; color: var(--ink-2); }
+.gd-sub { text-align: center; font-size: 13px; color: var(--ink-2); margin: 8px 0 14px; }
+.gd-chips { justify-content: center; margin: 8px 0 !important; }

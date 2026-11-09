@@ -138,7 +138,7 @@ window.KaloNutriInit = function (K) {
   /* Idées d'aliments pour monter le score : chaque aliment est testé sur la journée, classé par points gagnés et adapté aux calories restantes */
   let lastQSug = [];
   function qualitySuggestions(k, q) {
-    const remK = goals().kcal - dayTotals(k).kcal, base = scoreOf(q), meal = guessMeal();
+    const remK = goals(k).kcal - dayTotals(k).kcal, base = scoreOf(q), meal = guessMeal();
     const out = [];
     for (const c of CANDS) {
       const it = itemOf(c); if (!it) continue;
@@ -160,7 +160,7 @@ window.KaloNutriInit = function (K) {
     const empty = !(S.days[k]?.entries || []).length;
     const fibPct = Math.min(100, q.fib / T.fib * 100), saltPct = Math.min(100, q.salt / (T.salt * 1.5) * 100);
     const partial = q.kcal > 0 && q.cover < 0.85;
-    const canPlan = !isLocked(k) && k === today() && !empty && goals().kcal - dayTotals(k).kcal > 120;
+    const canPlan = !isLocked(k) && k === today() && !empty && goals(k).kcal - dayTotals(k).kcal > 120;
     const score = empty ? null : scoreOf(q);
     const live = !isLocked(k) && k === today();
     const sug = live && score != null && score < 100 ? qualitySuggestions(k, q) : [];
@@ -222,7 +222,7 @@ window.KaloNutriInit = function (K) {
     return { f, name, g, lab, role, kcal: p.kcal * k, p: p.p * k, c: p.c * k, fat: p.f * k, fib: q[0] * k, salt: q[1] * k, veg: g * q[2] / 100, dairy: q[3] ? g / q[3] : 0 };
   }
   function plan(k, meal) {
-    const g = goals(), t = dayTotals(k), q = dayQuality(k);
+    const g = goals(k), t = dayTotals(k), q = dayQuality(k);
     const R = { k: g.kcal - t.kcal, p: Math.max(0, g.protein - t.p), c: g.carbs != null ? g.carbs - t.c : null, f: g.fat != null ? g.fat - t.f : null,
       fib: Math.max(0, T.fib - q.fib), veg: Math.max(0, T.veg - q.vegG), dairy: Math.max(0, T.dairy - q.dairyP) };
     if (R.k < 120) return { R, q, plans: [] };

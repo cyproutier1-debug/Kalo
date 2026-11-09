@@ -87,7 +87,7 @@ window.KaloBoostInit = K => {
   }
   function coachCard(k) {
     if (k !== today() || isLocked(k)) return '';
-    const g = goals(), t = dayTotals(k), remK = g.kcal - t.kcal, remP = g.protein - t.p, h = new Date().getHours();
+    const g = goals(k), t = dayTotals(k), remK = g.kcal - t.kcal, remP = g.protein - t.p, h = new Date().getHours();
     const water = S.days[k]?.water || 0, supps = S.supps.filter(x => !S.days[k]?.supps?.[x.id]);
     const tips = [];
     if (!t.n) tips.push(h < 11 ? `Bonne journée ! Un petit-déjeuner riche en protéines (skyr, œufs, whey) cale jusqu'à midi.` : `Rien de saisi pour l'instant : ajoute ce que tu as mangé pour garder un bilan juste.`);
@@ -294,7 +294,7 @@ window.KaloBoostInit = K => {
     'backup-later': () => { S.meta = { ...(S.meta || {}), snooze: Date.now() + 7 * DAY }; Store.put('meta', S.meta); render(); },
   };
   return {
-    waterCard, coachCard: k => { const h = coachCard(k); const g = goals(), t = dayTotals(k); lastSug = h.includes('coach-food') ? suggestions(g.kcal - t.kcal, g.protein - t.p, k) : []; return h; },
+    waterCard, coachCard: k => { const h = coachCard(k); const g = goals(k), t = dayTotals(k); lastSug = h.includes('coach-food') ? suggestions(g.kcal - t.kcal, g.protein - t.p, k) : []; return h; },
     favsHTML, favClick, trophiesHTML, weekHTML, backupCard, streakChip, checkBadges, markExport, actions,
     onLoad(all) { S.favs = all.favs || []; S.badges = all.badges || []; S.badgesInit = !!all.badgesInit; S.meta = all.meta || {}; },
   };

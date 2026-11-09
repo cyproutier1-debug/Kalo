@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.9.9';
+  const APP_VERSION = '3.10.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -161,8 +161,8 @@
 
   function saveDay(k) {
     const d = S.days[k];
-    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !(d.mealsDone && Object.keys(d.mealsDone).length) && !(d.supps && Object.keys(d.supps).length) && !d.water)) { delete S.days[k]; return Store.del('day:' + k); }
-    if (k === today() || !d.goal) { const g = goals(); d.goal = { kcal: g.kcal, protein: g.protein, carbs: g.carbs, tdee: g.tdee }; }
+    if (!d || (!d.entries.length && d.burn == null && d.active == null && !d.validated && !d.kcalOv && !(d.mealsDone && Object.keys(d.mealsDone).length) && !(d.supps && Object.keys(d.supps).length) && !d.water)) { delete S.days[k]; return Store.del('day:' + k); }
+    if (k === today() || !d.goal) { const g = goals(k); d.goal = { kcal: g.kcal, protein: g.protein, carbs: g.carbs, tdee: g.tdee }; }
     return Store.put('day:' + k, d);
   }
   const getDay = k => (S.days[k] = S.days[k] || { entries: [] });
@@ -216,7 +216,13 @@
     for (let i = 1; i <= 28; i++) { const k = dkey(addDays(new Date(), -i)); const d = S.days[k]; if (d && (d.burn != null || d.active != null)) ks.push(k); }
     return { n: ks.length, avg: ks.length ? Math.round(ks.reduce((a, k) => a + dayBurn(k).v, 0) / ks.length) : null };
   }
-  function goals() {
+  function goals(k) {
+    const g0 = baseGoals();
+    const ov = k && S.days[k]?.kcalOv;
+    if (!ov || !g0) return g0;
+    return { ...g0, baseKcal: g0.kcal, ov: true, kcal: ov, ...macroSplit(ov, g0.protein) };
+  }
+  function baseGoals() {
     const p = S.profile;
     if (!p) return { kcal: 2000, protein: 120, tdee: 2000 };
     const ws = watchStats();
@@ -504,7 +510,7 @@
   }
   const QUOTES = ['On reste focus 💪', 'Chaque repas compte 🔥', 'Un jour après l\'autre 💚', 'La régularité paie ⚡'];
   function viewJournal() {
-    const k = UI.date, g = goals(), t = dayTotals(k), p = S.profile;
+    const k = UI.date, g = goals(k), t = dayTotals(k), p = S.profile;
     const rem = g.kcal - t.kcal, over = rem < 0;
     const d = dparse(k);
     const label = k === today() ? "Aujourd'hui" : k === dkey(addDays(new Date(), -1)) ? 'Hier' : k === dkey(addDays(new Date(), 1)) ? 'Demain' : cap(F.short.format(d));
@@ -543,7 +549,7 @@
         <div class="today-card">
           <div class="ring-wrap">${kcalRing(E.k, P.k, g.kcal)}
             <div class="ring-center">${ICON.flame}<b class="num ${over ? 'over-text' : ''}" data-count="${Math.round(Math.abs(rem))}">${r0(Math.abs(rem))}</b><span>${over ? 'kcal en trop' : 'kcal restantes'}</span></div>
-            <div class="ring-goal num">Objectif : ${r0(g.kcal)} kcal</div></div>
+            <button class="ring-goal num ${g.ov ? 'adj' : ''}" data-action="goal-day" ${locked ? 'disabled' : ''}>Objectif : ${r0(g.kcal)} kcal${g.ov ? ` <i>${g.kcal >= g.baseKcal ? '+' : '−'}${r0(Math.abs(g.kcal - g.baseKcal))}</i>` : ''} ${locked ? '' : '<u>✎</u>'}</button></div>
           <div class="macros">
             <div class="macro"><div class="row">${ICON.muscle}<span>Protéines</span><b class="num">${r0(t.p)} / ${r0(g.protein)} g</b></div>${gradBar(E.p, P.p, g.protein)}</div>
             <div class="macro"><div class="row">${ICON.drop('#6E8BFF')}<span>Glucides</span><b class="num">${r0(t.c)} / ${r0(g.carbs)} g</b></div>${gradBar(E.c, P.c, g.carbs)}</div>
@@ -1819,6 +1825,36 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       if (d.supps[id]) delete d.supps[id]; else d.supps[id] = Date.now();
       saveDay(UI.date); render();
       if (d.supps[id]) { try { navigator.vibrate?.(15); } catch (e) { /* ignore */ } if (S.supps.every(x => d.supps[x.id])) toast('Tous tes compléments sont pris 💊'); }
+    },
+    'goal-day': () => {
+      const k = UI.date, d = S.days[k] || {}, base = baseGoals().kcal;
+      let v = d.kcalOv || base;
+      const sh = makeSheet('Objectif du jour');
+      const draw = () => {
+        sh.setBody(`<section class="card stack gd">
+          <div class="gd-big"><input type="number" inputmode="numeric" id="gd-in" value="${v}"><span>kcal</span></div>
+          <div class="gd-sub num">Objectif habituel : ${r0(base)} kcal · ${v === base ? 'inchangé' : (v > base ? '+' : '−') + r0(Math.abs(v - base)) + ' kcal aujourd\'hui'}</div>
+          <div class="chips gd-chips">${[200, 400, 600, 800].map(n => `<button type="button" class="chip" data-add="${n}">+${n}</button>`).join('')}</div>
+          <div class="chips gd-chips">${[2400, 2600, 2700, 2800].map(n => `<button type="button" class="chip ${v === n ? 'chip-on' : ''}" data-set="${n}">${n}</button>`).join('')}</div>
+          <p class="muted small">Valable uniquement pour ce jour. Les protéines restent identiques, glucides et lipides se recalculent. Le déficit du bilan se base sur ta dépense, pas sur cet objectif.</p>
+        </section>`);
+        sh.setFoot(`<div class="row" style="gap:10px">${d.kcalOv ? '<button class="btn ghost" data-a="reset">Remettre l\'habituel</button>' : ''}<button class="btn grow" data-a="ok">Enregistrer</button></div>`);
+      };
+      draw();
+      sh.body.addEventListener('input', e => { if (e.target.id === 'gd-in') { v = Math.max(800, Math.min(6000, +e.target.value || 0)); } });
+      sh.body.addEventListener('click', e => {
+        const b = e.target.closest('[data-add],[data-set]'); if (!b) return;
+        const cur = Math.max(800, +sh.body.querySelector('#gd-in')?.value || v);
+        v = b.dataset.set ? +b.dataset.set : cur + +b.dataset.add; draw();
+      });
+      sh.foot.onclick = e => {
+        const b = e.target.closest('[data-a]'); if (!b) return;
+        const day = getDay(k);
+        if (b.dataset.a === 'reset') delete day.kcalOv;
+        else { v = Math.max(800, Math.min(6000, +sh.body.querySelector('#gd-in').value || base)); if (v === base) delete day.kcalOv; else day.kcalOv = v; }
+        saveDay(k); closeSheet(1); render(); toast(day.kcalOv ? `Objectif du jour : ${r0(day.kcalOv)} kcal` : 'Objectif habituel rétabli');
+      };
+      openSheet(sh.el);
     },
     'mini-range': b => { UI.mini = +b.dataset.v; render(); },
     fx: b => { S.fx[b.dataset.k] = b.dataset.v === '1'; Store.put('fx', S.fx); render(); },
