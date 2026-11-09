@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.11.1';
+  const APP_VERSION = '3.12.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -550,7 +550,7 @@
         <div class="today-card">
           <div class="ring-wrap">${kcalRing(E.k, P.k, g.kcal)}
             <div class="ring-center">${ICON.flame}<b class="num ${over ? 'over-text' : ''}" data-count="${Math.round(Math.abs(rem))}">${r0(Math.abs(rem))}</b><span>${over ? 'kcal en trop' : 'kcal restantes'}</span></div>
-            <button class="ring-goal num ${g.ov ? 'adj' : ''}" data-action="goal-day" ${locked ? 'disabled' : ''}>Objectif : ${r0(g.kcal)} kcal${g.ov ? ` <i>${g.kcal >= g.baseKcal ? '+' : '−'}${r0(Math.abs(g.kcal - g.baseKcal))}</i>` : ''} ${locked ? '' : '<u>✎</u>'}</button></div>
+            <button class="ring-goal num ${g.ov ? 'adj' : ''}" data-action="goal-day" ${locked ? 'disabled' : ''}>${g.ov ? '' : 'Objectif : '}${r0(g.kcal)} kcal${g.ov ? ` <i>${g.kcal >= g.baseKcal ? '+' : '−'}${r0(Math.abs(g.kcal - g.baseKcal))}</i>` : ''} ${locked ? '' : '<u>✎</u>'}</button></div>
           <div class="macros">
             <div class="macro"><div class="row">${ICON.muscle}<span>Protéines</span><b class="num">${r0(t.p)} / ${r0(g.protein)} g</b></div>${gradBar(E.p, P.p, g.protein)}</div>
             <div class="macro"><div class="row">${ICON.drop('#6E8BFF')}<span>Glucides</span><b class="num">${r0(t.c)} / ${r0(g.carbs)} g</b></div>${gradBar(E.c, P.c, g.carbs)}</div>
@@ -1781,7 +1781,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
   const Mu = window.KaloMuscuInit({ $, $$, esc, r0, r1, num, uid, cap, dkey, dparse, addDays, today, F, ICON, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, closeAll, niceStep, bindTip, currentWeight });
 
   /* ---------- Boost : coach, eau, favoris, séries, trophées (boost.js) ---------- */
-  const Nu = window.KaloNutriInit({ $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN, openDetail });
+  const Nu = window.KaloNutriInit({ mealDone, editEntry: id => actions['edit-entry']({ dataset: { id } }), $, esc, r0, r1, uid, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate: (...a) => celebrate(...a), today, GEN, openDetail });
   GEN.forEach(Nu.enrichGen);
   const Wc = window.KaloWeightInit({ S, UI, esc, r0, r1, dkey, dparse, addDays, today, cap, F, sortedWeights, dayTotals, dayBurn, Nu, Mu, goals, currentWeight });
   const So = window.KaloSocialInit({ $, esc, r0, r1, cap, dkey, addDays, today, F, S, UI, Store, toast, render: () => render(), makeSheet, openSheet, closeSheet, goals, dayTotals, currentWeight, sortedWeights, Mu, Nu, progColor, ICON });

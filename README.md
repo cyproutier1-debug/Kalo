@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.12.0** : toucher les lignes Sucres ou Sel de « Qualité du jour » (« Comment réduire › ») ouvre un détail : d'où vient chaque gramme (aliments classés), ce qui est encore « prévu » et modifiable, des alternatives par aliment, conseils pour la suite. Correction du pastille « Objectif » qui débordait sur les barres quand l'objectif du jour est ajusté.
 - **v3.11.1** : étiquettes rouges SUCRÉ / SALÉ sur les aliments du Journal et des résultats de recherche (sucres libres > 22,5 g/100 g, boissons > 10 g/100 ml ; sel > 1,5 g/100 g).
 - **v3.11.0** : « Qualité du jour » comprend les sucres libres (≤ 50 g, repère OMS ; fruits entiers, légumes et lactose exclus). Score /100 rééquilibré : fibres 25, fruits & légumes 30, sucres 20, sel 15, laitiers 10. Sucres lus sur Open Food Facts, table générique pour les aliments de base, conseil dédié, planificateur et coach du jour au courant.
 - **v3.10.0** : objectif calorique ajustable pour un jour précis (toucher « Objectif : … kcal » sous l'anneau du Journal : saisie libre, +200 à +800 ou 2400 à 2800, bouton pour revenir à l'habituel). Protéines inchangées, glucides et lipides recalculés, le coach et la qualité du jour suivent.

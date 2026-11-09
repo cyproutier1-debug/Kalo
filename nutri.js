@@ -3,7 +3,7 @@
    Valeurs génériques : moyennes proches de la table Ciqual (Anses, Licence Ouverte), arrondies. */
 window.KaloNutriInit = function (K) {
   const { openDetail } = K;
-  const { $, esc, r0, r1, uid, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate, today } = K;
+  const { $, esc, r0, r1, uid, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate, today, mealDone } = K;
   const T = { fib: 30, salt: 6, veg: 400, vegPortion: 80, dairy: 2, sug: 50 };
 
   /* [fibres g, sel g, % fruits/légumes, portion laitière en g (0 = non)] pour 100 g */
@@ -197,8 +197,8 @@ window.KaloNutriInit = function (K) {
       <div class="row between"><div class="card-title"><svg viewBox="0 0 24 24" class="ico"><path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15zm0 0c3-4 6-7 10-10"/></svg>Qualité du jour<button class="q-info-btn" data-action="quality-info" aria-label="Comment est calculé ce score">i</button></div>${score != null ? `<span class="q-score" style="--qc:${progColor(score / 100)}"><b class="num">${score}</b>/100</span>` : ''}</div>
       <div class="q-grid">
         <div class="q-item"><div class="q-row"><span>Fibres</span><b class="num">${r0(q.fib)} / ${T.fib} g</b></div><div class="bar"><div style="width:${fibPct}%;background:${progColor(q.fib / T.fib)};box-shadow:0 0 10px ${progColor(q.fib / T.fib)};border-radius:8px"></div></div></div>
-        <div class="q-item"><div class="q-row"><span>Sel</span><b class="num" style="color:${q.salt > T.salt ? '#FF6B6B' : 'inherit'}">${r1(q.salt)} / ${T.salt} g max</b></div><div class="bar salt"><i class="lim" style="left:${100 / 1.5}%"></i><div style="width:${saltPct}%;background:${saltColor(q.salt)};border-radius:8px"></div></div></div>
-        <div class="q-item"><div class="q-row"><span>Sucres</span><b class="num" style="color:${q.sug > T.sug ? '#FF6B6B' : 'inherit'}">${r0(q.sug)} / ${T.sug} g max</b></div><div class="bar salt"><i class="lim" style="left:${100 / 1.5}%"></i><div style="width:${sugPct}%;background:${sugColor(q.sug)};border-radius:8px"></div></div></div>
+        <button class="q-item tapq" data-action="q-fix-salt"><div class="q-row"><span>Sel</span><b class="num" style="color:${q.salt > T.salt ? '#FF6B6B' : 'inherit'}">${r1(q.salt)} / ${T.salt} g max</b></div><div class="bar salt"><i class="lim" style="left:${100 / 1.5}%"></i><div style="width:${saltPct}%;background:${saltColor(q.salt)};border-radius:8px"></div></div>${q.salt > T.salt * 0.7 ? '<small class="q-help">Comment réduire ›</small>' : ''}</button>
+        <button class="q-item tapq" data-action="q-fix-sug"><div class="q-row"><span>Sucres</span><b class="num" style="color:${q.sug > T.sug ? '#FF6B6B' : 'inherit'}">${r0(q.sug)} / ${T.sug} g max</b></div><div class="bar salt"><i class="lim" style="left:${100 / 1.5}%"></i><div style="width:${sugPct}%;background:${sugColor(q.sug)};border-radius:8px"></div></div>${q.sug > T.sug * 0.7 ? '<small class="q-help">Comment réduire ›</small>' : ''}</button>
         <div class="q-item"><div class="q-row"><span>Fruits & légumes</span><b class="num">${r1(Math.min(9, q.vegP)).replace('.', ',')} / 5</b></div><div class="pips veg">${pips(q.vegP, 5, leaf)}</div></div>
         <div class="q-item"><div class="q-row"><span>Laitiers (calcium)</span><b class="num">${r1(q.dairyP).replace('.', ',')} / ${T.dairy}</b></div><div class="pips dairy">${pips(q.dairyP, T.dairy, cup)}</div></div>
       </div>
@@ -388,7 +388,78 @@ window.KaloNutriInit = function (K) {
     return '';
   }
 
+
+  /* ---------- « Comment réduire » le sucre ou le sel ---------- */
+  const SWAPS = {
+    sug: [
+      [/soda|cola|coca|limonade|sprite|fanta|ice ?tea|th[ée] glac|energy|red ?bull|monster|sirop/i, 'Eau pétillante citronnée, soda zéro ou thé sans sucre'],
+      [/jus|nectar|smoothie/i, 'Un fruit entier (plus de fibres, moins de sucres libres)'],
+      [/nutella|p[âa]te [àa] tartiner|confiture|miel|sirop/i, 'Beurre de cacahuète 100 %, ou moitié moins avec des tranches de banane'],
+      [/c[ée]r[ée]ales|corn ?flakes|muesli|granola|chocapic|special k|frosties/i, "Flocons d'avoine nature + fruits rouges"],
+      [/barre|snickers|mars|twix|kinder|bounty|kitkat/i, 'Un fruit + une poignée d\'amandes, ou une barre protéinée sans sucres ajoutés'],
+      [/chocolat|bonbon|g[âa]teau|biscuit|cookie|brownie|muffin|donut|crois|pain au choc|viennoiserie|tarte|glace|dessert|cr[èe]me/i, 'Yaourt nature + fruit, ou 2 carrés de chocolat noir 70 %'],
+      [/ketchup|sauce|barbecue|bbq/i, 'Moutarde, salsa maison ou citron'],
+      [/yaourt|skyr|fromage blanc/i, 'Version nature (ajoute des fruits frais)'],
+    ],
+    salt: [
+      [/jambon|bacon|lardons?|saucisse|charcuterie|chorizo|saucisson|rillettes|p[âa]t[ée]|merguez|knacki/i, 'Blanc de poulet ou dinde maison, œufs, thon au naturel'],
+      [/fromage|emmental|comt[ée]|camembert|feta|parmesan|raclette|mozzarella|ch[èe]vre/i, 'Fromage blanc, skyr ou une portion de 30 g seulement'],
+      [/chips|biscuit ap[ée]ro|cacahu[èe]tes? sal|cr[ée]ackers?|bretzel/i, 'Amandes ou noix non salées, légumes croquants'],
+      [/pizza|burger|kebab|tacos|nuggets|sandwich|panini|croque|quiche|lasagne|hachis|plat pr[ée]par|surgel/i, 'Version maison : tu contrôles le sel (compte 1 g de sel par plat en moins)'],
+      [/soupe|bouillon|velout/i, 'Soupe maison sans cube, relevée aux herbes et citron'],
+      [/ketchup|mayonnaise|sauce|vinaigrette|soja/i, 'Citron, herbes, épices, moutarde (en petite quantité)'],
+      [/pain|baguette|biscotte/i, 'Pain complet avec moins de tranches, ou flocons d\'avoine'],
+      [/thon|saumon fum|crevettes|sardines?|anchois/i, 'Poisson frais ou surgelé nature, ou rincer les conserves'],
+    ],
+  };
+  for (const kk in SWAPS) SWAPS[kk] = SWAPS[kk].map(([re, t]) => [new RegExp('(?<!\\p{L})(?:' + re.source + ')', 'iu'), t]); // début de mot obligatoire (cola ≠ chocolat)
+  function openReduce(kind, k) {
+    const isSug = kind === 'sug', lim = isSug ? T.sug : T.salt, unit = 'g', nameWord = isSug ? 'sucres libres' : 'sel';
+    const q = dayQuality(k), tot = isSug ? q.sug : q.salt;
+    const rows = [];
+    for (const e of S.days[k]?.entries || []) {
+      if (e.grams == null || !e.per100) continue;
+      let p = e.per100;
+      if (e.src === 'gen') p = { ...p, sug: p.sug ?? SG[e.name] ?? 0, salt: p.salt ?? Q[e.name]?.[1] ?? 0, veg: p.veg ?? Q[e.name]?.[2], dairy: p.dairy ?? Q[e.name]?.[3] };
+      const v = (isSug ? freeSug100(p) : (+p.salt || 0)) * e.grams / 100;
+      if (v >= (isSug ? 2 : 0.15)) rows.push({ e, v, done: mealDone(k, e.meal) });
+    }
+    rows.sort((a, b) => b.v - a.v);
+    const top = rows.slice(0, 6), planned = rows.filter(r => !r.done && !isLocked(k)).reduce((s, r) => s + r.v, 0);
+    const over = tot - lim, swapFor = n => (SWAPS[kind].find(([re]) => re.test(n)) || [])[1];
+    const fmt = v => isSug ? r0(v) : r1(v).replace('.', ',');
+    const sh = makeSheet(isSug ? 'Réduire le sucre' : 'Réduire le sel');
+    const head = `<section class="card stack rd-head"><div class="rd-big"><b class="num" style="color:${over > 0 ? '#FF6B6B' : 'inherit'}">${fmt(tot)}</b><span>/ ${lim} g max</span></div>
+      <p class="muted small">${over > 0 ? `${fmt(over)} g au-dessus du repère. Ce qui est déjà mangé ne se retire pas, mais voici d'où ça vient et quoi changer pour la suite.` : `Tu es sous le repère : ${fmt(lim - tot)} g de marge.`}</p>
+      ${planned > 0 && over > -lim ? `<p class="small rd-plan">Dont <b>${fmt(planned)} g</b> sur des aliments encore « prévus » : tu peux encore les remplacer ou les retirer.${tot - planned <= lim ? ` Sans eux : <b>${fmt(tot - planned)} g</b> ✓` : ` Sans eux : ${fmt(tot - planned)} g.`}</p>` : ''}</section>`;
+    const list = top.length ? `<div class="section-title" style="margin:14px 0 8px"><h2>D'où ça vient</h2></div><section class="card list rd-list">${top.map(({ e, v, done }, i) => {
+      const sw = swapFor(e.name);
+      return `<div class="rd-row"><div class="row between"><div class="grow"><div class="name">${esc(e.name)}</div><div class="sub">${r0(e.grams)} g · ${done ? 'déjà mangé' : 'prévu'}</div></div><b class="num rd-v">${fmt(v)} ${unit}</b></div>
+        <div class="bar rd-bar"><div style="width:${Math.min(100, v / Math.max(tot, .01) * 100)}%;background:${isSug ? '#FF6B6B' : '#FFB020'};border-radius:8px"></div></div>
+        ${sw ? `<p class="rd-swap small">↳ ${esc(sw)}</p>` : ''}
+        ${!done && !isLocked(k) ? `<button class="btn ghost small rd-edit" data-a="edit" data-id="${e.id}">Modifier / retirer</button>` : ''}</div>`;
+    }).join('')}</section>` : '<p class="muted small" style="margin-top:14px">Rien de significatif dans ta journée pour le moment.</p>';
+    const tips = isSug ? [
+      'Les boissons sucrées sont la première source : eau pétillante, soda zéro, thé ou café sans sucre.',
+      'Remplace desserts et viennoiseries par yaourt nature + fruit : les sucres des fruits entiers et du lactose ne comptent pas.',
+      'Lis la ligne « dont sucres » de l\'étiquette : au-delà de 10 g pour 100 g, c\'est déjà sucré.',
+      'Un peu de protéines et de fibres au repas limitent l\'envie de sucré 2 h après.',
+    ] : [
+      'Le pain, le fromage, la charcuterie et les plats préparés apportent l\'essentiel du sel.',
+      'Cuisine sans ajouter de sel : ail, herbes, épices, citron, vinaigre.',
+      'Rince les légumes et légumineuses en conserve.',
+      'Les légumes et fruits riches en potassium (banane, épinards, pommes de terre) aident à compenser.',
+    ];
+    sh.setBody(head + list + `<div class="section-title" style="margin:14px 0 8px"><h2>Pour la suite</h2></div><section class="card stack"><ul class="rd-tips">${tips.map(t => `<li>${t}</li>`).join('')}</ul></section>`);
+    sh.setFoot('<button class="btn grow" data-a="ok">Compris</button>');
+    sh.foot.onclick = () => closeSheet(1);
+    sh.body.addEventListener('click', ev => { const b = ev.target.closest('[data-a="edit"]'); if (!b) return; K.editEntry(b.dataset.id); });
+    openSheet(sh.el);
+  }
+
   const actions = {
+    'q-fix-sug': () => openReduce('sug', UI.date),
+    'q-fix-salt': () => openReduce('salt', UI.date),
     'quality-toggle': b => { UI.qualOpen = !UI.qualOpen; const c = b.closest('.quality'); c?.classList.toggle('open', UI.qualOpen); b.setAttribute('aria-expanded', UI.qualOpen); },
     'quality-fix': () => openFixer(UI.date),
     'quality-sug': b => { const x = lastQSug[+b.dataset.i]; if (x) openDetail(x.it.f, { meal: guessMeal(), date: UI.date, grams: x.it.g }); },
