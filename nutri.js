@@ -4,7 +4,7 @@
 window.KaloNutriInit = function (K) {
   const { openDetail } = K;
   const { $, esc, r0, r1, uid, S, UI, Store, toast, render, makeSheet, openSheet, closeSheet, goals, dayTotals, getDay, saveDay, isLocked, guessMeal, mealName, MEALS, progColor, celebrate, today } = K;
-  const T = { fib: 30, salt: 6, veg: 400, vegPortion: 80, dairy: 2 };
+  const T = { fib: 30, salt: 6, veg: 400, vegPortion: 80, dairy: 2, sug: 50 };
 
   /* [fibres g, sel g, % fruits/légumes, portion laitière en g (0 = non)] pour 100 g */
   const Q = {
@@ -37,10 +37,22 @@ window.KaloNutriInit = function (K) {
     'Hachis parmentier': [1.2, .7, 0, 0], 'Croque-monsieur': [1.5, 1.8, 0, 0], 'Quiche lorraine': [1, 1, 0, 0], "Jus d'orange": [.2, 0, 0, 0], 'Soda sucré type cola': [0, 0, 0, 0],
     'Soda zéro': [0, .02, 0, 0], 'Bière blonde 5 %': [0, 0, 0, 0], 'Vin rouge': [0, 0, 0, 0], 'Café noir': [0, 0, 0, 0], 'Boisson amande sans sucre': [.4, .1, 0, 0],
   };
+  /* Sucres totaux g/100 g (absent = 0). Les sucres du lait/yaourt (lactose) et des fruits/légumes entiers sont retirés au calcul : reste les sucres « libres » (OMS : < 10 % des calories, ≈ 50 g). */
+  const SG = {
+    'Lait demi-écrémé': 4.8, 'Lait écrémé': 4.8, 'Lait entier': 4.8, 'Yaourt nature': 4.5, 'Skyr nature': 3.5, 'Fromage blanc 0 %': 4, 'Fromage blanc 3 %': 4,
+    'Pain baguette': 3, 'Pain complet': 3, 'Pain de mie': 5, "Flocons d'avoine": 1, 'Muesli': 15, 'Corn flakes': 8, 'Biscotte': 5, 'Galette de riz soufflé': .5,
+    'Dattes sèches': 65, 'Maïs doux (boîte)': 5, 'Soupe de légumes maison': 3, 'Lentilles cuites': .5, 'Ketchup': 22, 'Mayonnaise': 1.5, 'Vinaigrette': 3,
+    'Chocolat noir 70 %': 24, 'Chocolat au lait': 55, 'Pâte à tartiner chocolat-noisette': 56, 'Miel': 80, 'Sucre': 100, 'Confiture': 55, 'Beurre de cacahuète': 8,
+    'Croissant': 8, 'Pain au chocolat': 12, 'Chips': .5, 'Barre protéinée (moyenne)': 8, 'Whey protéine (poudre)': 3, 'Pizza margherita': 3, 'Burger type fast-food': 4,
+    'Makis / sushis': 3, 'Lasagnes bolognaise': 3, 'Hachis parmentier': 2, 'Croque-monsieur': 3, 'Quiche lorraine': 1.5, "Jus d'orange": 8.5, 'Soda sucré type cola': 10.6,
+    'Vin rouge': .5, 'Bière blonde 5 %': .1, 'Crème légère 15 %': 3.5, 'Crème fraîche 30 %': 2.5,
+  };
+  /* sucres libres pour 100 g d'un aliment : total moins lactose (produits laitiers) ou part de fruits/légumes entiers */
+  const freeSug100 = p => { let v = +p?.sug || 0; if (!v) return 0; if (p.dairy) v = Math.max(0, v - 5); else if (p.veg) v *= 1 - Math.min(100, p.veg) / 100; return v; };
   /* Complète per100 d'un aliment générique avec ses données qualité */
   function enrichGen(f) {
     const q = Q[f.name]; if (!q || !f.per100) return f;
-    f.per100 = { ...f.per100, fib: q[0], salt: q[1], veg: q[2], dairy: q[3] };
+    f.per100 = { ...f.per100, fib: q[0], salt: q[1], veg: q[2], dairy: q[3], sug: SG[f.name] || 0 };
     return f;
   }
   /* Aliments sans fibres par nature (produits animaux, boissons, matières grasses, sucres purs) : 0 g sûr même si l'étiquette ne le dit pas.
@@ -55,6 +67,7 @@ window.KaloNutriInit = function (K) {
     const tags = (p.categories_tags || []).join(' ');
     const fib = n.fiber_100g != null ? Math.max(0, +n.fiber_100g || 0) : null;
     const salt = n.salt_100g != null ? Math.max(0, +n.salt_100g || 0) : n.sodium_100g != null ? Math.max(0, +n.sodium_100g * 2.5) : null;
+    const sug = n.sugars_100g != null ? Math.max(0, +n.sugars_100g || 0) : null;
     let veg = n['fruits-vegetables-legumes-estimate-from-ingredients_100g'] ?? n['fruits-vegetables-nuts-estimate-from-ingredients_100g'] ?? n['fruits-vegetables-legumes_100g'] ?? n['fruits-vegetables-nuts_100g'] ?? null;
     veg = veg == null ? null : Math.min(100, Math.max(0, +veg || 0));
     if (/en:(fruit-juices|juices-and-nectars|nectars|jams|fruit-preserves|sweet-spreads|sodas|fruit-based-beverages|plant-based-beverages|dried-fruits|nuts)\b/.test(tags)) veg = 0; // jus, confitures, fruits secs : hors 5 par jour
@@ -66,7 +79,7 @@ window.KaloNutriInit = function (K) {
     }
     let fibEst = false, fibV = fib;
     if (fibV == null && ZERO_TAGS.test(tags) && !ZERO_BLOCK.test(tags)) { fibV = 0; fibEst = true; }
-    return { fib: fibV, fibEst, salt, veg, dairy, qv: 2 };
+    return { fib: fibV, fibEst, salt, sug, veg, dairy, qv: 3 };
   }
 
   /* Corrections manuelles : par produit (code-barres), par aliment perso (id) ou par entrée (IA, ajout rapide) */
@@ -75,11 +88,12 @@ window.KaloNutriInit = function (K) {
   /* ---------- Bilan qualité d'une journée ---------- */
   const hasQ = p => p && p.fib != null;
   function dayQuality(k) {
-    const r = { fib: 0, salt: 0, vegG: 0, dairyP: 0, kcal: 0, kcalKnown: 0, saltKnown: 0, missing: [], miss: [] };
+    const r = { fib: 0, salt: 0, sug: 0, vegG: 0, dairyP: 0, kcal: 0, kcalKnown: 0, saltKnown: 0, missing: [], miss: [] };
     for (const e of S.days[k]?.entries || []) {
       const kc = e.kcal || 0; r.kcal += kc;
       let p = e.per100;
       if (e.src === 'gen' && !hasQ(p)) { const q = Q[e.name]; if (q) p = { ...p, fib: q[0], salt: q[1], veg: q[2], dairy: q[3] }; }
+      if (e.src === 'gen' && p && p.sug == null) p = { ...p, sug: SG[e.name] || 0 };
       const fx = fixOf(e);
       if (e.src === 'quick' || e.grams == null) { // ajout rapide : pas de poids, seulement un total de fibres saisi à la main
         if (fx && fx.fibTot != null) { r.fib += fx.fibTot; r.kcalKnown += kc; } else r.miss.push(e);
@@ -91,10 +105,12 @@ window.KaloNutriInit = function (K) {
       if (fib == null && fx && fx.fib != null) fib = fx.fib;
       if (fib == null && zeroByName(e.name)) fib = 0;
       if (fib != null) { r.fib += fib * k100; r.kcalKnown += kc; }
-      else { r.miss.push(e); if (e.code && (e.src === 'off' || e.src === 'custom') && p.qv !== 2) r.missing.push(e.code); }
+      else { r.miss.push(e); if (e.code && (e.src === 'off' || e.src === 'custom') && (p.qv || 0) < 3) r.missing.push(e.code); }
       if (p.salt == null && fx && fx.salt != null) { r.salt += fx.salt * k100; r.saltKnown += kc; }
       if (p.salt != null) { r.salt += p.salt * k100; r.saltKnown += kc; }
       if (p.veg) r.vegG += g * p.veg / 100;
+      r.sug += freeSug100(p) * k100;
+      if (p.sug === undefined && (e.src === 'off' || e.src === 'custom') && e.code && p.qv !== 3) r.missing.push(e.code);
       if (p.dairy) r.dairyP += g / p.dairy;
     }
     r.cover = r.kcal > 0 ? r.kcalKnown / r.kcal : 1;
@@ -106,7 +122,7 @@ window.KaloNutriInit = function (K) {
   const asked = new Set();
   let backfillT = 0;
   // ne remplace jamais une valeur déjà saisie (aliment perso) ; complète seulement ce qui manque
-  const mergeQ = (p, q) => ({ ...p, fib: p.fib ?? q.fib, fibEst: p.fib != null ? p.fibEst : q.fibEst, salt: p.salt ?? q.salt, veg: p.veg ?? q.veg, dairy: p.dairy || q.dairy, qv: 2 });
+  const mergeQ = (p, q) => ({ ...p, fib: p.fib ?? q.fib, fibEst: p.fib != null ? p.fibEst : q.fibEst, salt: p.salt ?? q.salt, sug: p.sug ?? q.sug, veg: p.veg ?? q.veg, dairy: p.dairy || q.dairy, qv: 3 });
   async function backfill(codes) {
     const todo = [...new Set(codes)].filter(c => !asked.has(c)).slice(0, 8);
     if (!todo.length || !navigator.onLine) return;
@@ -119,10 +135,10 @@ window.KaloNutriInit = function (K) {
         const q = offQuality(j.product, j.product.nutriments || {});
         for (const [dk, d] of Object.entries(S.days)) {
           let ch = false;
-          for (const e of d.entries || []) if ((e.src === 'off' || e.src === 'custom') && e.code === code && e.per100 && e.per100.qv !== 2) { e.per100 = mergeQ(e.per100, q); ch = true; }
+          for (const e of d.entries || []) if ((e.src === 'off' || e.src === 'custom') && e.code === code && e.per100 && (e.per100.qv || 0) < 3) { e.per100 = mergeQ(e.per100, q); ch = true; }
           if (ch) { saveDay(dk); changed = true; }
         }
-        for (const list of [S.recents, S.foods, S.favs?.flatMap(f => f.items) || []]) for (const x of list) if ((x.src === 'off' || x.src === 'custom') && x.code === code && x.per100 && x.per100.qv !== 2) x.per100 = mergeQ(x.per100, q);
+        for (const list of [S.recents, S.foods, S.favs?.flatMap(f => f.items) || []]) for (const x of list) if ((x.src === 'off' || x.src === 'custom') && x.code === code && x.per100 && (x.per100.qv || 0) < 3) x.per100 = mergeQ(x.per100, q);
         if (S.off?.[code]?.per100) S.off[code].per100 = mergeQ(S.off[code].per100, q);
       } catch (err) { /* hors ligne ou OFF indisponible : on réessaiera à la prochaine session */ }
     }));
@@ -134,7 +150,8 @@ window.KaloNutriInit = function (K) {
   const cup = on => `<svg viewBox="0 0 24 24" class="pip ${on}"><path d="M7 4h10l-1.4 15.2a2 2 0 0 1-2 1.8h-3.2a2 2 0 0 1-2-1.8z"/><path d="M7.4 9h9.2"/></svg>`;
   const pips = (n, max, icon) => Array.from({ length: max }, (_, i) => icon(n >= i + 1 ? 'on' : n > i + 0.25 ? 'half' : '')).join('');
   function saltColor(v) { return v <= T.salt * 0.8 ? '#2EE68A' : v <= T.salt ? '#FFB020' : '#FF4D4F'; }
-  const scoreOf = q => Math.round(Math.min(1, q.fib / T.fib) * 30 + Math.min(1, q.vegP / 5) * 35 + Math.min(1, q.dairyP / T.dairy) * 15 + (q.salt <= T.salt ? 20 : Math.max(0, 20 - (q.salt - T.salt) * 8)));
+  const scoreOf = q => Math.round(Math.min(1, q.fib / T.fib) * 25 + Math.min(1, q.vegP / 5) * 30 + Math.min(1, q.dairyP / T.dairy) * 10 + (q.salt <= T.salt ? 15 : Math.max(0, 15 - (q.salt - T.salt) * 6)) + ((q.sug || 0) <= T.sug ? 20 : Math.max(0, 20 - (q.sug - T.sug) * 0.5)));
+  const sugColor = v => v <= T.sug * 0.7 ? '#2EE68A' : v <= T.sug ? '#FFB020' : '#FF4D4F';
   /* Idées d'aliments pour monter le score : chaque aliment est testé sur la journée, classé par points gagnés et adapté aux calories restantes */
   let lastQSug = [];
   function qualitySuggestions(k, q) {
@@ -144,7 +161,7 @@ window.KaloNutriInit = function (K) {
       const it = itemOf(c); if (!it) continue;
       if (isSnackMeal(meal) && !SNACK.has(it.name)) continue;
       const cap = Math.max(90, remK + 40); if (it.kcal > cap) continue;
-      const nq = { ...q, fib: q.fib + it.fib, salt: q.salt + it.salt, vegP: (q.vegG + it.veg) / T.vegPortion, dairyP: q.dairyP + it.dairy };
+      const nq = { ...q, fib: q.fib + it.fib, salt: q.salt + it.salt, sug: (q.sug || 0) + it.sug, vegP: (q.vegG + it.veg) / T.vegPortion, dairyP: q.dairyP + it.dairy };
       const gain = scoreOf(nq) - base; if (gain < 2) continue;
       const why = [it.veg >= 40 ? `+${r1(it.veg / T.vegPortion).replace('.', ',')} F&L` : '', it.fib >= 1.5 ? `+${r0(it.fib)} g fibres` : '', it.dairy >= 0.5 ? `+${r1(it.dairy).replace('.', ',')} laitier` : '', it.p >= 8 ? `+${r0(it.p)} g prot.` : ''].filter(Boolean).slice(0, 2).join(' · ');
       out.push({ it, gain, why, rank: gain / Math.max(40, it.kcal) * 100 + (it.p >= 10 ? 1.5 : 0) });
@@ -158,7 +175,7 @@ window.KaloNutriInit = function (K) {
     const q = dayQuality(k);
     if (q.missing.length) setTimeout(() => backfill(q.missing), 400);
     const empty = !(S.days[k]?.entries || []).length;
-    const fibPct = Math.min(100, q.fib / T.fib * 100), saltPct = Math.min(100, q.salt / (T.salt * 1.5) * 100);
+    const fibPct = Math.min(100, q.fib / T.fib * 100), saltPct = Math.min(100, q.salt / (T.salt * 1.5) * 100), sugPct = Math.min(100, q.sug / (T.sug * 1.5) * 100);
     const partial = q.kcal > 0 && q.cover < 0.85;
     const canPlan = !isLocked(k) && k === today() && !empty && goals(k).kcal - dayTotals(k).kcal > 120;
     const score = empty ? null : scoreOf(q);
@@ -166,19 +183,21 @@ window.KaloNutriInit = function (K) {
     const sug = live && score != null && score < 100 ? qualitySuggestions(k, q) : [];
     lastQSug = sug;
     const saltTip = live && q.salt > T.salt * 0.85 ? `<p class="coach-tip small">🧂 Sel ${q.salt > T.salt ? 'dépassé' : 'presque au max'} : au prochain repas, évite charcuterie, fromage, pain et plats préparés ; les végétaux riches en potassium compensent.</p>` : '';
-    const open = !!UI.qualOpen, n = sug.length + (saltTip ? 1 : 0), best = sug.reduce((m, x) => Math.max(m, x.gain), 0);
+    const sugTip = live && q.sug > T.sug * 0.8 ? `<p class="coach-tip small">🍬 Sucres libres ${q.sug > T.sug ? 'dépassés' : 'presque au max'} (${r0(q.sug)} g) : privilégie fruits entiers, yaourt nature ou oléagineux plutôt que boissons sucrées, pâtisseries ou céréales sucrées.</p>` : '';
+    const open = !!UI.qualOpen, n = sug.length + (saltTip ? 1 : 0) + (sugTip ? 1 : 0), best = sug.reduce((m, x) => Math.max(m, x.gain), 0);
     return `<section class="card quality ${open ? 'open' : ''}">
       <div class="row between"><div class="card-title"><svg viewBox="0 0 24 24" class="ico"><path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15zm0 0c3-4 6-7 10-10"/></svg>Qualité du jour<button class="q-info-btn" data-action="quality-info" aria-label="Comment est calculé ce score">i</button></div>${score != null ? `<span class="q-score" style="--qc:${progColor(score / 100)}"><b class="num">${score}</b>/100</span>` : ''}</div>
       <div class="q-grid">
         <div class="q-item"><div class="q-row"><span>Fibres</span><b class="num">${r0(q.fib)} / ${T.fib} g</b></div><div class="bar"><div style="width:${fibPct}%;background:${progColor(q.fib / T.fib)};box-shadow:0 0 10px ${progColor(q.fib / T.fib)};border-radius:8px"></div></div></div>
         <div class="q-item"><div class="q-row"><span>Sel</span><b class="num" style="color:${q.salt > T.salt ? '#FF6B6B' : 'inherit'}">${r1(q.salt)} / ${T.salt} g max</b></div><div class="bar salt"><i class="lim" style="left:${100 / 1.5}%"></i><div style="width:${saltPct}%;background:${saltColor(q.salt)};border-radius:8px"></div></div></div>
+        <div class="q-item"><div class="q-row"><span>Sucres</span><b class="num" style="color:${q.sug > T.sug ? '#FF6B6B' : 'inherit'}">${r0(q.sug)} / ${T.sug} g max</b></div><div class="bar salt"><i class="lim" style="left:${100 / 1.5}%"></i><div style="width:${sugPct}%;background:${sugColor(q.sug)};border-radius:8px"></div></div></div>
         <div class="q-item"><div class="q-row"><span>Fruits & légumes</span><b class="num">${r1(Math.min(9, q.vegP)).replace('.', ',')} / 5</b></div><div class="pips veg">${pips(q.vegP, 5, leaf)}</div></div>
         <div class="q-item"><div class="q-row"><span>Laitiers (calcium)</span><b class="num">${r1(q.dairyP).replace('.', ',')} / ${T.dairy}</b></div><div class="pips dairy">${pips(q.dairyP, T.dairy, cup)}</div></div>
       </div>
       ${partial ? `<button class="q-note q-fix" data-action="quality-fix">Fibres inconnues pour ${r0((1 - q.cover) * 100)} % des calories (${q.miss.length} aliment${q.miss.length > 1 ? 's' : ''}) · <b>Compléter →</b></button>` : ''}
-      ${n ? `<button class="coach-more" data-action="quality-toggle" aria-expanded="${open}"><span>${sug.length ? `${sug.length} idée${sug.length > 1 ? 's' : ''} · jusqu'à +${best} pts` : 'Conseil sel'}</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+      ${n ? `<button class="coach-more" data-action="quality-toggle" aria-expanded="${open}"><span>${sug.length ? `${sug.length} idée${sug.length > 1 ? 's' : ''} · jusqu'à +${best} pts` : 'Conseils'}</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
       <div class="coach-drop"><div class="coach-drop-in">
-        ${saltTip}
+        ${saltTip}${sugTip}
         ${sug.length ? `<div class="coach-sug">${sug.map((x, i) => `<button class="coach-food q-food" data-action="quality-sug" data-i="${i}"><b>${esc(x.it.lab)}${x.it.lab.toLowerCase().includes(x.it.name.split(/[ (]/)[0].toLowerCase().slice(0, 5)) ? '' : ' · ' + esc(x.it.name.replace(/ \(.*\)$/, '').toLowerCase())}</b><span class="num">${x.why} · ${r0(x.it.kcal)} kcal</span><em class="q-gain num">+${x.gain}</em></button>`).join('')}</div>` : ''}
       </div></div>` : ''}
       ${canPlan ? `<button class="btn block q-plan" data-action="plan-day">✨ Compléter ma journée intelligemment</button>` : ''}
@@ -192,7 +211,8 @@ window.KaloNutriInit = function (K) {
       <p><b>Sel ≤ 6 g.</b> Les plats préparés, la charcuterie, le fromage et le pain en apportent l'essentiel. Une journée salée se rééquilibre avec des végétaux riches en potassium (légumes, fruits, légumineuses).</p>
       <p><b>5 fruits & légumes</b> (portions de 80 g). C'est le meilleur indicateur des vitamines C et B9, du potassium et du magnésium, que les étiquettes n'indiquent presque jamais. Pour les produits emballés, Kalo utilise l'estimation d'Open Food Facts de la part de fruits, légumes et légumineuses dans les ingrédients. Jus, confitures et fruits secs ne comptent pas.</p>
       <p><b>2 produits laitiers</b> (PNNS 2019) : un yaourt ou skyr de 125 g, 100 g de fromage blanc, 150 ml de lait ou 30 g de fromage = 1 portion. Principale source de calcium (besoin ≈ 950 mg/j).</p>
-      <p><b>Score /100</b> : fibres 30 pts, fruits & légumes 35, laitiers 15, sel 20.</p>
+      <p><b>Sucres libres ≤ 50 g.</b> Repère OMS : moins de 10 % des calories (≈ 50 g, idéalement 25 g). Sont comptés les sucres ajoutés, ceux des jus, miels et sirops. Les sucres des fruits entiers, des légumes et le lactose du lait et des yaourts nature ne comptent pas. Valeur estimée depuis les étiquettes : un produit sans sucres renseignés compte 0.</p>
+      <p><b>Score /100</b> : fibres 25 pts, fruits & légumes 30, sucres 20, sel 15, laitiers 10.</p>
       <p class="muted small">Valeurs génériques proches de la table Ciqual (Anses). Produits scannés : Open Food Facts. Ces repères ne remplacent pas l'avis d'un professionnel de santé.</p></section>`);
     sh.setFoot('<button class="btn grow" data-a="ok">Compris</button>');
     sh.foot.onclick = () => closeSheet(1);
@@ -219,7 +239,7 @@ window.KaloNutriInit = function (K) {
   function itemOf([name, g, lab, role]) {
     const f = genFood(name); if (!f) return null;
     const q = Q[name] || [0, 0, 0, 0], p = f.per100, k = g / 100;
-    return { f, name, g, lab, role, kcal: p.kcal * k, p: p.p * k, c: p.c * k, fat: p.f * k, fib: q[0] * k, salt: q[1] * k, veg: g * q[2] / 100, dairy: q[3] ? g / q[3] : 0 };
+    return { f, name, g, lab, role, kcal: p.kcal * k, p: p.p * k, c: p.c * k, fat: p.f * k, fib: q[0] * k, salt: q[1] * k, sug: freeSug100({ sug: SG[name] || 0, veg: q[2], dairy: q[3] }) * k, veg: g * q[2] / 100, dairy: q[3] ? g / q[3] : 0 };
   }
   function plan(k, meal) {
     const g = goals(k), t = dayTotals(k), q = dayQuality(k);
@@ -229,7 +249,7 @@ window.KaloNutriInit = function (K) {
     const items = CANDS.map(itemOf).filter(Boolean).filter(it => !isSnackMeal(meal) || SNACK.has(it.name));
     const recentNames = new Set((S.recents || []).map(r => r.name));
     function score(set) {
-      const s = { kcal: 0, p: 0, c: 0, fat: 0, fib: 0, veg: 0, dairy: 0, salt: 0 };
+      const s = { kcal: 0, p: 0, c: 0, fat: 0, fib: 0, veg: 0, dairy: 0, salt: 0, sug: 0 };
       for (const it of set) for (const key in s) s[key] += it[key];
       let pen = 0;
       const over = s.kcal - R.k; if (over > 0) pen += Math.pow(over / 40, 2) * 3; // dépasser le budget kcal : très pénalisé
@@ -241,6 +261,7 @@ window.KaloNutriInit = function (K) {
       if (R.c != null && s.c > Math.max(0, R.c)) pen += Math.pow((s.c - Math.max(0, R.c)) / 12, 2);
       if (R.f != null && s.fat > Math.max(0, R.f)) pen += Math.pow((s.fat - Math.max(0, R.f)) / 6, 2);
       if (q.salt + s.salt > T.salt) pen += (q.salt + s.salt - T.salt) * 2;
+      if (q.sug + s.sug > T.sug) pen += (q.sug + s.sug - T.sug) / 5;
       const roles = set.map(x => x.role); if (new Set(roles).size < roles.length) pen += 1.2; // variété
       pen += set.length * 0.35; // simplicité
       if (!isSnackMeal(meal) && !set.some(x => ['prot', 'leg', 'dairy'].includes(x.role)) && R.p > 10) pen += 1.5; // un repas = une source de protéines
@@ -305,7 +326,7 @@ window.KaloNutriInit = function (K) {
       if (b.dataset.a === 'add') {
         const pl = plans[+b.dataset.i]; if (!pl) return;
         const d = getDay(k), now = Date.now();
-        pl.set.forEach((it, j) => { const p = { ...it.f.per100, fib: Q[it.name][0], salt: Q[it.name][1], veg: Q[it.name][2], dairy: Q[it.name][3] }, kk = it.g / 100;
+        pl.set.forEach((it, j) => { const p = { ...it.f.per100, fib: Q[it.name][0], salt: Q[it.name][1], veg: Q[it.name][2], dairy: Q[it.name][3], sug: SG[it.name] || 0 }, kk = it.g / 100;
           d.entries.push({ id: uid(), meal, src: 'gen', fid: it.f.id, code: '', name: it.f.name, brand: '', per100: p, unit: it.f.unit || null, img: '', ns: '', qtyLabel: '', grams: it.g, count: null, kcal: p.kcal * kk, p: p.p * kk, c: p.c * kk, f: p.f * kk, t: now + j }); });
         saveDay(k); UI.date = k; UI.tab = 'journal';
         const before = dayQuality(k);
@@ -353,6 +374,7 @@ window.KaloNutriInit = function (K) {
     const q = dayQuality(k), h = new Date().getHours();
     if (!(S.days[k]?.entries || []).length) return '';
     if (q.salt > T.salt) return `Journée salée (<b>${r1(q.salt)} g</b> de sel) : mise sur des légumes et fruits ce soir, riches en potassium.`;
+    if (q.sug > T.sug) return `Sucres libres à <b>${r0(q.sug)} g</b> (repère 50 g) : le reste de la journée, fruits entiers, yaourt nature ou oléagineux plutôt que du sucré.`;
     if (h >= 15 && q.vegP < 2) return `Seulement <b>${r1(q.vegP).replace('.', ',')}</b> portion de fruits/légumes : vitamines C, potassium et magnésium en manque. « Compléter ma journée » te propose de quoi rattraper.`;
     if (h >= 17 && q.fib < T.fib * 0.6) return `Fibres à <b>${r0(q.fib)} g</b> sur 30 : légumineuses, légumes ou fruits rouges au prochain repas.`;
     return '';
