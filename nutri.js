@@ -464,5 +464,5 @@ window.KaloNutriInit = function (K) {
     'quality-fix': () => openFixer(UI.date),
     'quality-sug': b => { const x = lastQSug[+b.dataset.i]; if (x) openDetail(x.it.f, { meal: guessMeal(), date: UI.date, grams: x.it.g }); },
   };
-  return { actions, flags, scoreOf, enrichGen, offQuality, dayQuality, qualityCard, qualityInfo, openPlanner, coachLine, T, Q };
+  return { actions, flags, sugOf: (p, name) => (p && p.sug != null ? p.sug : (SG[name] ?? null)), scoreOf, enrichGen, offQuality, dayQuality, qualityCard, qualityInfo, openPlanner, coachLine, T, Q };
 };

@@ -1325,3 +1325,4 @@ button.q-item.tapq:active { opacity: .7; }
 .rd-edit { margin-top: 8px; }
 .rd-tips { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--ink-2); }
 button.ring-goal { max-width: 100%; padding: 4px 6px; }
+.q-chips .qc-sug { color: #FFC98A; } .q-chips .qc-sug.hi { color: #FF8A8A; border-color: rgba(255, 77, 79, .4); }

@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.12.0';
+  const APP_VERSION = '3.12.1';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1527,7 +1527,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
         <div class="chips" data-f="chips"></div>
         <label class="field"><span>Repas</span><select data-f="meal">${mealOptions(entry ? entry.meal : ctx.meal)}</select></label>
       </section>
-      <p class="note">Pour 100 g : ${r0(p.kcal)} kcal · ${r1(p.p)} g protéines · ${r1(p.c)} g glucides · ${r1(p.f)} g lipides${p.fib != null ? ` · ${r1(p.fib)} g fibres` : ''}${p.salt != null ? ` · ${r1(p.salt)} g sel` : ''}${food.code ? ` · code ${esc(food.code)}` : ''}</p>`);
+      <p class="note">Pour 100 g : ${r0(p.kcal)} kcal · ${r1(p.p)} g protéines · ${r1(p.c)} g glucides · ${r1(p.f)} g lipides${p.fib != null ? ` · ${r1(p.fib)} g fibres` : ''}${p.salt != null ? ` · ${r1(p.salt)} g sel` : ''}${Nu.sugOf(p, food.name) > 0 ? ` · ${r1(Nu.sugOf(p, food.name))} g sucres` : ''}${food.code ? ` · code ${esc(food.code)}` : ''}</p>`);
     sh.setFoot(`${entry ? '<button class="btn danger" data-a="del">Supprimer</button>' : ''}<button class="btn grow" data-a="save">${entry ? 'Enregistrer' : 'Ajouter'}</button>`);
     const qEl = $('[data-f="qty"]', sh.body), mEl = $('[data-f="mode"]', sh.body), chips = $('[data-f="chips"]', sh.body);
     const grams = () => { const v = num(qEl.value) || 0; return mEl.value === 'u' && food.unit ? v * food.unit.g : mEl.value === 'c' && raw ? v / st.ratio : v; };
@@ -1539,7 +1539,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       $('[data-o="p"]', sh.body).textContent = r1(p.p * k);
       $('[data-o="c"]', sh.body).textContent = r1(p.c * k);
       $('[data-o="f"]', sh.body).textContent = r1(p.f * k);
-      const qc = [p.fib != null ? `<span class="qc-fib">${r1(p.fib * k)} g fibres</span>` : '<span class="qc-na">fibres non renseignées</span>', p.salt != null ? `<span class="qc-salt ${p.salt * k > 2 ? 'hi' : ''}">${r1(p.salt * k)} g sel</span>` : '', p.veg ? `<span class="qc-veg">🥦 ${r1(grams() * p.veg / 100 / 80).replace('.', ',')} portion F&L</span>` : '', p.dairy ? `<span class="qc-dairy">🥛 ${r1(grams() / p.dairy).replace('.', ',')} laitier</span>` : ''].filter(Boolean);
+      const qc = [p.fib != null ? `<span class="qc-fib">${r1(p.fib * k)} g fibres</span>` : '<span class="qc-na">fibres non renseignées</span>', p.salt != null ? `<span class="qc-salt ${p.salt * k > 2 ? 'hi' : ''}">${r1(p.salt * k)} g sel</span>` : '', Nu.sugOf(p, food.name) > 0 ? `<span class="qc-sug ${Nu.flags(p, food.name).sweet || Nu.sugOf(p, food.name) * k > 25 ? 'hi' : ''}">${r1(Nu.sugOf(p, food.name) * k)} g sucres</span>` : '', p.veg ? `<span class="qc-veg">🥦 ${r1(grams() * p.veg / 100 / 80).replace('.', ',')} portion F&L</span>` : '', p.dairy ? `<span class="qc-dairy">🥛 ${r1(grams() / p.dairy).replace('.', ',')} laitier</span>` : ''].filter(Boolean);
       $('[data-o="q"]', sh.body).innerHTML = qc.join('');
     };
     const drawChips = () => { chips.innerHTML = (mEl.value === 'u' ? [0.5, 1, 2, 3] : (mEl.value === 'c' ? [100, 150, 200, 250, 300, 350] : [30, 50, 100, 150, 200, 250])).map(v => `<button type="button" class="chip" data-v="${v}">${mEl.value === 'u' ? r1(v) : v + ' g'}</button>`).join(''); };
