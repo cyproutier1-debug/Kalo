@@ -1326,3 +1326,11 @@ button.q-item.tapq:active { opacity: .7; }
 .rd-tips { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--ink-2); }
 button.ring-goal { max-width: 100%; padding: 4px 6px; }
 .q-chips .qc-sug { color: #FFC98A; } .q-chips .qc-sug.hi { color: #FF8A8A; border-color: rgba(255, 77, 79, .4); }
+
+/* v3.13.0 — lipides */
+button.macro-btn { background: none; border: 0; padding: 0; margin: 0; text-align: left; color: inherit; font: inherit; width: 100%; cursor: pointer; display: block; -webkit-tap-highlight-color: transparent; }
+button.macro-btn:active { opacity: .7; }
+button.fat-row { display: block; width: 100%; background: none; border: 0; border-top: 1px solid var(--card-border); text-align: left; color: inherit; font: inherit; cursor: pointer; }
+button.fat-row:first-child { border-top: 0; }
+button.fat-row:active { background: rgba(255,255,255,.04); }
+.fat-r { text-align: right; } .fat-r b { color: #FFC247; display: block; } .fat-r small { color: var(--ink-3); font-size: 12px; }

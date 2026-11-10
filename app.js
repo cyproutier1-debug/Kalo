@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.12.1';
+  const APP_VERSION = '3.13.0';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -554,7 +554,7 @@
           <div class="macros">
             <div class="macro"><div class="row">${ICON.muscle}<span>Protéines</span><b class="num">${r0(t.p)} / ${r0(g.protein)} g</b></div>${gradBar(E.p, P.p, g.protein)}</div>
             <div class="macro"><div class="row">${ICON.drop('#6E8BFF')}<span>Glucides</span><b class="num">${r0(t.c)} / ${r0(g.carbs)} g</b></div>${gradBar(E.c, P.c, g.carbs)}</div>
-            <div class="macro"><div class="row">${ICON.drop('#FFC247')}<span>Lipides</span><b class="num">${r0(t.f)} g</b></div>${plainBar(t.f, g.fat, 'fat')}</div>
+            <button class="macro macro-btn" data-action="fat-open"><div class="row">${ICON.drop('#FFC247')}<span>Lipides</span><b class="num">${r0(t.f)} / ${r0(g.fat)} g</b></div>${plainBar(t.f, g.fat, 'fat')}${t.f < g.fat * 0.8 ? '<small class="q-help">Comment compléter ›</small>' : ''}</button>
           </div>
         </div>
         <div class="today-sub num">${split ? `Mangé ${r0(t.eatenK)} · prévu ${r0(t.planK)} · ` : ''}consommé ${r0(t.kcal)} / ${r0(g.kcal)} kcal</div>

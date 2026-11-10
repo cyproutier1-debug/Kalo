@@ -238,7 +238,7 @@ window.KaloNutriInit = function (K) {
     ['Framboises', 125, '1 barquette', 'fruit'], ['Poire', 150, '1 poire', 'fruit'], ['Clémentine', 120, '2 clémentines', 'fruit'], ['Myrtilles', 100, '100 g', 'fruit'],
     ['Brocoli cuit', 200, '200 g', 'veg'], ['Haricots verts cuits', 200, '200 g', 'veg'], ['Carotte crue', 120, '1 grosse carotte', 'veg'], ['Tomate', 150, '1 tomate', 'veg'], ['Concombre', 150, '½ concombre', 'veg'],
     ['Salade verte', 80, '1 bol', 'veg'], ['Épinards cuits', 200, '200 g', 'veg'], ['Courgette cuite', 200, '200 g', 'veg'], ['Soupe de légumes maison', 300, '1 bol 300 ml', 'veg'], ['Chou-fleur cuit', 200, '200 g', 'veg'], ['Petits pois cuits', 150, '150 g', 'veg'],
-    ['Amandes', 20, '1 poignée (20 g)', 'nut'], ['Noix', 20, '1 poignée (20 g)', 'nut'], ["Flocons d'avoine", 40, '40 g', 'starch'], ['Pain complet', 60, '2 tranches', 'starch'],
+    ['Amandes', 20, '1 poignée (20 g)', 'nut'], ['Avocat', 100, '½ avocat', 'nut'], ['Huile (olive, colza, tournesol)', 10, '1 c. à soupe', 'fat'], ['Noix', 20, '1 poignée (20 g)', 'nut'], ["Flocons d'avoine", 40, '40 g', 'starch'], ['Pain complet', 60, '2 tranches', 'starch'],
     ['Patate douce cuite', 200, '200 g', 'starch'], ['Riz complet cuit', 150, '150 g', 'starch'], ['Quinoa cuit', 150, '150 g', 'starch'], ["Pomme de terre cuite à l'eau", 200, '200 g', 'starch'],
   ];
   const SNACK = new Set(['Fromage blanc 0 %', 'Skyr nature', 'Yaourt nature', 'Lait demi-écrémé', 'Emmental', 'Œuf entier', 'Jambon blanc découenné', 'Pomme', 'Banane', 'Orange', 'Kiwi', 'Fraises', 'Framboises', 'Poire', 'Clémentine', 'Myrtilles', 'Carotte crue', 'Tomate', 'Concombre', 'Amandes', 'Noix', "Flocons d'avoine", 'Pain complet']);
@@ -269,6 +269,7 @@ window.KaloNutriInit = function (K) {
       if (R.c != null && s.c > Math.max(0, R.c)) pen += Math.pow((s.c - Math.max(0, R.c)) / 12, 2);
       if (R.f != null && s.fat > Math.max(0, R.f)) pen += Math.pow((s.fat - Math.max(0, R.f)) / 6, 2);
       if (q.salt + s.salt > T.salt) pen += (q.salt + s.salt - T.salt) * 2;
+      if (R.f != null && R.f > 15 && s.fat < R.f) pen += Math.min(R.f, 30) - Math.min(s.fat, 30) > 0 ? (Math.min(R.f, 30) - Math.min(s.fat, 30)) * 0.03 : 0; // lipides encore bas : léger bonus aux aliments gras sains
       if (q.sug + s.sug > T.sug) pen += (q.sug + s.sug - T.sug) / 5;
       const roles = set.map(x => x.role); if (new Set(roles).size < roles.length) pen += 1.2; // variété
       pen += set.length * 0.35; // simplicité
@@ -457,7 +458,36 @@ window.KaloNutriInit = function (K) {
     openSheet(sh.el);
   }
 
+  /* ---------- Lipides : comment atteindre l'objectif avec de bons aliments ---------- */
+  // [nom générique, grammes, libellé]
+  const FAT_SRC = [
+    ['Huile (olive, colza, tournesol)', 10, '1 c. à soupe'], ['Amandes', 30, '1 grosse poignée'], ['Noix', 25, '1 poignée'], ['Noix de cajou', 30, '1 poignée'],
+    ['Beurre de cacahuète', 20, '1 c. à soupe'], ['Avocat', 100, '½ avocat'], ['Œuf entier', 100, '2 œufs'], ['Saumon cuit', 120, '1 pavé'],
+    ["Sardines à l'huile égouttées", 90, '1 boîte'], ['Maquereau cuit', 100, '1 filet'], ['Emmental', 30, '30 g'], ['Chocolat noir 70 %', 20, '4 carrés'],
+  ];
+  const FAT_WHY = { 'Huile (olive, colza, tournesol)': 'sur légumes, riz ou pâtes', 'Amandes': 'collation, aussi fibres', 'Noix': 'oméga 3', 'Noix de cajou': 'collation', 'Beurre de cacahuète': 'sur pain ou skyr', 'Avocat': 'fibres + potassium', 'Œuf entier': 'protéines + lipides', 'Saumon cuit': 'oméga 3 + protéines', "Sardines à l'huile égouttées": 'oméga 3 + calcium', 'Maquereau cuit': 'oméga 3', 'Emmental': 'calcium', 'Chocolat noir 70 %': 'plaisir, magnésium' };
+  function openFat(k) {
+    const g = goals(k), t = dayTotals(k), gap = Math.max(0, g.fat - t.f), remK = g.kcal - t.kcal;
+    const items = FAT_SRC.map(([n, gr, lab]) => { const f = genFood(n); if (!f) return null; const kk = gr / 100; return { f, n, gr, lab, fat: f.per100.f * kk, kcal: f.per100.kcal * kk, p: f.per100.p * kk }; }).filter(Boolean);
+    const floor20 = Math.round(g.kcal * 0.2 / 9);
+    const gapK = gap * 9, tight = remK < gapK * 0.7;
+    const live = !isLocked(k);
+    const sh = makeSheet('Compléter mes lipides');
+    sh.setBody(`<section class="card stack rd-head"><div class="rd-big"><b class="num">${r0(t.f)}</b><span>/ ${r0(g.fat)} g</span></div>
+      <p class="muted small">${gap > 0 ? `Il manque <b>${r0(gap)} g</b> de lipides, soit environ <b>${r0(gapK)} kcal</b>${remK > 0 ? ` pour ${r0(remK)} kcal restantes.` : ', et ta journée est déjà pleine en calories.'}` : 'Objectif lipides atteint 👌'}</p>
+      ${gap > 0 && tight ? `<p class="small rd-plan">Les lipides apportent 9 kcal/g : pour en ajouter sans dépasser, il faut <b>retirer des glucides</b> ailleurs (${r0(gap * 9 / 4)} g de glucides = ${r0(gap)} g de lipides). Les lipides ne sont pas un but en soi : le plancher utile est d'environ ${floor20} g (20 % des calories).${t.f >= floor20 ? ' Tu es au-dessus.' : ''}</p>` : ''}</section>
+      <div class="section-title" style="margin:14px 0 8px"><h2>Bons lipides, par portion</h2></div>
+      <section class="card list rd-list">${items.map((x, i) => `<button class="rd-row fat-row" data-a="add" data-i="${i}"><div class="row between"><div class="grow"><div class="name">${esc(x.f.name.replace(/ \(.*\)$/, ''))}</div><div class="sub">${x.lab} · ${FAT_WHY[x.n] || ''}</div></div><div class="fat-r"><b class="num">+${r0(x.fat)} g</b><small class="num">${r0(x.kcal)} kcal</small></div></div></button>`).join('')}</section>
+      <div class="section-title" style="margin:14px 0 8px"><h2>Habitudes faciles</h2></div>
+      <section class="card stack"><ul class="rd-tips"><li>1 c. à soupe d'huile d'olive ou de colza dans chaque repas chaud : environ 10 g chacun.</li><li>Garde une portion d'oléagineux (amandes, noix) pour la collation plutôt qu'un produit sucré.</li><li>Prends des œufs entiers, du saumon ou des sardines au lieu de viandes maigres une fois sur deux.</li><li>Un sachet de chips ou une viennoiserie remplit les lipides, mais avec 10 à 20 g de sucre ou de sel en plus : les sources ci-dessus sont plus rentables.</li></ul></section>`);
+    sh.setFoot('<button class="btn grow" data-a="ok">Compris</button>');
+    sh.foot.onclick = () => closeSheet(1);
+    sh.body.addEventListener('click', ev => { const b = ev.target.closest('[data-a="add"]'); if (!b || !live) return; const x = items[+b.dataset.i]; if (x) openDetail(x.f, { meal: guessMeal(), date: k, grams: x.gr }); });
+    openSheet(sh.el);
+  }
+
   const actions = {
+    'fat-open': () => openFat(UI.date),
     'q-fix-sug': () => openReduce('sug', UI.date),
     'q-fix-salt': () => openReduce('salt', UI.date),
     'quality-toggle': b => { UI.qualOpen = !UI.qualOpen; const c = b.closest('.quality'); c?.classList.toggle('open', UI.qualOpen); b.setAttribute('aria-expanded', UI.qualOpen); },

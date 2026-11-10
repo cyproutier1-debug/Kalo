@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.13.0** : la ligne Lipides affiche « mangé / objectif » et, quand elle est basse, « Comment compléter › » ouvre un écran : gramme manquant, 12 bons aliments gras par portion (huile, oléagineux, avocat, œufs, poissons gras…) ajoutables en un toucher, habitudes faciles, et rappel qu'il faut retirer des glucides si les calories sont pleines. Le planificateur favorise aussi un peu les bons lipides quand ils manquent.
 - **v3.12.1** : la fiche d'un aliment affiche aussi les sucres (pastille à côté des fibres et du sel, rouge si très sucré ; ligne « pour 100 g »), uniquement quand il y en a.
 - **v3.12.0** : toucher les lignes Sucres ou Sel de « Qualité du jour » (« Comment réduire › ») ouvre un détail : d'où vient chaque gramme (aliments classés), ce qui est encore « prévu » et modifiable, des alternatives par aliment, conseils pour la suite. Correction du pastille « Objectif » qui débordait sur les barres quand l'objectif du jour est ajusté.
 - **v3.11.1** : étiquettes rouges SUCRÉ / SALÉ sur les aliments du Journal et des résultats de recherche (sucres libres > 22,5 g/100 g, boissons > 10 g/100 ml ; sel > 1,5 g/100 g).
