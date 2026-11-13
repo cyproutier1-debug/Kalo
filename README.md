@@ -2,6 +2,7 @@
 
 Web-app installable (PWA) : scan de code-barres, recherche Open Food Facts, aliments génériques, objectifs kcal + protéines calculés automatiquement, journal par repas, progrès semaine / mois / année, suivi du poids. Gratuit, sans compte ni serveur : les données restent sur le téléphone.
 
+- **v3.13.2** : dans « Objectif du jour », champ « Total réellement mangé » : on indique le total estimé (ex. 3 700 kcal) et l'app ajoute la différence en ligne « Non détaillé (estimation) », sur n'importe quel jour non validé.
 - **v3.13.1** : l'écran « Objectif du jour » affiche la maintenance du jour (montre ou estimée) et le surplus / déficit réel par rapport à ce qui est mangé, avec un bouton « Maintenance ». Utilisable sur les jours passés : l'objectif ajusté est pris en compte dans le bilan des 7 jours (un jour de surplus voulu n'est plus compté comme raté).
 - **v3.13.0** : la ligne Lipides affiche « mangé / objectif » et, quand elle est basse, « Comment compléter › » ouvre un écran : gramme manquant, 12 bons aliments gras par portion (huile, oléagineux, avocat, œufs, poissons gras…) ajoutables en un toucher, habitudes faciles, et rappel qu'il faut retirer des glucides si les calories sont pleines. Le planificateur favorise aussi un peu les bons lipides quand ils manquent.
 - **v3.12.1** : la fiche d'un aliment affiche aussi les sucres (pastille à côté des fibres et du sel, rouge si très sucré ; ligne « pour 100 g »), uniquement quand il y en a.

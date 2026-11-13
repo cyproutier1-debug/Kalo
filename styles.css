@@ -1340,3 +1340,8 @@ button.fat-row:active { background: rgba(255,255,255,.04); }
 .gd-maint > div { background: rgba(255,255,255,.04); border-radius: 14px; padding: 10px 12px; }
 .gd-maint small { display: block; font-size: 12px; color: var(--ink-3); } .gd-maint small em { font-style: normal; opacity: .8; }
 .gd-maint b { font-size: 18px; } .gd-maint.sur > div:last-child b { color: #FFB020; } .gd-maint.def > div:last-child b { color: #2EE68A; }
+
+/* v3.13.2 — total mangé direct */
+.gd-tot { background: rgba(var(--accent-rgb), .08); border: 1px solid rgba(var(--accent-rgb), .25); border-radius: 14px; padding: 12px; margin-bottom: 14px; }
+.gd-tot input { flex: 1; min-width: 0; }
+.gd-h { font-size: 13px; color: var(--ink-2); margin: 4px 0 -2px; text-align: center; font-weight: 600; }

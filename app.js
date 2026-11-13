@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.13.1';
+  const APP_VERSION = '3.13.2';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1830,12 +1830,16 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     'goal-day': () => {
       const k = UI.date, d = S.days[k] || {}, base = baseGoals().kcal;
       let v = d.kcalOv || base;
-      const burn = dayBurn(k), eaten = dayTotals(k).kcal, maint = Math.round(burn.v / 10) * 10, diff = Math.round(eaten - burn.v);
+      const burn = dayBurn(k), maint = Math.round(burn.v / 10) * 10;
       const isToday = k === today(), when = isToday ? "aujourd'hui" : 'ce jour';
       const sh = makeSheet(isToday ? 'Objectif du jour' : 'Objectif de ce jour');
       const draw = () => {
+        const eaten = dayTotals(k).kcal, diff = Math.round(eaten - burn.v);
         sh.setBody(`<section class="card stack gd">
           <div class="gd-maint ${diff > 0 ? 'sur' : 'def'}"><div><small>Maintenance du jour <em>${burn.measured ? 'montre' : 'estimée'}</em></small><b class="num">≈ ${r0(maint)} kcal</b></div><div><small>${eaten ? 'Mangé' : 'Mangé'} ${r0(eaten)} kcal</small><b class="num">${eaten ? (diff > 0 ? 'Surplus +' : 'Déficit −') + r0(Math.abs(diff)) : '–'}</b></div></div>
+          <div class="gd-tot"><label class="field"><span>Total réellement mangé ce jour (kcal)</span><div class="row" style="gap:8px"><input type="number" inputmode="numeric" id="gd-tot" placeholder="ex. 3700" value=""><button type="button" class="btn small" data-tot="1">Appliquer</button></div></label>
+            <p class="muted small" style="margin:6px 0 0">Tu n'as pas tout détaillé ? Indique le total estimé : l'app ajoute la différence (${r0(eaten)} kcal déjà saisis) en ligne « Non détaillé ».</p></div>
+          <h3 class="gd-h">Objectif de calories de ce jour</h3>
           <div class="gd-big"><input type="number" inputmode="numeric" id="gd-in" value="${v}"><span>kcal</span></div>
           <div class="gd-sub num">Objectif habituel : ${r0(base)} kcal · ${v === base ? 'inchangé' : (v > base ? '+' : '−') + r0(Math.abs(v - base)) + ' kcal ' + when}</div>
           <div class="chips gd-chips">${[200, 400, 600, 800].map(n => `<button type="button" class="chip" data-add="${n}">+${n}</button>`).join('')}</div>
@@ -1848,6 +1852,16 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
       draw();
       sh.body.addEventListener('input', e => { if (e.target.id === 'gd-in') { v = Math.max(800, Math.min(6000, +e.target.value || 0)); } });
       sh.body.addEventListener('click', e => {
+        const tb = e.target.closest('[data-tot]');
+        if (tb) {
+          if (isLocked(k)) { toast('Journée validée : rouvre-la pour modifier'); return; }
+          const tot = +sh.body.querySelector('#gd-tot').value, cur = dayTotals(k).kcal;
+          if (!(tot > 0)) { toast('Indique le total en kcal'); return; }
+          if (tot <= cur) { toast(`Déjà ${r0(cur)} kcal saisis : supprime ou modifie des lignes pour baisser le total`); return; }
+          const day = getDay(k), old = day.entries.find(x => x.src === 'quick' && x.nd);
+          if (old) old.kcal += tot - cur; else day.entries.push({ id: uid(), src: 'quick', nd: 1, meal: 'dinner', name: 'Non détaillé (estimation)', kcal: tot - cur, p: 0, c: 0, f: 0, t: Date.now() });
+          saveDay(k); render(); draw(); toast(`Total du jour : ${r0(tot)} kcal`); return;
+        }
         const b = e.target.closest('[data-add],[data-set]'); if (!b) return;
         const cur = Math.max(800, +sh.body.querySelector('#gd-in')?.value || v);
         v = b.dataset.set ? +b.dataset.set : cur + +b.dataset.add; draw();
