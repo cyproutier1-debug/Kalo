@@ -1334,3 +1334,9 @@ button.fat-row { display: block; width: 100%; background: none; border: 0; borde
 button.fat-row:first-child { border-top: 0; }
 button.fat-row:active { background: rgba(255,255,255,.04); }
 .fat-r { text-align: right; } .fat-r b { color: #FFC247; display: block; } .fat-r small { color: var(--ink-3); font-size: 12px; }
+
+/* v3.13.1 — maintenance dans l'objectif du jour */
+.gd-maint { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.gd-maint > div { background: rgba(255,255,255,.04); border-radius: 14px; padding: 10px 12px; }
+.gd-maint small { display: block; font-size: 12px; color: var(--ink-3); } .gd-maint small em { font-style: normal; opacity: .8; }
+.gd-maint b { font-size: 18px; } .gd-maint.sur > div:last-child b { color: #FFB020; } .gd-maint.def > div:last-child b { color: #2EE68A; }

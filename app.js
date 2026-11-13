@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const APP_VERSION = '3.13.0';
+  const APP_VERSION = '3.13.1';
 
   /* ---------- Utilitaires ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -1830,14 +1830,18 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
     'goal-day': () => {
       const k = UI.date, d = S.days[k] || {}, base = baseGoals().kcal;
       let v = d.kcalOv || base;
-      const sh = makeSheet('Objectif du jour');
+      const burn = dayBurn(k), eaten = dayTotals(k).kcal, maint = Math.round(burn.v / 10) * 10, diff = Math.round(eaten - burn.v);
+      const isToday = k === today(), when = isToday ? "aujourd'hui" : 'ce jour';
+      const sh = makeSheet(isToday ? 'Objectif du jour' : 'Objectif de ce jour');
       const draw = () => {
         sh.setBody(`<section class="card stack gd">
+          <div class="gd-maint ${diff > 0 ? 'sur' : 'def'}"><div><small>Maintenance du jour <em>${burn.measured ? 'montre' : 'estimée'}</em></small><b class="num">≈ ${r0(maint)} kcal</b></div><div><small>${eaten ? 'Mangé' : 'Mangé'} ${r0(eaten)} kcal</small><b class="num">${eaten ? (diff > 0 ? 'Surplus +' : 'Déficit −') + r0(Math.abs(diff)) : '–'}</b></div></div>
           <div class="gd-big"><input type="number" inputmode="numeric" id="gd-in" value="${v}"><span>kcal</span></div>
-          <div class="gd-sub num">Objectif habituel : ${r0(base)} kcal · ${v === base ? 'inchangé' : (v > base ? '+' : '−') + r0(Math.abs(v - base)) + ' kcal aujourd\'hui'}</div>
+          <div class="gd-sub num">Objectif habituel : ${r0(base)} kcal · ${v === base ? 'inchangé' : (v > base ? '+' : '−') + r0(Math.abs(v - base)) + ' kcal ' + when}</div>
           <div class="chips gd-chips">${[200, 400, 600, 800].map(n => `<button type="button" class="chip" data-add="${n}">+${n}</button>`).join('')}</div>
+          <div class="chips gd-chips"><button type="button" class="chip ${v === maint ? 'chip-on' : ''}" data-set="${maint}">Maintenance ${r0(maint)}</button></div>
           <div class="chips gd-chips">${[2400, 2600, 2700, 2800].map(n => `<button type="button" class="chip ${v === n ? 'chip-on' : ''}" data-set="${n}">${n}</button>`).join('')}</div>
-          <p class="muted small">Valable uniquement pour ce jour. Les protéines restent identiques, glucides et lipides se recalculent. Le déficit du bilan se base sur ta dépense, pas sur cet objectif.</p>
+          <p class="muted small">Valable uniquement pour ce jour, y compris dans le bilan des 7 jours : un repas libre ou un jour de surplus voulu n'est plus compté comme raté. Les protéines restent identiques, glucides et lipides se recalculent. Le surplus ou déficit se calcule toujours sur ta dépense, pas sur l'objectif.</p>
         </section>`);
         sh.setFoot(`<div class="row" style="gap:10px">${d.kcalOv ? '<button class="btn ghost" data-a="reset">Remettre l\'habituel</button>' : ''}<button class="btn grow" data-a="ok">Enregistrer</button></div>`);
       };
@@ -1853,6 +1857,7 @@ fruits_legumes_g = grammes de fruits, légumes ou légumineuses dans ce composan
         const day = getDay(k);
         if (b.dataset.a === 'reset') delete day.kcalOv;
         else { v = Math.max(800, Math.min(6000, +sh.body.querySelector('#gd-in').value || base)); if (v === base) delete day.kcalOv; else day.kcalOv = v; }
+        if (day.goal) { const g2 = goals(k); day.goal = { ...day.goal, kcal: g2.kcal, carbs: g2.carbs }; } // jours passés : le bilan lit l'objectif figé du jour
         saveDay(k); closeSheet(1); render(); toast(day.kcalOv ? `Objectif du jour : ${r0(day.kcalOv)} kcal` : 'Objectif habituel rétabli');
       };
       openSheet(sh.el);
